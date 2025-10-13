@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>Commercial Packing List</title>
+    <style>
+        :root {
+            --outer: 2px solid #000;
+            --inner: 1px solid #000;
+            --grey: #e0e0e0;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 10px;
+            margin: 10px;
+        }
+
+        .page {
+            border: var(--outer);
+        }
+
+        .title {
+            background: var(--grey);
+            text-align: center;
+            font-weight: 700;
+            font-size: 16px;
+            padding: 6px 8px;
+            border-bottom: var(--inner);
+        }
+
+        .subtitle {
+            text-align: center;
+            padding: 6px 8px;
+            border-bottom: var(--inner);
+            font-size: 10px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th,
+        td {
+            border: var(--inner);
+            padding: 6px;
+            vertical-align: top;
+        }
+
+        .header {
+            background: var(--grey);
+            font-weight: bold;
+        }
+
+        .center {
+            text-align: center;
+        }
+
+        .right {
+            text-align: right;
+        }
+
+        .bold {
+            font-weight: bold;
+        }
+
+        .section-title {
+            font-weight: bold;
+            margin-top: 12px;
+            margin-bottom: 4px;
+        }
+
+        .note {
+            font-style: italic;
+            font-size: 10px;
+        }
+
+        .footer {
+            margin-top: 30px;
+            font-size: 10px;
+        }
+
+        .table-title {
+            text-align: center;
+            border-left: var(--inner);
+            border-right: var(--inner);
+            border-bottom: var(--inner);
+            background: var(--grey);
+            padding: 6px 4px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- <pre><%= JSON.stringify(packingListData) %></pre> -->
+    <div class="page">
+        <div class="title">COMMERCIAL PACKING LIST</div>
+        <div class="subtitle">SUPPLY MEANT FOR EXPORT UNDER BOND &amp; LUT - LETTER OF UNDERTAKING WITHOUT PAYMENT OF
+            INTEGRATED TAX</div>
+
+        <!-- Top block exactly like PL1.png: Exporter left, Invoice/Date + Buyer Ref + Terms right -->
+        <% const invDateObj=packingListData.exportInvoiceDate ? new Date(packingListData.exportInvoiceDate) :
+            (piInvoice.invoiceDate ? new Date(piInvoice.invoiceDate) : null); %>
+            <% const invDateStr=invDateObj ? invDateObj.toLocaleDateString('en-GB', { day:'2-digit', month:'long',
+                year:'numeric' }).replace(/ /g, '-' ) : 'N/A' ; %>
+
+                <table>
+                    <tr>
+                        <!-- Left large cell: EXPORTER -->
+                        <td rowspan="3" style="width: 60%;">
+                            <div style="display: flex; align-items: flex-start; gap: 10px;">
+                                <div style="flex: 1;">
+                                    <div class="bold" style="text-decoration: underline;">EXPORTER:</div>
+                                    <div class="bold" style="margin-top: 4px; font-size: 12px;">
+                                        <%= piInvoice.company?.name || 'N/A' %>
+                                    </div>
+                                    <div>
+                                        <%= piInvoice.company?.address || '' %>
+                                    </div>
+                                    <div>
+                                        <%= piInvoice.company.city || '' %>
+                                            <%= piInvoice.company.state ? ', ' + piInvoice.company.state : '' %>
+                                                <%= piInvoice.company.pincode ? ', ' + piInvoice.company.pincode : '' %>
+                                    </div>
+                                    <div>Phone: <%= piInvoice.company.phoneNo || '+91-XXXXXXXXXX' %>
+                                    </div>
+                                    <div>Email: <%= piInvoice.company.email || 'email@company.com' %>
+                                    </div>
+
+                                </div>
+                                <div class="logo-box" style="text-align:right;">
+                                    <% const logoUrl=piInvoice.company?.logo; %>
+                                        <% const fullLogoUrl=logoUrl ? (logoUrl.startsWith('http') ? logoUrl :
+                                            `http://localhost:8000${logoUrl}`) : null; %>
+                                            <% if (typeof logoBase64 !=='undefined' && logoBase64) { %>
+                                                <img class="logo-img" src="data:image/*;base64,<%= logoBase64 %>" alt="Company Logo" style="max-height: 80px; max-width: 200px; object-fit: contain; border-radius: 8px; border: none; padding: 4px;">
+                                                <% } else if (fullLogoUrl) { %>
+                                                    <img class="logo-img" src="<%= fullLogoUrl %>" alt="Company Logo" style="max-height: 80px; max-width: 200px; object-fit: contain; border-radius: 8px; border: none; padding: 4px;">
+                                                    <% } %>
+                                </div>
+                            </div>
+                        </td>
+                        <!-- Right top row: Invoice No and Date -->
+                        <td style="width: 20%;" class="center">
+                            <div class="bold">Invoice No:</div>
+                            <div class="bold" style="font-size: 12px; margin-top: 2px;">
+                                <%= packingListData.exportInvoiceNo || piInvoice.piNumber || 'N/A' %>
+                            </div>
+                        </td>
+                        <td style="width: 20%;" class="center">
+                            <div class="bold">Date:</div>
+                            <div class="bold" style="font-size: 12px; margin-top: 2px;">
+                                <%= invDateStr %>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="2" class="bold">Buyer's Ref No. &amp; Date :-</td>
+                    </tr>
+                    <tr>
+                        <td colspan="2">
+                            <div class="bold">Terms &amp; Conditions :-</div>
+                            <ol style="margin: 4px 0 0 16px; padding: 0;">
+                                <li>TRADE TERM: <%= packingListData.methodOfDispatch || piInvoice.deliveryTerm || 'N/A'
+                                        %>
+                                </li>
+                                <li>PAYMENT TERM: <%= piInvoice.paymentTerm || 'N/A' %>
+                                </li>
+                            </ol>
+                        </td>
+                    </tr>
+                </table>
+
+                <!-- CONSIGNEE / BUYER / NOTIFY PARTY headers -->
+                <table>
+                    <tr>
+                        <td class="header">CONSIGNEE:</td>
+                        <td class="header">BUYER</td>
+                        <td class="header">NOTIFY PARTY (Other then Buyer)</td>
+                    </tr>
+                    <tr>
+                        <td style="width: 40%;">
+                            <div class="bold" style="margin-top:2px;">
+                                <%= packingListData.consigneeDetails || piInvoice.party?.companyName ||
+                                    piInvoice.partyName || 'N/A' %>
+                            </div>
+                            <div>Address: <%= piInvoice.party?.address || piInvoice.address || '' %>
+                            </div>
+                            <% if (piInvoice.party?.buildingName) { %>
+                                <div>Building Name: <%= piInvoice.party.buildingName %>
+                                </div>
+                                <% } %>
+                                    <div>
+                                        <%= piInvoice.party?.city || '' %>
+                                            <%= piInvoice.party?.state ? ', ' + piInvoice.party.state : '' %>
+                                                <%= piInvoice.party?.zip || '' %>
+                                    </div>
+                                    <% if (piInvoice.party?.phone) { %>
+                                        <div>Phone: <%= piInvoice.party.phone %>
+                                        </div>
+                                        <% } %>
+                                            <% if (piInvoice.party?.email) { %>
+                                                <div>Email: <%= piInvoice.party.email %>
+                                                </div>
+                                                <% } %>
+                        </td>
+                        <td style="width: 40%;">
+                            <div class="bold" style="margin-top:2px;">
+                                <%= piInvoice.party?.companyName || piInvoice.partyName || 'N/A' %>
+                            </div>
+                            <div>Address: <%= piInvoice.party?.address || piInvoice.address || '' %>
+                            </div>
+                            <% if (piInvoice.party?.buildingName) { %>
+                                <div>Building Name: <%= piInvoice.party.buildingName %>
+                                </div>
+                                <% } %>
+                                    <div>
+                                        <%= piInvoice.party?.city || '' %>
+                                            <%= piInvoice.party?.state ? ', ' + piInvoice.party.state : '' %>
+                                                <%= piInvoice.party?.zip || '' %>
+                                    </div>
+                                    <% if (piInvoice.party?.phone) { %>
+                                        <div>Phone: <%= piInvoice.party.phone %>
+                                        </div>
+                                        <% } %>
+                                            <% if (piInvoice.party?.email) { %>
+                                                <div>Email: <%= piInvoice.party.email %>
+                                                </div>
+                                                <% } %>
+                        </td>
+                        <td style="width: 20%;"></td>
+                    </tr>
+                </table>
+
+                <!-- Shipment info -->
+                <table>
+                    <tr class="center header">
+                        <td>Pre Carriage By</td>
+                        <td>Place of Receipt by Pre-Carrier</td>
+                        <td>Country of Origin of Goods</td>
+                        <td>Country of Final Destination</td>
+                    </tr>
+                    <tr class="center">
+                        <td>
+                            <%= piInvoice.preCarriageBy || 'ROAD' %>
+                        </td>
+                        <td>
+                            <%= piInvoice.placeOfReceipt || packingListData.portOfLoading || 'MORBI' %>
+                        </td>
+                        <td>
+                            <%= piInvoice.countryOfOrigin || packingListData.countryOfOrigin || piInvoice.country
+                                || 'INDIA' %>
+                        </td>
+                        <td>
+                            <%= piInvoice.countryOfDestination || packingListData.finalDestinationCountry ||
+                                piInvoice.party?.country || 'USA' %>
+                        </td>
+                    </tr>
+                    <tr class="center header">
+                        <td>Vessel/ Flight No</td>
+                        <td>Port of Loading</td>
+                        <td>Port of Discharge</td>
+                        <td>Final Destination</td>
+                    </tr>
+                    <tr class="center">
+                        <td>
+                            <%= piInvoice.vesselFlightNo || (packingListData.vesselVoyageNo &&
+                                packingListData.vesselVoyageNo.trim()) ? packingListData.vesselVoyageNo :
+                                (Array.isArray(piInvoice.packagingSteps) && piInvoice.packagingSteps.length> 0 &&
+                                piInvoice.packagingSteps[0].notes &&
+                                piInvoice.packagingSteps[0].notes.vesselVoyageNo
+                                ? piInvoice.packagingSteps[0].notes.vesselVoyageNo
+                                : 'N/A'
+                                )
+                                %>
+                        </td>
+                        <td>
+                            <%= piInvoice.portOfLoading || '-' %>
+                        </td>
+                        <td>
+                            <%= piInvoice.portOfDischarge || '-' %>
+                        </td>
+                        <td>
+                            <%= piInvoice.finalDestination || '-' %>
+                        </td>
+                    </tr>
+                </table>
+
+                <!-- Description of Goods EXACTLY like PL2.png -->
+                <div class="table-title">Description of Goods</div>
+                <table>
+                    <thead>
+                        <tr class="header center">
+                            <th style="width:10%;">No &amp; Kind of Pckgs</th>
+                            <th style="width:18%;">Design Name</th>
+                            <th style="width:8%;">Size (mm)</th>
+                            <th style="width:8%;">HSN Code</th>
+                            <th style="width:10%;">Container No.</th>
+                            <th style="width:9%;">Line Seal No.</th>
+                            <th style="width:8%;">Weight / Box (Kgs)</th>
+                            <th style="width:9%;">Quantity [in SQM]</th>
+                            <th style="width:7%;">Total Pallets</th>
+                            <th style="width:7%;">Quantity [Box]</th>
+                            <th style="width:8%;">Net Weight [kg]</th>
+                            <th style="width:8%;">Gross Weight [kg]</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- <tr>
+                            <td colspan="12" class="center bold">POLISHED GLAZED VITRIFIED TILES</td>
+                        </tr> -->
+
+                        <% const allContainers=piInvoice.packagingSteps && piInvoice.packagingSteps[0] &&
+                            piInvoice.packagingSteps[0].notes && piInvoice.packagingSteps[0].notes.containers ?
+                            piInvoice.packagingSteps[0].notes.containers : []; %>
+                            <% let sumQtySqm=0, sumPallets=0, sumBoxes=0, sumNet=0, sumGross=0; %>
+                            <% let rowIndex = 0; %>
+
+                            <% if (allContainers.length > 0) { %>
+                                <% allContainers.forEach((containerData, containerIndex) => { %>
+                                    <% const items = containerData && containerData.products ? containerData.products : []; %>
+                                    <% if (items.length > 0) { %>
+                                        <% items.forEach((p, i) => { %>
+                                            <% rowIndex++; %>
+                                            <% const pkg = rowIndex; %>
+                                            <% const design = p.productName || p.productDescription || p.description || 'N/A'; %>
+                                            <% const size = packingListData.boxDimensions || piInvoice.packagingSteps?.[0]?.notes?.boxDimensions || ''; %>
+                                            <% const hsn = p.hsnCode || p.hsCode || (piInvoice.products && piInvoice.products[i] && piInvoice.products[i].category?.hsnCode) || (piInvoice.products && piInvoice.products[i] && piInvoice.products[i].product?.category?.hsnCode) || '69072100'; %>
+                                            <% const cont = containerData?.containerNumber || ''; %>
+                                            <% const seal = containerData?.sealNumber || ''; %>
+                                            <% const wtBox = p.grossWeight ? (Number(p.grossWeight) / Number(p.noOfBoxes || 1)).toFixed(1) : ''; %>
+                                            <% const qtySqm = p.measurement ? Number(p.measurement) : 0; %>
+                                            <% const pallets = Math.ceil(Number(p.noOfBoxes || 0) / 50); %>
+                                            <% const boxes = Number(p.noOfBoxes || p.quantity || 0); %>
+                                            <% const net = Number(p.netWeight || 0); %>
+                                            <% const gross = Number(p.grossWeight || 0); %>
+
+                                            <% sumQtySqm += qtySqm; sumPallets += pallets; sumBoxes += boxes; sumNet += net; sumGross += gross; %>
+
+                                            <tr>
+                                                <td class="center"><%= pkg %></td>
+                                                <td><%= design %></td>
+                                                <td class="center"><%= size %></td>
+                                                <td class="center"><%= hsn %></td>
+                                                <td class="center"><%= cont %></td>
+                                                <td class="center"><%= seal %></td>
+                                                <td class="right"><%= wtBox %></td>
+                                                <td class="right"><%= qtySqm ? qtySqm.toFixed(2) : '' %></td>
+                                                <td class="center"><%= pallets || '' %></td>
+                                                <td class="center"><%= boxes || '' %></td>
+                                                <td class="right"><%= net ? net.toFixed(2) : '' %></td>
+                                                <td class="right"><%= gross ? gross.toFixed(2) : '' %></td>
+                                            </tr>
+                                        <% }); %>
+                                    <% } else { %>
+                                        <!-- Show container info even if no products -->
+                                        <% rowIndex++; %>
+                                        <% const pkg = rowIndex; %>
+                                        <% const cont = containerData?.containerNumber || `Container ${containerIndex + 1}`; %>
+                                        <% const seal = containerData?.sealNumber || ''; %>
+                                        <% const boxes = Number(containerData?.totalNoOfBoxes || 0); %>
+                                        <% const net = Number(containerData?.totalNetWeight || 0); %>
+                                        <% const gross = Number(containerData?.totalGrossWeight || 0); %>
+                                        <% const qtySqm = Number(containerData?.totalMeasurement || 0); %>
+                                        <% const pallets = Math.ceil(boxes / 50); %>
+
+                                        <% sumQtySqm += qtySqm; sumPallets += pallets; sumBoxes += boxes; sumNet += net; sumGross += gross; %>
+
+                                        <tr>
+                                            <td class="center"><%= pkg %></td>
+                                            <td>Mixed Goods</td>
+                                            <td class="center"><%= packingListData.boxDimensions || '' %></td>
+                                            <td class="center">69072100</td>
+                                            <td class="center"><%= cont %></td>
+                                            <td class="center"><%= seal %></td>
+                                            <td class="right"><%= boxes > 0 && gross > 0 ? (gross / boxes).toFixed(1) : '' %></td>
+                                            <td class="right"><%= qtySqm ? qtySqm.toFixed(2) : '' %></td>
+                                            <td class="center"><%= pallets || '' %></td>
+                                            <td class="center"><%= boxes || '' %></td>
+                                            <td class="right"><%= net ? net.toFixed(2) : '' %></td>
+                                            <td class="right"><%= gross ? gross.toFixed(2) : '' %></td>
+                                        </tr>
+                                    <% } %>
+                                <% }); %>
+                            <% } else { %>
+                                <!-- Fallback to original products if no container data -->
+                                <% const items = piInvoice.products || []; %>
+                                <% items.forEach((p, i) => { %>
+                                    <% rowIndex++; %>
+                                    <% const pkg = rowIndex; %>
+                                    <% const design = p.productName || p.productDescription || p.description || 'N/A'; %>
+                                    <% const size = packingListData.boxDimensions || ''; %>
+                                    <% const hsn = p.hsnCode || p.hsCode || (p.category?.hsnCode) || (p.product?.category?.hsnCode) || '69072100'; %>
+                                    <% const cont = piInvoice.packagingSteps?.[0]?.containerNumber || ''; %>
+                                    <% const seal = piInvoice.packagingSteps?.[0]?.sealNumber || ''; %>
+                                    <% const wtBox = p.grossWeight ? (Number(p.grossWeight) / Number(p.noOfBoxes || 1)).toFixed(1) : ''; %>
+                                    <% const qtySqm = p.measurement ? Number(p.measurement) : 0; %>
+                                    <% const pallets = Math.ceil(Number(p.noOfBoxes || 0) / 50); %>
+                                    <% const boxes = Number(p.noOfBoxes || p.quantity || 0); %>
+                                    <% const net = Number(p.netWeight || 0); %>
+                                    <% const gross = Number(p.grossWeight || 0); %>
+
+                                    <% sumQtySqm += qtySqm; sumPallets += pallets; sumBoxes += boxes; sumNet += net; sumGross += gross; %>
+
+                                    <tr>
+                                        <td class="center"><%= pkg %></td>
+                                        <td><%= design %></td>
+                                        <td class="center"><%= size %></td>
+                                        <td class="center"><%= hsn %></td>
+                                        <td class="center"><%= cont %></td>
+                                        <td class="center"><%= seal %></td>
+                                        <td class="right"><%= wtBox %></td>
+                                        <td class="right"><%= qtySqm ? qtySqm.toFixed(2) : '' %></td>
+                                        <td class="center"><%= pallets || '' %></td>
+                                        <td class="center"><%= boxes || '' %></td>
+                                        <td class="right"><%= net ? net.toFixed(2) : '' %></td>
+                                        <td class="right"><%= gross ? gross.toFixed(2) : '' %></td>
+                                    </tr>
+                                <% }); %>
+                            <% } %>
+
+                                                                                                <!-- Optional filler rows to create same visual spacing as screenshot -->
+                                                                                                <% for (let i=0; i < Math.max(0, 4 - rowIndex); i++) { %>
+                                                                                                    <tr>
+                                                                                                        <td colspan="12" style="height:26px;"></td>
+                                                                                                    </tr>
+                                                                                                <% } %>
+
+                                                                                                        <!-- TOTAL CONTAINERS row inside the table -->
+                                                                                                        <tr>
+                                                                                                            <td colspan="4"
+                                                                                                                class="center bold">
+                                                                                                                TOTAL
+                                                                                                                CONTAINERS
+                                                                                                                :- <%=
+                                                                                                                    packingListData.totalContainers
+                                                                                                                    &&
+                                                                                                                    packingListData.shipmentType
+                                                                                                                    ?
+                                                                                                                    (packingListData.totalContainers
+                                                                                                                    + ' X '
+                                                                                                                    +
+                                                                                                                    (packingListData.shipmentType
+                                                                                                                    || "20'FCL"
+                                                                                                                    )) :
+                                                                                                                    (packingListData.totalContainersDescription
+                                                                                                                    || ''
+                                                                                                                    ) %>
+                                                                                                            </td>
+                                                                                                            <td
+                                                                                                                colspan="8">
+                                                                                                            </td>
+                                                                                                        </tr>
+
+                                                                                                        <!-- Bottom TOTALS row like screenshot -->
+                                                                                                        <tr
+                                                                                                            class="bold">
+                                                                                                            <td colspan="7"
+                                                                                                                class="center">
+                                                                                                                TOTAL :-
+                                                                                                            </td>
+                                                                                                            <td
+                                                                                                                class="right">
+                                                                                                                <%= sumQtySqm
+                                                                                                                    ?
+                                                                                                                    sumQtySqm.toFixed(2)
+                                                                                                                    : '0.00'
+                                                                                                                    %>
+                                                                                                            </td>
+                                                                                                            <td
+                                                                                                                class="center">
+                                                                                                                <%= sumPallets
+                                                                                                                    || 0
+                                                                                                                    %>
+                                                                                                            </td>
+                                                                                                            <td
+                                                                                                                class="center">
+                                                                                                                <%= sumBoxes
+                                                                                                                    || 0
+                                                                                                                    %>
+                                                                                                            </td>
+                                                                                                            <td
+                                                                                                                class="right">
+                                                                                                                <%= sumNet
+                                                                                                                    ?
+                                                                                                                    sumNet.toFixed(2)
+                                                                                                                    : '0.00'
+                                                                                                                    %>
+                                                                                                            </td>
+                                                                                                            <td
+                                                                                                                class="right">
+                                                                                                                <%= sumGross
+                                                                                                                    ?
+                                                                                                                    sumGross.toFixed(2)
+                                                                                                                    : '0.00'
+                                                                                                                    %>
+                                                                                                            </td>
+                                                                                                        </tr>
+                    </tbody>
+                </table>
+
+
+
+                <!-- Footer section matching the image layout -->
+                <table style="margin-top: 20px;">
+                    <tr>
+                        <td colspan="2" class="header">REMARKS:-</td>
+                    </tr>
+                    <tr>
+                        <td colspan="2" style="height: 40px; vertical-align: top;">
+                            <% if (packingListData.notes) { %>
+                                <%= packingListData.notes %>
+                                    <% } %>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="width: 70%; padding: 10px; vertical-align: top;">
+                            <div style="margin-bottom: 15px;">
+                                <strong>Merchandise to be of <%= packingListData.countryOfOrigin || 'India' %>
+                                        Origin.</strong>
+                            </div>
+                            <div style="margin-bottom: 8px;">
+                                <strong>Declaration:</strong>
+                            </div>
+                            <div>
+                                We Declare that this Invoice shows the Actual prices of the goods described and that
+                                particulars are true and correct.
+                            </div>
+                        </td>
+                        <td style="width: 30%; text-align: center; vertical-align: top; padding: 10px;">
+                            <div style="margin-bottom: 10px;">
+                                <strong>For, <%= piInvoice.company?.name || 'ANANTA INC.' %></strong>
+                            </div>
+                            <div style="height: 80px; display: flex; align-items: center; justify-content: center;">
+                                <!-- Space for company stamp/seal -->
+                                <div
+                                    style="width: 100px; height: 100px; border: 1px dashed #ccc; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 8px; color: #999;">
+                                    COMPANY<br>SEAL
+                                </div>
+                            </div>
+                            <div style="margin-top: 10px;">
+                                <div style="border-bottom: 1px solid #000; width: 120px; margin: 0 auto;"></div>
+                                <div style="font-size: 9px; margin-top: 2px;">Authorised Signatory</div>
+                            </div>
+                        </td>
+                    </tr>
+                </table>
+    </div>
+
+</body>
+
+</html>

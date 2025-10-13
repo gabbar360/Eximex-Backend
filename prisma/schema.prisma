@@ -1,0 +1,799 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                    Int                     @id @default(autoincrement())
+  name                  String
+  email                 String                  @unique
+  mobileNum             String?                 @unique @map("mobile_num")
+  password              String
+  role                  UserRole                @default(ADMIN)
+  status                UserStatus              @default(ACTIVE)
+  isBlocked             Boolean                 @default(false) @map("is_blocked")
+  lastLogin             DateTime?               @map("last_login")
+  createdAt             DateTime                @default(now()) @map("created_at")
+  companyId             Int?                    @map("company_id")
+  ItemCategory          ItemCategory[]
+  party                 PartyList?              @relation("UserToParty")
+  createdParties        PartyList[]             @relation("PartyCreator")
+  company               CompanyDetails?         @relation(fields: [companyId], references: [id])
+  products              Product[]
+  createdPiInvoices     PiInvoice[]             @relation("PiInvoiceCreator")
+  updatedPiInvoices     PiInvoice[]             @relation("PiInvoiceUpdater")
+  piInvoiceHistory      PiInvoiceHistory[]
+  createdOrders         Order[]                 @relation("OrderCreator")
+  updatedOrders         Order[]                 @relation("OrderUpdater")
+  createdPackagingSteps ProductPackagingSteps[] @relation("StepCreator")
+  updatedPackagingSteps ProductPackagingSteps[] @relation("StepUpdater")
+  createdVgmDocuments   VgmDocument[]           @relation("VgmCreator")
+  updatedVgmDocuments   VgmDocument[]           @relation("VgmUpdater")
+  createdPurchaseOrders PurchaseOrder[]         @relation("PoCreator")
+  updatedPurchaseOrders PurchaseOrder[]         @relation("PoUpdater")
+  activityLogs          ActivityLog[]
+  payments              Payment[]
+}
+
+model CompanyDetails {
+  id              Int            @id @default(autoincrement())
+  name            String
+  logo            String?
+  address         String?
+  phoneNo         String?        @map("phone_no")
+  email           String?
+  gstNumber       String?        @map("gst_number")
+  iecNumber       String?        @map("iec_number")
+  currencies      String[]
+  defaultCurrency String         @map("default_currency")
+  allowedUnits    String[]       @map("allowed_units")
+  bankName        String?        @map("bank_name")
+  bankAddress     String?        @map("bank_address")
+  accountNumber   String?        @map("account_number")
+  ifscCode        String?        @map("ifsc_code")
+  swiftCode       String?        @map("swift_code")
+  isActive        Boolean        @default(true) @map("is_active")
+  planId          String         @default("trial") @map("plan_id")
+  trialEndsAt     DateTime?      @map("trial_ends_at")
+  createdAt       DateTime       @default(now()) @map("created_at")
+  deletedAt       DateTime?      @map("deleted_at")
+  ItemCategory    ItemCategory[]
+  parties         PartyList[]
+  users           User[]
+  products        Product[]
+  piInvoices      PiInvoice[]
+  piProducts      PiProduct[]
+  orders          Order[]
+  vgmDocuments    VgmDocument[]
+  purchaseOrders  PurchaseOrder[]
+  activityLogs    ActivityLog[]
+  payments        Payment[]
+}
+
+model PartyList {
+  id            Int            @id @default(autoincrement())
+  companyId     Int            @map("company_id")
+  createdBy     Int            @map("created_by")
+  email         String?        @unique
+  phone         String?
+  password      String?
+  role          PartyRole
+  createdAt     DateTime       @default(now()) @map("created_at")
+  userId        Int?           @unique @map("user_id")
+  address       String?
+  city          String?
+  companyName   String         @map("company_name")
+  contactPerson String?        @map("contact_person")
+  country       String?
+  currency      String         @default("USD")
+  gstNumber     String?        @map("gst_number")
+  notes         String?
+  partyType     String         @map("party_type")
+  pincode       String?
+  state         String?
+  tags          String?
+  status        Boolean        @default(true)
+  company       CompanyDetails @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  user          User?          @relation("UserToParty", fields: [userId], references: [id])
+  creator       User           @relation("PartyCreator", fields: [createdBy], references: [id])
+  piInvoices    PiInvoice[]
+  purchaseOrders PurchaseOrder[]
+  payments      Payment[]
+}
+
+model Product {
+  id        Int     @id @default(autoincrement())
+  name      String
+  sku       String? @unique @map("sku")
+  companyId Int     @map("company_id")
+  createdBy Int     @map("created_by")
+
+  // Basic product info
+  description String? @map("description")
+  price       Float?  @map("price")
+  currency    String? @default("USD") @map("currency")
+
+  categoryId Int?          @map("category_id")
+  category   ItemCategory? @relation(fields: [categoryId], references: [id])
+
+  subCategoryId Int?          @map("sub_category_id")
+  subCategory   ItemCategory? @relation("ProductSubcategory", fields: [subCategoryId], references: [id])
+
+  // Weight info (legacy fields - keeping for backward compatibility)
+  weightUnit WeightUnit @default(kg) @map("weight_unit")
+  weightType WeightType @default(per_piece) @map("weight_type")
+  weight     Float?     @map("weight")
+
+  // Area info (legacy fields - keeping for backward compatibility)
+  areaUnit  AreaUnit @default(sqmt) @map("area_unit")
+  areaType  AreaType @default(per_piece) @map("area_type")
+  coverArea Float?   @map("cover_area")
+
+  // Packing info (legacy field - keeping for backward compatibility)
+  piecePerBox Int? @map("piece_per_box")
+
+  // New packaging and weight fields
+  totalBoxes                  Int?    @map("total_boxes")
+  grossWeightPerBox           Float?  @map("gross_weight_per_box")
+  grossWeightUnit             String? @default("kg") @map("gross_weight_unit")
+  packagingMaterialWeight     Float?  @map("packaging_material_weight")
+  packagingMaterialWeightUnit String? @default("g") @map("packaging_material_weight_unit")
+
+  // Unit weight fields
+  unitWeight     Float?  @map("unit_weight")
+  unitWeightUnit String? @default("kg") @map("unit_weight_unit")
+  weightUnitType String? @map("weight_unit_type")
+
+  // Calculated fields
+  totalPieces          Int?    @map("total_pieces")
+  totalGrossWeight     Float?  @map("total_gross_weight")
+  totalGrossWeightUnit String? @default("kg") @map("total_gross_weight_unit")
+
+  // Volume tracking fields
+  volumeLength Float? @map("volume_length")
+  volumeWidth  Float? @map("volume_width")
+  volumeHeight Float? @map("volume_height")
+  volumePerBox Float? @map("volume_per_box")
+  totalVolume  Float? @map("total_volume")
+
+  // Packaging dimensions fields (in meters)
+  packagingLength Float? @map("packaging_length")
+  packagingWidth  Float? @map("packaging_width")
+  packagingHeight Float? @map("packaging_height")
+  packagingVolume Float? @map("packaging_volume")
+
+  // Dynamic packaging hierarchy fields (JSON for flexibility)
+  packagingHierarchyData Json? @map("packaging_hierarchy_data")
+
+  isActive  Boolean   @default(true) @map("is_active")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  company        CompanyDetails          @relation(fields: [companyId], references: [id])
+  user           User                    @relation(fields: [createdBy], references: [id])
+  piProducts     PiProduct[]
+  packagingSteps ProductPackagingSteps[]
+
+  @@map("product")
+}
+
+model ItemCategory {
+  id                     Int                     @id @default(autoincrement())
+  companyId              Int                     @map("company_id")
+  createdBy              Int                     @map("created_by")
+  name                   String
+  description            String?
+  hsnCode                String?                 @map("hsn_code")
+  useParentHsnCode       Boolean                 @default(false) @map("use_parent_hsn_code")
+  primary_unit           Unit?                   @map("primary_unit")
+  secondary_unit         Unit?                   @map("secondary_unit")
+  parentId               Int?                    @map("parent_id")
+  isActive               Boolean                 @default(true) @map("is_active")
+  createdAt              DateTime                @default(now()) @map("created_at")
+  updatedAt              DateTime                @map("updated_at")
+  CompanyDetails         CompanyDetails          @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  User                   User                    @relation(fields: [createdBy], references: [id])
+  ItemCategory           ItemCategory?           @relation("ItemCategoryToItemCategory", fields: [parentId], references: [id])
+  other_ItemCategory     ItemCategory[]          @relation("ItemCategoryToItemCategory")
+  products               Product[]
+  subCategoryProducts    Product[]               @relation("ProductSubcategory")
+  piProductCategories    PiProduct[]             @relation("PiProductCategory")
+  piProductSubcategories PiProduct[]             @relation("PiProductSubcategory")
+  packagingHierarchy     PackagingHierarchy[]
+  packagingSteps         ProductPackagingSteps[]
+}
+
+model PackagingUnit {
+  id           Int      @id @default(autoincrement())
+  name         String   @unique
+  abbreviation String   @unique
+  description  String?
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  parentPackaging PackagingHierarchy[]    @relation("ParentUnit")
+  childPackaging  PackagingHierarchy[]    @relation("ChildUnit")
+  packagingSteps  ProductPackagingSteps[]
+
+  @@map("packaging_units")
+}
+
+model PackagingHierarchy {
+  id                 Int      @id @default(autoincrement())
+  categoryId         Int      @map("category_id")
+  level              Int // 1, 2, 3, etc. (hierarchy level)
+  parentUnitId       Int      @map("parent_unit_id")
+  childUnitId        Int      @map("child_unit_id")
+  conversionQuantity Float    @map("conversion_quantity") // How many parent units = 1 child unit
+  isActive           Boolean  @default(true) @map("is_active")
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  category   ItemCategory  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  parentUnit PackagingUnit @relation("ParentUnit", fields: [parentUnitId], references: [id])
+  childUnit  PackagingUnit @relation("ChildUnit", fields: [childUnitId], references: [id])
+
+  @@unique([categoryId, level])
+  @@map("packaging_hierarchy")
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+  PENDING
+  INVITED
+  DELETED
+}
+
+enum UserRole {
+  SUPER_ADMIN
+  ADMINISTRATOR
+  ADMIN
+  STAFF
+}
+
+model ActivityLog {
+  id          Int      @id @default(autoincrement())
+  companyId   Int      @map("company_id")
+  userId      Int      @map("user_id")
+  action      String   // CREATE, UPDATE, DELETE, VIEW
+  entityType  String   @map("entity_type") // Party, Product, PiInvoice, Order, etc.
+  entityId    Int?     @map("entity_id")
+  entityName  String?  @map("entity_name")
+  description String?
+  metadata    Json?    // Additional data about the action
+  ipAddress   String?  @map("ip_address")
+  userAgent   String?  @map("user_agent")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  // Relations
+  company CompanyDetails @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  user    User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("activity_logs")
+}
+
+enum PartyRole {
+  Customer
+  Lead
+  Freight_Forwarder
+  Vendor
+  Agent
+  CHA
+  Transporter
+  Supplier
+}
+
+enum PackingUnit {
+  sqm
+  kg
+  pcs
+  ltr
+}
+
+enum Unit {
+  sqm
+  sqft
+  sqyd
+  acre
+  hectare
+  mm
+  cm
+  m
+  km
+  inch
+  ft
+  yd
+  mile
+  mg
+  g
+  kg
+  mt
+  lb
+  oz
+  ml
+  ltr
+  gal
+  cuft
+  cum
+  pcs
+  dozen
+  pack
+  box
+  set
+  unit
+  carton
+  bundle
+  pallet
+  bag
+}
+
+enum ProductType {
+  tiles
+  bagasse
+  fabric
+  generic
+}
+
+enum WeightUnit {
+  kg
+  lbs
+}
+
+enum WeightType {
+  per_box
+  per_piece
+  per_carton
+}
+
+enum AreaUnit {
+  sqmt
+  sqft
+}
+
+enum AreaType {
+  per_box
+  per_piece
+}
+
+enum PiStatus {
+  draft
+  pending
+  cancelled
+  confirmed
+}
+
+enum OrderStatus {
+  pending
+  confirmed
+  processing
+  shipped
+  delivered
+  cancelled
+}
+
+enum PaymentStatus {
+  pending
+  partial
+  paid
+  overdue
+}
+
+model PiInvoice {
+  id          Int      @id @default(autoincrement())
+  companyId   Int      @map("company_id")
+  piNumber    String   @unique @map("pi_number")
+  invoiceDate DateTime @default(now()) @map("invoice_date")
+  status      PiStatus @default(pending)
+
+  // Customer (Party) Details
+  partyId       Int?    @map("party_id")
+  partyName     String  @map("party_name")
+  contactPerson String? @map("contact_person")
+  address       String?
+  country       String?
+  email         String?
+  phone         String?
+
+  // Terms & Container Info
+  paymentTerm          String  @map("payment_term")
+  deliveryTerm         String  @map("delivery_term")
+  containerType        String? @map("container_type")
+  capacityBasis        String? @map("capacity_basis")
+  numberOfContainers   Int?    @default(1) @map("number_of_containers")
+  maxPermissibleWeight Float?  @map("max_permissible_weight")
+  maxShipmentWeight    Float?  @map("max_shipment_weight")
+  currency             String  @default("USD")
+
+  // Charges (Flexible JSON)
+  charges Json?
+
+  // Shipping Details
+  preCarriageBy        String? @map("pre_carriage_by")
+  placeOfReceipt       String? @map("place_of_receipt")
+  countryOfOrigin      String? @map("country_of_origin")
+  countryOfDestination String? @map("country_of_destination")
+  portOfLoading        String? @map("port_of_loading")
+  portOfDischarge      String? @map("port_of_discharge")
+  finalDestination     String? @map("final_destination")
+
+  // Totals
+  subtotal           Float  @default(0)
+  chargesTotal       Float  @default(0) @map("charges_total")
+  totalAmount        Float  @default(0) @map("total_amount")
+  advanceAmount      Float? @map("advance_amount") // Advance payment amount
+  totalWeight        Float  @default(0) @map("total_weight")
+  totalVolume        Float  @default(0) @map("total_volume")
+  totalBoxes         Int    @default(0) @map("total_boxes")
+  totalPallets       Int    @default(0) @map("total_pallets")
+  requiredContainers Int    @default(1) @map("required_containers")
+
+  // Timestamps
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  createdBy Int?     @map("created_by")
+  updatedBy Int?     @map("updated_by")
+
+  // Relations
+  company        CompanyDetails          @relation(fields: [companyId], references: [id])
+  party          PartyList?              @relation(fields: [partyId], references: [id])
+  creator        User?                   @relation("PiInvoiceCreator", fields: [createdBy], references: [id])
+  updater        User?                   @relation("PiInvoiceUpdater", fields: [updatedBy], references: [id])
+  products       PiProduct[]
+  history        PiInvoiceHistory[]
+  orders         Order[]
+  packagingSteps ProductPackagingSteps[]
+  vgmDocuments   VgmDocument[]
+  payments       Payment[]
+
+  @@map("pi_invoice")
+}
+
+model PiProduct {
+  id          Int @id @default(autoincrement())
+  companyId   Int @map("company_id")
+  piInvoiceId Int @map("pi_invoice_id")
+
+  // Product Info
+  productId          Int?    @map("product_id")
+  productName        String  @map("product_name")
+  hsCode             String? @map("hs_code")
+  productDescription String? @map("product_description")
+  categoryId         Int?    @map("category_id")
+  subcategoryId      Int?    @map("subcategory_id")
+
+  // Quantity & Pricing
+  quantity Float
+  unit     String
+  rate     Float
+  total    Float
+
+  // Weight Calculations
+  quantityByWeight  Float? @map("quantity_by_weight")
+  totalWeight       Float? @map("total_weight")
+  convertedQuantity Float? @map("converted_quantity")
+
+  // Enhanced Packing Breakdown
+  calculatedBoxes   Int?   @map("calculated_boxes")
+  calculatedPallets Int?   @map("calculated_pallets")
+  totalCBM          Float? @map("total_cbm")
+  packingBreakdown  Json?  @map("packing_breakdown")
+
+  // Order in PI
+  lineNumber Int @default(1) @map("line_number")
+
+  // Metadata
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  company     CompanyDetails @relation(fields: [companyId], references: [id])
+  piInvoice   PiInvoice      @relation(fields: [piInvoiceId], references: [id], onDelete: Cascade)
+  product     Product?       @relation(fields: [productId], references: [id])
+  category    ItemCategory?  @relation("PiProductCategory", fields: [categoryId], references: [id])
+  subcategory ItemCategory?  @relation("PiProductSubcategory", fields: [subcategoryId], references: [id])
+
+  @@map("pi_products")
+}
+
+model PiDailyCounter {
+  date                  DateTime @id @map("date")
+  lastIncrementalNumber Int      @default(0) @map("last_incremental_number")
+
+  @@map("pi_daily_counters")
+}
+
+model PiInvoiceHistory {
+  id            Int      @id @default(autoincrement())
+  piInvoiceId   Int      @map("pi_invoice_id")
+  action        String // CREATE, UPDATE, DELETE
+  changeData    Json? // Store what changed
+  description   String? // Human-readable description of the change
+  ipAddress     String?  @map("ip_address") // IP address of the user
+  deviceInfo    String?  @map("device_info") // User agent or device information
+  statusBefore  String?  @map("status_before") // Invoice status before change
+  statusAfter   String?  @map("status_after") // Invoice status after change
+  changedFields String[] @map("changed_fields") // List of fields that were changed
+  createdAt     DateTime @default(now()) @map("created_at")
+  createdBy     Int?     @map("created_by")
+
+  // Relations
+  piInvoice PiInvoice @relation(fields: [piInvoiceId], references: [id], onDelete: Cascade)
+  user      User?     @relation(fields: [createdBy], references: [id])
+
+  @@map("pi_invoice_history")
+}
+
+model Order {
+  id          Int    @id @default(autoincrement())
+  companyId   Int    @map("company_id")
+  piInvoiceId Int    @map("pi_invoice_id")
+  orderNumber String @unique @map("order_number")
+  piNumber    String @map("pi_number")
+
+  // Order Status & Payment
+  orderStatus   OrderStatus   @default(pending) @map("order_status")
+  paymentStatus PaymentStatus @default(pending) @map("payment_status")
+  totalAmount   Float         @map("total_amount")
+  paymentAmount Decimal?      @map("payment_amount") @db.Decimal(10, 2) // Optional payment amount
+  productQty    Int           @map("product_qty")
+
+  // Delivery Terms
+  deliveryTerms String @map("delivery_terms")
+
+  // Booking Information
+  bookingNumber String?   @map("booking_number")
+  bookingDate   DateTime? @map("booking_date")
+
+  // Container and seal information moved to packaging steps
+
+  // Timestamps
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  createdBy Int?     @map("created_by")
+  updatedBy Int?     @map("updated_by")
+
+  // shipping details
+  wayBillNumber String?        @map("way_bill_number")
+  truckNumber   String?        @map("truck_number")
+  // Relations
+  company          CompanyDetails          @relation(fields: [companyId], references: [id])
+  piInvoice        PiInvoice               @relation(fields: [piInvoiceId], references: [id])
+  creator          User?                   @relation("OrderCreator", fields: [createdBy], references: [id])
+  updater          User?                   @relation("OrderUpdater", fields: [updatedBy], references: [id])
+  packagingSteps   ProductPackagingSteps[] @relation("OrderPackagingSteps")
+
+  @@map("orders")
+}
+
+model ProductPackagingSteps {
+  id              Int               @id @default(autoincrement())
+  productId       Int?              @map("product_id")
+  piInvoiceId     Int?              @map("pi_invoice_id") // Link to specific PI
+  orderId         Int?              @map("order_id") // Link to specific Order
+  categoryId      Int?              @map("category_id") // Optional, for category-specific steps
+  stepNumber      Int               @map("step_number") // Sequential order of the step (1, 2, 3, etc.)
+  stepType        PackagingStepType @default(PACKING) @map("step_type") // Type of step
+  description     String            @map("description") // Detailed instruction for the step
+  packagingUnitId Int?              @map("packaging_unit_id") // Reference to PackagingUnit for unit type
+  quantity        Float?            @map("quantity") // Quantity required for this step (e.g., 10 pieces)
+  material        String?           @map("material") // Material used (e.g., "cardboard", "bubble wrap")
+  weight          Float?            @map("weight") // Weight contribution of this step
+  weightUnit      String?           @default("kg") @map("weight_unit") // Unit of weight (e.g., kg, g)
+  dimensions      Json?             @map("dimensions") // JSON for length, width, height (flexible)
+  containerNumber String?           @map("container_number") // Container number for this packaging step
+  sealType        String?           @map("seal_type") // Seal type for this packaging step (self seal, line seal)
+  sealNumber      String?           @map("seal_number") // Seal number for this packaging step
+  notes           Json?             @map("notes") // Additional notes as JSON object
+  isActive        Boolean           @default(true) @map("is_active")
+  createdAt       DateTime          @default(now()) @map("created_at")
+  updatedAt       DateTime          @updatedAt @map("updated_at")
+  createdBy       Int               @map("created_by") // User who created the step
+  updatedBy       Int?              @map("updated_by") // User who last updated the step
+
+  // Relations
+  product       Product?       @relation(fields: [productId], references: [id], onDelete: Cascade)
+  piInvoice     PiInvoice?     @relation(fields: [piInvoiceId], references: [id], onDelete: Cascade)
+  order         Order?         @relation("OrderPackagingSteps", fields: [orderId], references: [id], onDelete: Cascade)
+  category      ItemCategory?  @relation(fields: [categoryId], references: [id])
+  packagingUnit PackagingUnit? @relation(fields: [packagingUnitId], references: [id])
+  creator       User           @relation("StepCreator", fields: [createdBy], references: [id])
+  updater       User?          @relation("StepUpdater", fields: [updatedBy], references: [id])
+  vgmDocuments  VgmDocument[] // Relation to VGM documents
+
+  // Note: Unique constraint modified to handle null productId for packing lists
+  @@map("product_packaging_steps")
+}
+
+enum PackagingStepType {
+  PACKING // Basic packing step
+  WRAPPING // Wrapping with materials
+  LABELING // Adding labels/marks
+  PALLETIZING // Arranging on pallets
+  CONTAINERIZING // Loading into containers
+  QUALITY_CHECK // Quality inspection
+  DOCUMENTATION // Adding documents
+}
+
+enum VgmStatus {
+  PENDING
+  VERIFIED
+  SUBMITTED
+  APPROVED
+  REJECTED
+}
+
+enum VgmMethod {
+  METHOD_1 // Weigh packed container
+  METHOD_2 // Weigh contents + tare weight
+}
+
+model VgmDocument {
+  id                     Int  @id @default(autoincrement())
+  companyId              Int  @map("company_id")
+  piInvoiceId            Int  @map("pi_invoice_id")
+  productPackagingStepId Int? @map("product_packaging_step_id") // Link to packaging step for container/VGM data
+
+  // VGM Core Details
+  verifiedGrossMass Float     @map("verified_gross_mass") // in KG
+  method            VgmMethod @default(METHOD_1)
+  status            VgmStatus @default(PENDING)
+
+  // Weight Breakdown (for Method 2)
+  cargoWeight         Float? @map("cargo_weight")
+  packagingWeight     Float? @map("packaging_weight")
+  containerTareWeight Float? @map("container_tare_weight")
+
+  // Verification Details
+  verifiedBy       String   @map("verified_by")
+  verifierPosition String?  @map("verifier_position")
+  verificationDate DateTime @map("verification_date")
+  weighingLocation String?  @map("weighing_location")
+
+  // Container Details
+  containerType String? @default("NORMAL") @map("container_type") // NORMAL, REEFER, HAZARDOUS, OTHER
+  hazardousUnNo String? @map("hazardous_un_no") // UN Number for hazardous materials
+  imdgClass     String? @map("imdg_class") // IMDG class for hazardous materials
+
+  remarks     String?
+  attachments Json?
+
+  // Timestamps
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  createdBy Int      @map("created_by")
+  updatedBy Int?     @map("updated_by")
+
+  // Relations
+  company              CompanyDetails         @relation(fields: [companyId], references: [id])
+  piInvoice            PiInvoice              @relation(fields: [piInvoiceId], references: [id])
+  productPackagingStep ProductPackagingSteps? @relation(fields: [productPackagingStepId], references: [id])
+  creator              User                   @relation("VgmCreator", fields: [createdBy], references: [id])
+  updater              User?                  @relation("VgmUpdater", fields: [updatedBy], references: [id])
+
+  @@map("vgm_documents")
+}
+
+model PurchaseOrder {
+  id          Int      @id @default(autoincrement())
+  companyId   Int      @map("company_id")
+  poNumber    String   @unique @map("po_number")
+  poDate      DateTime @map("po_date")
+  deliveryDate DateTime? @map("delivery_date")
+  refNumber   String?  @map("ref_number")
+  placeOfSupply String? @map("place_of_supply")
+  
+  // Company Details
+  companyName    String? @map("company_name")
+  companyAddress String? @map("company_address")
+  companyGstin   String? @map("company_gstin")
+  
+  // Vendor Details
+  vendorId    Int?     @map("vendor_id")
+  vendorName  String   @map("vendor_name")
+  vendorAddress String? @map("vendor_address")
+  vendorGstin String?  @map("vendor_gstin")
+  
+  // Delivery Details
+  deliverToName    String? @map("deliver_to_name")
+  deliverToAddress String? @map("deliver_to_address")
+  deliverToGstin   String? @map("deliver_to_gstin")
+  deliverToContact String? @map("deliver_to_contact")
+  
+  // Tax Settings
+  currency String @default("INR")
+  cgstRate Float  @default(6) @map("cgst_rate")
+  sgstRate Float  @default(6) @map("sgst_rate")
+  
+  // Totals
+  subTotal Float @default(0) @map("sub_total")
+  cgstAmount Float @default(0) @map("cgst_amount")
+  sgstAmount Float @default(0) @map("sgst_amount")
+  totalAmount Float @default(0) @map("total_amount")
+  
+  // Additional Information
+  notes String?
+  termsConditions String? @map("terms_conditions")
+  
+  // Authorization
+  signatureCompany String? @map("signature_company")
+  signatureTitle   String? @map("signature_title")
+  authorizedBy     String? @map("authorized_by")
+  
+  // Status
+  status PoStatus @default(DRAFT)
+  
+  // Timestamps
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  createdBy Int      @map("created_by")
+  updatedBy Int?     @map("updated_by")
+  
+  // Relations
+  company CompanyDetails @relation(fields: [companyId], references: [id])
+  vendor  PartyList?     @relation(fields: [vendorId], references: [id])
+  creator User           @relation("PoCreator", fields: [createdBy], references: [id])
+  updater User?          @relation("PoUpdater", fields: [updatedBy], references: [id])
+  items   PurchaseOrderItem[]
+  
+  @@map("purchase_orders")
+}
+
+model PurchaseOrderItem {
+  id               Int    @id @default(autoincrement())
+  purchaseOrderId  Int    @map("purchase_order_id")
+  itemDescription  String @map("item_description")
+  hsnSac          String? @map("hsn_sac")
+  quantity        Float
+  rate            Float
+  amount          Float
+  lineNumber      Int    @default(1) @map("line_number")
+  
+  // Relations
+  purchaseOrder PurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
+  
+  @@map("purchase_order_items")
+}
+
+enum PoStatus {
+  DRAFT
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+model Payment {
+  id          Int           @id @default(autoincrement())
+  companyId   Int           @map("company_id")
+  piInvoiceId Int?          @map("pi_invoice_id")
+  partyId     Int?          @map("party_id")
+  amount      Float
+  paidAmount  Float         @default(0) @map("paid_amount")
+  dueAmount   Float         @map("due_amount")
+  dueDate     DateTime      @map("due_date")
+  status      PaymentStatus @default(pending)
+  paymentMethod String?     @map("payment_method")
+  reference   String?
+  notes       String?
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+  createdBy   Int           @map("created_by")
+  
+  // Relations
+  company   CompanyDetails @relation(fields: [companyId], references: [id])
+  piInvoice PiInvoice?     @relation(fields: [piInvoiceId], references: [id], onDelete: Cascade)
+  party     PartyList?     @relation(fields: [partyId], references: [id])
+  creator   User           @relation(fields: [createdBy], references: [id])
+  
+  @@map("payments")
+}

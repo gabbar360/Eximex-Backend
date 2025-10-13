@@ -1,0 +1,109 @@
+import Joi from 'joi';
+
+// validation/categoryValidation.js
+const createCategory = {
+  body: Joi.object().keys({
+    name: Joi.string().required().trim(),
+    description: Joi.string().optional().trim(),
+    desc: Joi.string().optional().trim(),
+    hsn_code: Joi.string().allow('', null).optional().trim(),
+    useParentHsnCode: Joi.boolean().optional(),
+    primary_unit: Joi.string()
+      .valid('sqm', 'sqft', 'sqyd', 'acre', 'hectare', 'mm', 'cm', 'm', 'km', 'inch', 'ft', 'yd', 'mile', 'mg', 'g', 'kg', 'mt', 'lb', 'oz', 'ml', 'ltr', 'gal', 'cuft', 'cum', 'pcs', 'dozen', 'pack', 'box', 'set', 'unit', 'carton', 'bundle', 'pallet', 'bag')
+      .optional(),
+    secondary_unit: Joi.string()
+      .valid('sqm', 'sqft', 'sqyd', 'acre', 'hectare', 'mm', 'cm', 'm', 'km', 'inch', 'ft', 'yd', 'mile', 'mg', 'g', 'kg', 'mt', 'lb', 'oz', 'ml', 'ltr', 'gal', 'cuft', 'cum', 'pcs', 'dozen', 'pack', 'box', 'set', 'unit', 'carton', 'bundle', 'pallet', 'bag')
+      .optional(),
+    parentId: Joi.number().integer().positive().allow(null),
+    parent_id: Joi.number().integer().positive().allow(null),
+    companyId: Joi.number().integer().positive().optional(),
+    createdBy: Joi.number().integer().positive().optional(),
+    subcategory: Joi.array()
+      .items(
+        Joi.object({
+          name: Joi.string().required().trim(),
+          description: Joi.string().optional().trim(),
+          desc: Joi.string().optional().trim(),
+          hsn_code: Joi.string().allow('', null).optional().trim(),
+          useParentHsnCode: Joi.boolean().optional(),
+          primary_unit: Joi.string()
+            .valid('sqm', 'sqft', 'sqyd', 'acre', 'hectare', 'mm', 'cm', 'm', 'km', 'inch', 'ft', 'yd', 'mile', 'mg', 'g', 'kg', 'mt', 'lb', 'oz', 'ml', 'ltr', 'gal', 'cuft', 'cum', 'pcs', 'dozen', 'pack', 'box', 'set', 'unit', 'carton', 'bundle', 'pallet', 'bag')
+            .optional(),
+          secondary_unit: Joi.string()
+            .valid('sqm', 'sqft', 'sqyd', 'acre', 'hectare', 'mm', 'cm', 'm', 'km', 'inch', 'ft', 'yd', 'mile', 'mg', 'g', 'kg', 'mt', 'lb', 'oz', 'ml', 'ltr', 'gal', 'cuft', 'cum', 'pcs', 'dozen', 'pack', 'box', 'set', 'unit', 'carton', 'bundle', 'pallet', 'bag')
+            .optional(),
+        })
+      )
+      .optional(),
+    packagingLevels: Joi.array()
+      .items(
+        Joi.object({
+          parentUnitId: Joi.number().integer().positive().required(),
+          childUnitId: Joi.number().integer().positive().required(),
+          conversionQuantity: Joi.number().positive().required(),
+        })
+      )
+      .optional(),
+  }),
+};
+
+const updateCategory = {
+  params: Joi.object().keys({
+    id: Joi.number().integer().positive().required(),
+  }),
+  body: Joi.object().keys({
+    name: Joi.string().optional().trim(),
+    description: Joi.string().optional().trim(),
+    desc: Joi.string().optional().trim(),
+    hsn_code: Joi.string().allow('', null).optional().trim(),
+    useParentHsnCode: Joi.boolean().optional(),
+    primary_unit: Joi.string()
+      .valid('sqm', 'sqft', 'sqyd', 'acre', 'hectare', 'mm', 'cm', 'm', 'km', 'inch', 'ft', 'yd', 'mile', 'mg', 'g', 'kg', 'mt', 'lb', 'oz', 'ml', 'ltr', 'gal', 'cuft', 'cum', 'pcs', 'dozen', 'pack', 'box', 'set', 'unit', 'carton', 'bundle', 'pallet', 'bag')
+      .optional(),
+    secondary_unit: Joi.string()
+      .valid('sqm', 'sqft', 'sqyd', 'acre', 'hectare', 'mm', 'cm', 'm', 'km', 'inch', 'ft', 'yd', 'mile', 'mg', 'g', 'kg', 'mt', 'lb', 'oz', 'ml', 'ltr', 'gal', 'cuft', 'cum', 'pcs', 'dozen', 'pack', 'box', 'set', 'unit', 'carton', 'bundle', 'pallet', 'bag')
+      .optional(),
+    parentId: Joi.number().integer().positive().allow(null),
+    parent_id: Joi.number().integer().positive().allow(null),
+    isActive: Joi.boolean().optional(),
+    subcategory: Joi.array()
+      .items(
+        Joi.object({
+          id: Joi.number().integer().positive().optional(),
+          name: Joi.string().required().trim(),
+          description: Joi.string().optional().trim(),
+          desc: Joi.string().optional().trim(),
+          hsn_code: Joi.string().allow('', null).optional().trim(),
+          useParentHsnCode: Joi.boolean().optional(),
+          primary_unit: Joi.string()
+            .valid('sqm', 'sqft', 'sqyd', 'acre', 'hectare', 'mm', 'cm', 'm', 'km', 'inch', 'ft', 'yd', 'mile', 'mg', 'g', 'kg', 'mt', 'lb', 'oz', 'ml', 'ltr', 'gal', 'cuft', 'cum', 'pcs', 'dozen', 'pack', 'box', 'set', 'unit', 'carton', 'bundle', 'pallet', 'bag')
+            .optional(),
+          secondary_unit: Joi.string()
+            .valid('sqm', 'sqft', 'sqyd', 'acre', 'hectare', 'mm', 'cm', 'm', 'km', 'inch', 'ft', 'yd', 'mile', 'mg', 'g', 'kg', 'mt', 'lb', 'oz', 'ml', 'ltr', 'gal', 'cuft', 'cum', 'pcs', 'dozen', 'pack', 'box', 'set', 'unit', 'carton', 'bundle', 'pallet', 'bag')
+            .optional(),
+        })
+      )
+      .optional(),
+    packagingLevels: Joi.array()
+      .items(
+        Joi.object({
+          parentUnitId: Joi.number().integer().positive().required(),
+          childUnitId: Joi.number().integer().positive().required(),
+          conversionQuantity: Joi.number().positive().required(),
+        })
+      )
+      .optional(),
+  }),
+};
+
+const getCategory = {
+  params: Joi.object().keys({
+    id: Joi.number().integer().positive().required(),
+  }),
+};
+
+export const categoryValidation = {
+  createCategory,
+  updateCategory,
+  getCategory,
+};

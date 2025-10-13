@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <title>Purchase Order - <%= purchaseOrder.poNumber || 'PO' %></title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      font-size: 12px;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 20px;
+    }
+
+    .company-info {
+      flex: 1;
+    }
+
+    .company-logo {
+      font-size: 24px;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+
+    .po-title {
+      text-align: center;
+      font-size: 28px;
+      font-weight: bold;
+      color: #2563eb;
+    }
+
+    .info-section {
+      display: flex;
+      margin-bottom: 20px;
+    }
+
+    .info-left,
+    .info-right {
+      flex: 1;
+    }
+
+    .info-box {
+      border: 1px solid #ccc;
+      padding: 10px;
+      margin: 5px 0;
+    }
+
+    .info-label {
+      font-weight: bold;
+      margin-right: 10px;
+    }
+
+    .items-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+    }
+
+    .items-table th,
+    .items-table td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      text-align: left;
+    }
+
+    .items-table th {
+      background-color: #f5f5f5;
+      font-weight: bold;
+    }
+
+    .text-right {
+      text-align: right;
+    }
+
+    .text-center {
+      text-align: center;
+    }
+
+    .notes-section {
+      margin: 20px 0;
+    }
+
+    .signature-section {
+      margin-top: 40px;
+      text-align: center;
+    }
+
+    .total-section {
+      margin-top: 20px;
+    }
+
+    .total-row {
+      display: flex;
+      justify-content: space-between;
+      margin: 5px 0;
+    }
+
+    .total-label {
+      font-weight: bold;
+    }
+
+    .logo-header {
+      text-align: center;
+      padding: 8px;
+      margin-bottom: 20px;
+    }
+
+    .logo-header img {
+      max-width: 120px;
+      max-height: 70px;
+      object-fit: contain;
+      border-radius: 8px;
+      border: none;
+      padding: 4px;
+    }
+
+    .po-logo {
+      text-align: right;
+    }
+
+    .po-logo img {
+      max-width: 120px;
+      max-height: 70px;
+      object-fit: contain;
+      border-radius: 8px;
+      border: none;
+      padding: 4px;
+    }
+  </style>
+</head>
+
+  <body>
+    <% 
+      // Function to get currency symbol
+      const getCurrencySymbol = (currency) => {
+        const symbols = { INR: '₹', USD: '$', EUR: '€', GBP: '£' };
+        return symbols[currency] || '₹';
+      };
+      const currencySymbol = getCurrencySymbol(purchaseOrder.currency || 'INR');
+    %>
+    <!-- Title Header -->
+    <div class="logo-header">
+      <div class="po-title">PURCHASE ORDER</div>
+    </div>
+    <div class="header">
+      <div class="company-info">
+        <!-- <div class="company-logo">
+          <%= purchaseOrder.companyName || company?.name || 'Vegnar Global LLP' %>
+        </div> -->
+        <div><%- purchaseOrder.companyAddress || company?.address
+            || 'B-623, RK Iconic<br>150 Feet Ring Road, Ayodhya Chowk<br>Rajkot Gujarat 360007<br>India' %></div>
+        <div>GSTIN <%= purchaseOrder.deliverToGstin || purchaseOrder.companyGstin || company?.gstNumber
+            || '24AABFV3901A1ZV' %>
+        </div>
+        <div>
+          <%= company?.email || 'sales@vegnar.com' %> | <%= company?.phoneNo || company?.phone || '+91 9998040482' %>
+        </div>
+        <div>
+          <%= company?.website || 'www.vegnar.com' %>
+        </div>
+      </div>
+      <div class="po-logo">
+        <% const logoUrl = company?.logo; %>
+        <% const fullLogoUrl = logoUrl ? (logoUrl.startsWith('http') ? logoUrl : `http://localhost:8000${logoUrl}`) : null; %>
+        <% if (typeof logoBase64 !== 'undefined' && logoBase64) { %>
+          <img src="data:image/*;base64,<%= logoBase64 %>" alt="Company Logo">
+        <% } else if (fullLogoUrl) { %>
+          <img src="<%= fullLogoUrl %>" alt="Company Logo">
+        <% } %>
+      </div>
+    </div>
+
+    <div class="info-section">
+      <div class="info-left">
+        <div class="info-box">
+          <div><span class="info-label">Purchase Order#:</span>
+            <%= purchaseOrder.poNumber %>
+          </div>
+          <div><span class="info-label">Date:</span>
+            <%= new Date(purchaseOrder.poDate).toLocaleDateString() %>
+          </div>
+          <div><span class="info-label">Delivery Date:</span>
+            <%= purchaseOrder.deliveryDate ? new Date(purchaseOrder.deliveryDate).toLocaleDateString() : 'N/A' %>
+          </div>
+          <div><span class="info-label">Ref#:</span>
+            <%= purchaseOrder.refNumber || 'VGL001' %>
+          </div>
+        </div>
+
+        <div class="info-box">
+          <div style="font-weight: bold; margin-bottom: 10px;">Vendor Address</div>
+          <div><strong>
+              <%= purchaseOrder.vendorName || vendor?.companyName || 'FOMEX GROUP INC' %>
+            </strong></div>
+          <div><%- purchaseOrder.vendorAddress || vendor?.address
+              || 'Survey No 249, Fomex Road,<br>8-A National highway, Vill Jalida,<br>Tal Wankaner<br>Morbi<br>363621 Gujarat<br>India'
+              %></div>
+          <div>GSTIN <%= purchaseOrder.vendorGstin || vendor?.gstNumber || '24AAEFF7243A1ZY' %>
+          </div>
+        </div>
+      </div>
+
+      <div class="info-right">
+        <div class="info-box">
+          <div><span class="info-label">Place Of Supply:</span>
+            <%= purchaseOrder.placeOfSupply || 'Gujarat (24)' %>
+          </div>
+
+        </div>
+
+        <div class="info-box">
+          <div style="font-weight: bold; margin-bottom: 10px;">Deliver To</div>
+          <div>
+            <%= purchaseOrder.deliverToName || purchaseOrder.companyName || company?.name || 'B-623, RK Iconic' %>
+          </div>
+          <div><%- purchaseOrder.deliverToAddress || purchaseOrder.companyAddress || company?.address
+              || '150 Feet Ring Road, Ayodhya Chowk<br>Rajkot Gujarat 360007<br>India' %></div>
+          <div>GSTIN <%= purchaseOrder.deliverToGstin || purchaseOrder.companyGstin || company?.gstNumber
+              || '24AABFV3901A1ZV' %>
+          </div>
+          <div>
+            <%= purchaseOrder.deliverToContact || company?.email || 'sales@vegnar.com' %> | <%= company?.phoneNo ||
+                company?.phone || '+91 9998040482' %>
+          </div>
+          <div>
+            <%= company?.website || 'www.vegnar.com' %>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <table class="items-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Item & Description</th>
+          <th>HSN/SAC</th>
+          <th>Qty</th>
+          <th>Rate</th>
+          <th>Amount</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if (items && items.length > 0) { %>
+          <% items.forEach((item, index) => { %>
+            <tr>
+              <td class="text-center">
+                <%= index + 1 %>
+              </td>
+              <td>
+                <%= item.itemDescription || item.productName || item.description || '' %><br><span
+                    style="color: #666; font-size: 11px;">
+                    <%= item.description || '' %>
+                  </span>
+              </td>
+              <td class="text-center">
+                <%= item.hsnSac || item.hsnCode || '48237010' %>
+              </td>
+              <td class="text-center">
+                <%= item.quantity || 0 %><br><span style="color: #666; font-size: 11px;">
+                    <%= item.unit || 'Nos' %>
+                  </span>
+              </td>
+              <td class="text-right">
+                <%= currencySymbol %> <%= (item.rate || 0).toFixed(2) %>
+              </td>
+              <td class="text-right">
+                <%= currencySymbol %> <%= (item.amount || 0).toFixed(2) %>
+              </td>
+            </tr>
+          <% }) %>
+        <% } else { %>
+                <tr>
+                  <td class="text-center">1</td>
+                  <td>Classic Oval Tray (230 ML)<br><span style="color: #666; font-size: 11px;">White Bleached Sugarcane
+                      Bagasse</span></td>
+                  <td class="text-center">48237010</td>
+                  <td class="text-center">50,000.00<br><span style="color: #666; font-size: 11px;">Nos</span></td>
+                  <td class="text-right">
+                    <%= currencySymbol %> 1.29
+                  </td>
+                  <td class="text-right">
+                    <%= currencySymbol %> 64,500.00
+                  </td>
+                </tr>
+        <% } %>
+      </tbody>
+    </table>
+
+    <div style="display: flex; justify-content: space-between;">
+      <div style="flex: 1; margin-right: 20px;">
+        <div class="notes-section">
+          <div style="font-weight: bold; margin-bottom: 10px;">Notes</div>
+          <div>
+            <%- (purchaseOrder.notes || 'Packaging must be sturdy to ship it safely without damage.'
+              ).replace(/\n/g, '<br>' ) %>
+          </div>
+        </div>
+
+        <div style="margin-top: 20px;">
+          <div style="font-weight: bold; margin-bottom: 10px;">Terms & Conditions</div>
+          <div style="font-size: 11px; line-height: 1.4;">
+            <%- (purchaseOrder.termsConditions
+              || '1. Goods/Services that must be meet agreed Quality / Specifications, will be replace, reject & return to supplier at their expenses.<br>2. Any liabilities arises due to GST Act due to mismatch of GST credit related<br>to you will be charged on with Interest and Penalty.<br>3. We will execute the particular work, process, inspection or testing followed by our suppliers and service providers at our premises as per decided terms &<br>conditions regarding quality, environment & health safety.<br>4. Before proceeding for production, supplier has to provide the samples and get the clearance to proceed for further production.<br>5. Payment terms will be against the delivery of the consignment to shipping address.<br>6. Subject to Rajkot Jurisdiction E&OE').replace(/\n/g, '<br>') %>
+          </div>
+        </div>
+      </div>
+
+      <div style="width: 300px;">
+        <div class="total-section">
+          <div class="total-row">
+            <span>Sub Total</span>
+            <span><%= currencySymbol %> <%= purchaseOrder.subTotal?.toFixed(2) || '0.00' %></span>
+          </div>
+          <div class="total-row">
+            <span>CGST (<%= purchaseOrder.cgstRate || 6 %>%)</span>
+            <span><%= currencySymbol %> <%= purchaseOrder.cgstAmount?.toFixed(2) || '0.00' %></span>
+          </div>
+          <div class="total-row">
+            <span>SGST (<%= purchaseOrder.sgstRate || 6 %>%)</span>
+            <span><%= currencySymbol %> <%= purchaseOrder.sgstAmount?.toFixed(2) || '0.00' %></span>
+          </div>
+          <div class="total-row"
+            style="border-top: 1px solid #ccc; padding-top: 5px; font-weight: bold; font-size: 14px;">
+            <span>Total</span>
+            <span><%= currencySymbol %> <%= purchaseOrder.totalAmount?.toFixed(2) || '0.00' %></span>
+          </div>
+        </div>
+
+        <div class="signature-section">
+          <div style="font-size: 18px; font-weight: bold; color: #2563eb; margin-bottom: 20px;">For, <%=
+              purchaseOrder.signatureCompany || purchaseOrder.companyName || company?.name || 'Vegnar Global LLP' %>
+          </div>
+          <div style="margin-bottom: 40px;">
+            <!-- Signature space -->
+          </div>
+          <div style="border-top: 1px solid #000; padding-top: 5px; font-weight: bold;">
+            <%= purchaseOrder.authorizedBy || purchaseOrder.signatureTitle || 'Designated Partner' %>
+          </div>
+          <div style="font-size: 11px; margin-top: 5px;">Authorized Signature</div>
+        </div>
+      </div>
+    </div>
+  </body>
+
+</html>
