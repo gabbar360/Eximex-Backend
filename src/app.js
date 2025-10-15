@@ -18,8 +18,7 @@ const loadRoutes = async () => {
   const files = fs.readdirSync(routesPath);
 
   for (const file of files) {
-    if (file.endsWith('Route.js')) {
-      // console.log("Loading route file:", file);
+    if (file.endsWith('Route.js') && file !== 'basicAuthRoute.js') {
       const route = await import(`./routes/${file}`);
       app.use('/api/v1', route.default);
     }

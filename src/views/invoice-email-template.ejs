@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Proforma Invoice <%= invoiceData.piNumber %></title>
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Arial, sans-serif; background-color: #f8f9fa;">
+    <div style="max-width: 600px; margin: 20px auto; padding: 20px;">
+        <div style="background-color: white; padding: 30px; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+            <h2 style="color: #212529; margin: 0 0 20px 0; font-size: 20px; font-weight: 600;">Proforma Invoice <%= invoiceData.piNumber %></h2>
+            
+            <p style="color: #495057; line-height: 1.5; font-size: 14px; margin: 0 0 15px 0;">Dear <%= invoiceData.party?.companyName || invoiceData.partyName || 'Customer' %>,</p>
+            <p style="color: #495057; line-height: 1.5; font-size: 14px; margin: 0 0 20px 0;">Please find attached your proforma invoice for the amount of <strong><%= invoiceData.currency %> <%= invoiceData.totalAmount %></strong>.</p>
+            
+            <div style="background-color: #f8f9fa; padding: 15px; border-radius: 3px; margin: 20px 0;">
+                <p style="color: #6c757d; margin: 5px 0; font-size: 12px;"><strong>Invoice Number:</strong> <%= invoiceData.piNumber %></p>
+                <p style="color: #6c757d; margin: 5px 0; font-size: 12px;"><strong>Amount:</strong> <%= invoiceData.currency %> <%= invoiceData.totalAmount %></p>
+                <p style="color: #6c757d; margin: 5px 0; font-size: 12px;"><strong>Date:</strong> <%= new Date().toLocaleDateString() %></p>
+            </div>
+            
+            <% if (paymentLink) { %>
+            <div style="margin: 25px 0; padding: 20px; background-color: #495057; border-radius: 4px; text-align: center;">
+                <h3 style="color: white; margin: 0 0 15px 0; font-size: 16px; font-weight: 600;">💳 Make Payment Now</h3>
+                <a href="<%= paymentLink.short_url %>" 
+                   style="display: inline-block; padding: 12px 24px; background-color: #28a745; color: white; text-decoration: none; border-radius: 4px; font-weight: 600; font-size: 14px;">
+                    PAY <%= invoiceData.currency %> <%= invoiceData.totalAmount %>
+                </a>
+                <p style="color: #f8f9fa; margin: 10px 0 0 0; font-size: 11px;">🔒 Secure payment powered by Razorpay</p>
+            </div>
+            <% } %>
+            
+            <p style="color: #495057; line-height: 1.5; font-size: 14px; margin: 0 0 15px 0;">If you have any questions regarding this invoice, please don't hesitate to contact us.</p>
+            <p style="color: #495057; line-height: 1.5; font-size: 14px; margin: 0 0 25px 0;">Thank you for your continued business!</p>
+            
+            <p style="color: #495057; font-size: 14px; margin: 0;">Best regards,<br><strong><%= invoiceData.company?.name || invoiceData.companyName || 'Company' %></strong></p>
+            
+            <hr style="border: none; border-top: 1px solid #dee2e6; margin: 25px 0 15px 0;">
+            <p style="color: #6c757d; font-size: 11px; margin: 0;">This is an automated message. Please do not reply to this email.</p>
+        </div>
+    </div>
+</body>
+</html>

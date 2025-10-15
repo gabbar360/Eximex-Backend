@@ -6,6 +6,8 @@ import cors from 'cors';
 import compression from 'compression';
 import cookieParser from 'cookie-parser';
 import express from 'express';
+import session from 'express-session';
+import passport from './config/passport.js';
 
 import { app, loadRoutes } from './app.js';
 import { prisma } from './config/dbConfig.js';
@@ -85,6 +87,22 @@ app.use(
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
+
+// Session configuration for passport
+app.use(session({
+  secret: process.env.JWT_SECRET_KEY || 'your-session-secret',
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    secure: process.env.NODE_ENV === 'production',
+    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+  }
+}));
+
+// Initialize passport
+app.use(passport.initialize());
+app.use(passport.session());
+
 app.use('/uploads', cors(), express.static('uploads'));
 app.use('/public', express.static('public'));
 

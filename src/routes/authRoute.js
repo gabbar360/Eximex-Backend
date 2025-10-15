@@ -5,6 +5,8 @@ import {
   logout,
   refreshAccessToken,
   changePassword,
+  forgotPassword,
+  resetPassword,
   getCurrentUser,
   verifyToken,
 } from '../controller/authController.js';
@@ -37,7 +39,19 @@ router.post(
   validate(authValidation.changePassword),
   changePassword
 );
+router.post(
+  '/forgot-password',
+  validate(authValidation.forgotPassword),
+  forgotPassword
+);
+router.post(
+  '/reset-password',
+  validate(authValidation.resetPassword),
+  resetPassword
+);
 router.get('/verify-token', verifyJWT, verifyToken);
 router.get('/me', verifyJWT, getCurrentUser);
+
+
 
 export default router;
