@@ -67,7 +67,10 @@ const forgotPassword = {
 
 const resetPassword = {
   body: Joi.object().keys({
-    token: Joi.string().required(),
+    token: Joi.string().required().messages({
+      'string.empty': 'Reset token is required',
+      'any.required': 'Reset token is required'
+    }),
     newPassword: Joi.string()
       .required()
       .min(8)
@@ -75,9 +78,11 @@ const resetPassword = {
       .pattern(
         /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/
       )
-      .message(
-        'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character'
-      ),
+      .messages({
+        'string.min': 'Password must be at least 8 characters long.',
+        'string.pattern.base':
+          'Password must include an uppercase letter, a lowercase letter, a number, and a special character.',
+      }),
     confirmPassword: Joi.string()
       .valid(Joi.ref('newPassword'))
       .required()

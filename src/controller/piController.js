@@ -5,7 +5,7 @@ import fs from 'fs';
 import { join } from 'path';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
-import { sendInvoiceEmail } from '../services/emailService.js';
+import paymentService from '../services/paymentService.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -258,7 +258,7 @@ export const emailInvoice = asyncHandler(async (req, res) => {
   );
 
   try {
-    await sendInvoiceEmail(email, piInvoice, pdfBuffer, paymentLink);
+    await paymentService.sendInvoiceEmail(email, piInvoice, pdfBuffer, paymentLink);
     console.log('✅ EMAIL CONTROLLER - Email sent successfully!');
   } catch (error) {
     console.error('❌ EMAIL CONTROLLER - Email send failed:', error.message);

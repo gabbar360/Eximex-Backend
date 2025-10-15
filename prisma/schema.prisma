@@ -12,7 +12,12 @@ model User {
   name                  String
   email                 String                  @unique
   mobileNum             String?                 @unique @map("mobile_num")
-  password              String
+  password              String?
+  refreshToken          String?                 @map("refresh_token")
+  googleId              String?                 @unique @map("google_id")
+  isEmailVerified       Boolean                 @default(false) @map("is_email_verified")
+  resetPasswordToken     String?                 @map("reset_password_token")
+  resetPasswordTokenExpiry DateTime?            @map("reset_password_token_expiry")
   role                  UserRole                @default(ADMIN)
   status                UserStatus              @default(ACTIVE)
   isBlocked             Boolean                 @default(false) @map("is_blocked")

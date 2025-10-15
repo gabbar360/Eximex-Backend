@@ -4,6 +4,7 @@ import { ApiResponse } from '../utils/ApiResponse.js';
 import { AuthService } from '../services/authService.js';
 import { setTokenCookies, clearTokenCookies } from '../utils/tokenUtils.js';
 import { prisma } from '../config/dbConfig.js';
+import jwt from 'jsonwebtoken';
 
 // Register User
 export const registerUser = asyncHandler(async (req, res) => {
@@ -102,6 +103,24 @@ export const verifyToken = asyncHandler(async (req, res) => {
     );
 });
 
+// Forgot Password
+export const forgotPassword = asyncHandler(async (req, res) => {
+  const { email } = req.body;
+  const result = await AuthService.forgotPassword(email);
+  return res
+    .status(200)
+    .json(new ApiResponse(200, { email: result.email }, result.message));
+});
+
+// Reset Password with Token
+export const resetPassword = asyncHandler(async (req, res) => {
+  const { token, newPassword } = req.body;
+  const result = await AuthService.resetPasswordWithToken(token, newPassword);
+  return res
+    .status(200)
+    .json(new ApiResponse(200, { email: result.email }, result.message));
+});
+
 export const getCurrentUser = asyncHandler(async (req, res) => {
   // guard-rail in case middleware wasn’t applied
   if (!req.user?.id) {
@@ -172,3 +191,5 @@ export const getCurrentUser = asyncHandler(async (req, res) => {
       )
     );
 });
+
+

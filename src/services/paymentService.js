@@ -1,5 +1,47 @@
 import { PrismaClient } from '@prisma/client';
+import nodemailer from 'nodemailer';
+import path from 'path';
+import ejs from 'ejs';
+import { fileURLToPath } from 'url';
+
 const prisma = new PrismaClient();
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const transporter = nodemailer.createTransport({
+  host: process.env.SMTP_HOST || 'smtp.gmail.com',
+  port: process.env.SMTP_PORT || 587,
+  secure: false,
+  auth: {
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS,
+  },
+});
+
+const sendInvoiceEmail = async (to, invoiceData, pdfBuffer, paymentLink = null) => {
+  const templatePath = path.join(__dirname, '../views/invoice-email-template.ejs');
+  const htmlContent = await ejs.renderFile(templatePath, {
+    invoiceData,
+    paymentLink
+  });
+  
+  const mailOptions = {
+    from: `"${invoiceData.company?.name || invoiceData.companyName || 'Company'}" <${process.env.SMTP_FROM || process.env.SMTP_USER}>`,
+    to,
+    subject: `Proforma Invoice ${invoiceData.piNumber}`,
+    text: `Dear ${invoiceData.party?.companyName || invoiceData.partyName || 'Customer'},\n\nPlease find attached your proforma invoice ${invoiceData.piNumber} for ${invoiceData.currency} ${invoiceData.totalAmount}.\n\nThank you for your business!\n\nBest regards,\n${invoiceData.company?.name || invoiceData.companyName || 'Company'}`,
+    html: htmlContent,
+    attachments: [
+      {
+        filename: `PI-${invoiceData.piNumber}.pdf`,
+        content: pdfBuffer,
+        contentType: 'application/pdf',
+      },
+    ],
+  };
+
+  await transporter.sendMail(mailOptions);
+};
 
 const createPayment = async (data, userId) => {
   return await prisma.payment.create({
@@ -71,4 +113,5 @@ export default {
   getPayments,
   updatePaymentStatus,
   getDuePayments,
+  sendInvoiceEmail,
 };
