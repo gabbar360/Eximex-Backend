@@ -218,18 +218,17 @@ export const updatePiAmount = asyncHandler(async (req, res) => {
 export const emailInvoice = asyncHandler(async (req, res) => {
   const { email } = req.body;
   const piId = parseInt(req.params.id);
-  
+
   console.log('🚀 EMAIL CONTROLLER - Starting email process');
-  
-  const piInvoice = await PiService.getPiInvoiceById(
-    piId,
-    req.user.companyId
-  );
-  
+
+  const piInvoice = await PiService.getPiInvoiceById(piId, req.user.companyId);
+
   // Generate Razorpay payment link
   let paymentLink = null;
   try {
-    const { createPaymentLink } = await import('../services/razorpayService.js');
+    const { createPaymentLink } = await import(
+      '../services/razorpayService.js'
+    );
     paymentLink = await createPaymentLink(piInvoice);
     console.log('💳 Payment link created:', paymentLink.short_url);
   } catch (error) {
@@ -258,14 +257,25 @@ export const emailInvoice = asyncHandler(async (req, res) => {
   );
 
   try {
-    await paymentService.sendInvoiceEmail(email, piInvoice, pdfBuffer, paymentLink);
+    await paymentService.sendInvoiceEmail(
+      email,
+      piInvoice,
+      pdfBuffer,
+      paymentLink
+    );
     console.log('✅ EMAIL CONTROLLER - Email sent successfully!');
   } catch (error) {
     console.error('❌ EMAIL CONTROLLER - Email send failed:', error.message);
     throw error;
   }
-  
+
   return res
     .status(200)
-    .json(new ApiResponse(200, { paymentLink: paymentLink?.short_url }, 'Invoice sent successfully with payment link'));
+    .json(
+      new ApiResponse(
+        200,
+        { paymentLink: paymentLink?.short_url },
+        'Invoice sent successfully with payment link'
+      )
+    );
 });

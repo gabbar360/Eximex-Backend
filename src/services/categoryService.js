@@ -58,8 +58,8 @@ const createCategory = async (categoryData, userId, companyId) => {
   // 6️⃣ Create subcategories if provided
   if (subcategories.length > 0) {
     for (const sub of subcategories) {
-      const hsnCode = sub.useParentHsnCode ? null : (sub.hsn_code || null);
-      
+      const hsnCode = sub.useParentHsnCode ? null : sub.hsn_code || null;
+
       await prisma.itemCategory.create({
         data: {
           name: sub.name,
@@ -314,13 +314,19 @@ const updateCategory = async (categoryId, updateData, userId, companyId) => {
   // Extract subcategories and packaging levels if provided
   const subcategories = updateData.subcategory || [];
   const packagingLevels = updateData.packagingLevels || [];
-  const { subcategory: _, packagingLevels: __, ...dataToUpdateRaw } = updateData;
+  const {
+    subcategory: _,
+    packagingLevels: __,
+    ...dataToUpdateRaw
+  } = updateData;
 
   // Map update data to schema fields
   const dataToUpdate = {
     name: dataToUpdateRaw.name,
     description: dataToUpdateRaw.desc || dataToUpdateRaw.description,
-    hsnCode: dataToUpdateRaw.useParentHsnCode ? null : (dataToUpdateRaw.hsn_code || null),
+    hsnCode: dataToUpdateRaw.useParentHsnCode
+      ? null
+      : dataToUpdateRaw.hsn_code || null,
     useParentHsnCode: dataToUpdateRaw.useParentHsnCode || false,
     primary_unit: dataToUpdateRaw.primary_unit,
     secondary_unit: dataToUpdateRaw.secondary_unit,
@@ -344,8 +350,8 @@ const updateCategory = async (categoryId, updateData, userId, companyId) => {
 
     // Create new subcategories
     for (const sub of subcategories) {
-      const hsnCode = sub.useParentHsnCode ? null : (sub.hsn_code || null);
-      
+      const hsnCode = sub.useParentHsnCode ? null : sub.hsn_code || null;
+
       await prisma.itemCategory.create({
         data: {
           name: sub.name,

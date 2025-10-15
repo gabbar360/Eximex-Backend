@@ -737,8 +737,9 @@ const updatePiStatus = async (
           dueDate.setDate(dueDate.getDate() + 30); // 30 days from now
 
           // Store original total amount before any advance deduction
-          const originalAmount = piInvoice.totalAmount + (piInvoice.advanceAmount || 0);
-          
+          const originalAmount =
+            piInvoice.totalAmount + (piInvoice.advanceAmount || 0);
+
           await tx.payment.create({
             data: {
               companyId,
@@ -901,7 +902,12 @@ const updatePiStatus = async (
   }
 };
 
-const generatePiInvoicePdf = async (id, companyId, logoBase64 = null, paymentLink = null) => {
+const generatePiInvoicePdf = async (
+  id,
+  companyId,
+  logoBase64 = null,
+  paymentLink = null
+) => {
   try {
     const piInvoice = await getPiInvoiceById(id, companyId);
 

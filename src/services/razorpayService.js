@@ -9,7 +9,7 @@ export const createPaymentLink = async (piInvoice) => {
   try {
     // Convert amount to paise (multiply by 100)
     const amountInPaise = Math.round(parseFloat(piInvoice.totalAmount) * 100);
-    
+
     const paymentLinkData = {
       amount: amountInPaise,
       currency: piInvoice.currency === 'USD' ? 'USD' : 'INR',
@@ -32,14 +32,16 @@ export const createPaymentLink = async (piInvoice) => {
       },
       callback_url: `${process.env.FRONTEND_URL || 'http://localhost:5173'}/payment-success?pi=${piInvoice.piNumber}`,
       callback_method: 'get',
-      expire_by: Math.floor(Date.now() / 1000) + (30 * 24 * 60 * 60), // 30 days
+      expire_by: Math.floor(Date.now() / 1000) + 30 * 24 * 60 * 60, // 30 days
     };
 
     const paymentLink = await razorpay.paymentLink.create(paymentLinkData);
-    
+
     // Log for production monitoring
-    console.log(`Payment link created for PI ${piInvoice.piNumber}: ${paymentLink.short_url}`);
-    
+    console.log(
+      `Payment link created for PI ${piInvoice.piNumber}: ${paymentLink.short_url}`
+    );
+
     return paymentLink;
   } catch (error) {
     console.error('Razorpay payment link creation failed:', error);
@@ -59,10 +61,11 @@ export const getPaymentLinkStatus = async (paymentLinkId) => {
 export const verifyPayment = async (paymentId, orderId, signature) => {
   try {
     const crypto = await import('crypto');
-    const expectedSignature = crypto.createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
+    const expectedSignature = crypto
+      .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
       .update(orderId + '|' + paymentId)
       .digest('hex');
-    
+
     return expectedSignature === signature;
   } catch (error) {
     console.error('Payment verification failed:', error);

@@ -5,10 +5,10 @@ import { GoogleAuthService } from '../services/googleAuthService.js';
 // Google OAuth Success
 export const googleCallback = asyncHandler(async (req, res) => {
   const result = await GoogleAuthService.handleGoogleCallback(req.user);
-  
+
   // Set cookies
   setTokenCookies(res, result.accessToken, result.refreshToken);
-  
+
   // Redirect to frontend with tokens
   res.redirect(result.redirectUrl);
 });

@@ -114,9 +114,12 @@ const loginUser = async (email, password) => {
 
   // Check if user has a password (not a Google OAuth user)
   if (!user.password) {
-    throw new ApiError(401, 'This account was created with Google. Please sign in with Google or set a password first.');
+    throw new ApiError(
+      401,
+      'This account was created with Google. Please sign in with Google or set a password first.'
+    );
   }
-  
+
   const isPasswordValid = await bcrypt.compare(password, user.password);
   if (!isPasswordValid) throw new ApiError(401, 'Invalid credentials');
 
@@ -181,7 +184,10 @@ const changePassword = async (userId, oldPassword, newPassword) => {
 
   // Check if user signed up with Google (no password)
   if (!user.password && user.googleId) {
-    throw new ApiError(400, 'Cannot change password for Google OAuth users. Please use Google account settings.');
+    throw new ApiError(
+      400,
+      'Cannot change password for Google OAuth users. Please use Google account settings.'
+    );
   }
 
   if (!user.password) {
@@ -208,13 +214,16 @@ const generateResetToken = () => {
 
 const sendPasswordResetEmail = async (to, resetToken, userName) => {
   const resetLink = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/reset-password?token=${resetToken}`;
-  
-  const templatePath = path.join(__dirname, '../views/password-reset-email-template.ejs');
+
+  const templatePath = path.join(
+    __dirname,
+    '../views/password-reset-email-template.ejs'
+  );
   const htmlContent = await ejs.renderFile(templatePath, {
     userName,
-    resetLink
+    resetLink,
   });
-  
+
   const mailOptions = {
     from: `"EximEx Security" <${process.env.SMTP_FROM || process.env.SMTP_USER}>`,
     to,
@@ -227,12 +236,15 @@ const sendPasswordResetEmail = async (to, resetToken, userName) => {
 };
 
 const sendPasswordResetConfirmationEmail = async (to, userName) => {
-  const templatePath = path.join(__dirname, '../views/password-reset-confirmation-template.ejs');
+  const templatePath = path.join(
+    __dirname,
+    '../views/password-reset-confirmation-template.ejs'
+  );
   const htmlContent = await ejs.renderFile(templatePath, {
     userName,
-    resetTime: new Date().toLocaleString()
+    resetTime: new Date().toLocaleString(),
   });
-  
+
   const mailOptions = {
     from: `"EximEx Security" <${process.env.SMTP_FROM || process.env.SMTP_USER}>`,
     to,
@@ -263,15 +275,24 @@ const forgotPassword = async (email) => {
     }
 
     if (user.isBlocked) {
-      throw new ApiError(403, 'Account is blocked. Please contact administrator.');
+      throw new ApiError(
+        403,
+        'Account is blocked. Please contact administrator.'
+      );
     }
 
     if (user.status !== 'ACTIVE') {
-      throw new ApiError(401, 'Account is not active. Please contact administrator.');
+      throw new ApiError(
+        401,
+        'Account is not active. Please contact administrator.'
+      );
     }
 
     if (user.googleId) {
-      throw new ApiError(400, 'This account was created with Google. Please sign in with Google or contact support to set a password.');
+      throw new ApiError(
+        400,
+        'This account was created with Google. Please sign in with Google or contact support to set a password.'
+      );
     }
 
     const resetToken = generateResetToken();
@@ -304,11 +325,11 @@ const forgotPassword = async (email) => {
 const resetPasswordWithToken = async (token, newPassword) => {
   try {
     const user = await prisma.user.findFirst({
-      where: { 
+      where: {
         resetPasswordToken: token,
         resetPasswordTokenExpiry: {
-          gt: new Date()
-        }
+          gt: new Date(),
+        },
       },
       select: {
         id: true,
@@ -324,11 +345,17 @@ const resetPasswordWithToken = async (token, newPassword) => {
     }
 
     if (user.isBlocked) {
-      throw new ApiError(403, 'Account is blocked. Please contact administrator.');
+      throw new ApiError(
+        403,
+        'Account is blocked. Please contact administrator.'
+      );
     }
 
     if (user.status !== 'ACTIVE') {
-      throw new ApiError(401, 'Account is not active. Please contact administrator.');
+      throw new ApiError(
+        401,
+        'Account is not active. Please contact administrator.'
+      );
     }
 
     const hashedNewPassword = await bcrypt.hash(newPassword, 12);

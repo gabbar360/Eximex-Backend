@@ -23,7 +23,7 @@ const loadRoutes = async () => {
       app.use('/api/v1', route.default);
     }
   }
-  
+
   // Load payment routes
   const paymentRoute = await import('./routes/paymentRoute.js');
   app.use('/api/v1', paymentRoute.default);

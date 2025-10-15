@@ -3,7 +3,7 @@ import {
   createPayment,
   getPayments,
   updatePaymentStatus,
-  getDuePayments
+  getDuePayments,
 } from '../controller/paymentController.js';
 import { verifyJWT } from '../middleware/auth.js';
 

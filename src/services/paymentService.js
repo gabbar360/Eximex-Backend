@@ -18,13 +18,21 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-const sendInvoiceEmail = async (to, invoiceData, pdfBuffer, paymentLink = null) => {
-  const templatePath = path.join(__dirname, '../views/invoice-email-template.ejs');
+const sendInvoiceEmail = async (
+  to,
+  invoiceData,
+  pdfBuffer,
+  paymentLink = null
+) => {
+  const templatePath = path.join(
+    __dirname,
+    '../views/invoice-email-template.ejs'
+  );
   const htmlContent = await ejs.renderFile(templatePath, {
     invoiceData,
-    paymentLink
+    paymentLink,
   });
-  
+
   const mailOptions = {
     from: `"${invoiceData.company?.name || invoiceData.companyName || 'Company'}" <${process.env.SMTP_FROM || process.env.SMTP_USER}>`,
     to,
@@ -58,7 +66,7 @@ const createPayment = async (data, userId) => {
 
 const getPayments = async (companyId, query = {}) => {
   const { status, startDate, endDate } = query;
-  
+
   const where = { companyId };
   if (status) where.status = status;
   if (startDate && endDate) {
@@ -72,10 +80,15 @@ const getPayments = async (companyId, query = {}) => {
     where,
     include: {
       piInvoice: {
-        select: { piNumber: true, partyName: true, totalAmount: true, advanceAmount: true }
+        select: {
+          piNumber: true,
+          partyName: true,
+          totalAmount: true,
+          advanceAmount: true,
+        },
       },
       party: {
-        select: { companyName: true }
+        select: { companyName: true },
       },
     },
     orderBy: { dueDate: 'asc' },
@@ -98,10 +111,15 @@ const getDuePayments = async (companyId) => {
     },
     include: {
       piInvoice: {
-        select: { piNumber: true, partyName: true, totalAmount: true, advanceAmount: true }
+        select: {
+          piNumber: true,
+          partyName: true,
+          totalAmount: true,
+          advanceAmount: true,
+        },
       },
       party: {
-        select: { companyName: true }
+        select: { companyName: true },
       },
     },
     orderBy: { dueDate: 'asc' },

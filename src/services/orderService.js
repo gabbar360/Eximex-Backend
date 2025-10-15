@@ -75,7 +75,9 @@ export class OrderService {
               ? data.wayBillNumber
               : null,
           truckNumber:
-            data.truckNumber && data.truckNumber !== '' ? data.truckNumber : null,
+            data.truckNumber && data.truckNumber !== ''
+              ? data.truckNumber
+              : null,
           orderStatus: 'confirmed',
           createdBy: userId,
         },
@@ -105,8 +107,9 @@ export class OrderService {
         const dueDate = new Date();
         dueDate.setDate(dueDate.getDate() + 30);
 
-        const originalAmount = piInvoice.totalAmount + (piInvoice.advanceAmount || 0);
-        
+        const originalAmount =
+          piInvoice.totalAmount + (piInvoice.advanceAmount || 0);
+
         await tx.payment.create({
           data: {
             companyId,
