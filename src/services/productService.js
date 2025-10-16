@@ -28,12 +28,16 @@ const getProductById = async (productId, includeRelations = false) => {
 const getAllProducts = async (companyId, options = {}, dataFilters = {}) => {
   const {
     page = 1,
-    limit = 10,
+    limit = 50,
     search = '',
     sortBy = 'createdAt',
     sortOrder = 'desc',
     categoryId = null,
   } = options;
+
+  // Convert to integers
+  const pageNum = parseInt(page) || 1;
+  const limitNum = parseInt(limit) || 50;
 
   const where = {
     companyId: Number(companyId),
@@ -51,14 +55,14 @@ const getAllProducts = async (companyId, options = {}, dataFilters = {}) => {
   }
 
   const orderBy = { [sortBy]: sortOrder };
-  const skip = (page - 1) * limit;
+  const skip = (pageNum - 1) * limitNum;
 
   const [products, total] = await Promise.all([
     prisma.product.findMany({
       where,
       orderBy,
       skip,
-      take: limit,
+      take: limitNum,
       include: { category: true, subCategory: true, company: true, user: true },
     }),
     prisma.product.count({ where }),
@@ -67,12 +71,12 @@ const getAllProducts = async (companyId, options = {}, dataFilters = {}) => {
   return {
     data: products,
     pagination: {
-      page,
-      limit,
+      page: pageNum,
+      limit: limitNum,
       total,
-      totalPages: Math.ceil(total / limit),
-      hasNext: page * limit < total,
-      hasPrev: page > 1,
+      totalPages: Math.ceil(total / limitNum),
+      hasNext: pageNum * limitNum < total,
+      hasPrev: pageNum > 1,
     },
   };
 };
