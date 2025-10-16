@@ -1,5 +1,5 @@
-// index.js
 import dotenv from 'dotenv';
+dotenv.config();
 import morgan from 'morgan';
 import helmet from 'helmet';
 import cors from 'cors';
@@ -14,8 +14,6 @@ import { prisma } from './config/dbConfig.js';
 import { logger } from './config/logger.js';
 // import { generalLimiter } from './middleware/rateLimiter.js';
 import { errorHandler, notFound } from './middleware/errorHandler.js';
-
-dotenv.config();
 
 const PORT = process.env.PORT || 3000;
 
