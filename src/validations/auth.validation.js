@@ -69,7 +69,7 @@ const resetPassword = {
   body: Joi.object().keys({
     token: Joi.string().required().messages({
       'string.empty': 'Reset token is required',
-      'any.required': 'Reset token is required'
+      'any.required': 'Reset token is required',
     }),
     newPassword: Joi.string()
       .required()

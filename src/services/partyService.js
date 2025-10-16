@@ -147,8 +147,6 @@ const createParty = async (partyData, companyId, userId = null) => {
 const updateParty = async (partyId, updateData) => {
   const existingParty = await getPartyById(partyId);
 
-
-
   // Map frontend 'name' field to backend 'companyName' field
   if (updateData.name && !updateData.companyName) {
     updateData.companyName = updateData.name;
@@ -200,8 +198,6 @@ const updateParty = async (partyId, updateData) => {
     { id: Number(partyId) },
     updateData
   );
-
-
 
   cacheManager.delete(`party_${partyId}_false`);
   cacheManager.delete(`party_${partyId}_true`);

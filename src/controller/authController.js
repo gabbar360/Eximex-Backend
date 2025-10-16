@@ -191,5 +191,3 @@ export const getCurrentUser = asyncHandler(async (req, res) => {
       )
     );
 });
-
-

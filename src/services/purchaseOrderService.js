@@ -83,7 +83,12 @@ class PurchaseOrderService {
       ...cleanPoData
     } = poData;
 
-    console.log('Extracted fields:', { supplierAddress, supplierGstNumber, vendorAddress, vendorGstin }); // Debug log
+    console.log('Extracted fields:', {
+      supplierAddress,
+      supplierGstNumber,
+      vendorAddress,
+      vendorGstin,
+    }); // Debug log
 
     // Convert dates to proper format
     if (cleanPoData.poDate) {

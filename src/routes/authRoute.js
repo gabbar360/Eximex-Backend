@@ -52,6 +52,4 @@ router.post(
 router.get('/verify-token', verifyJWT, verifyToken);
 router.get('/me', verifyJWT, getCurrentUser);
 
-
-
 export default router;
