@@ -19,19 +19,32 @@ const handleGoogleCallback = async (user) => {
     throw new ApiError(401, 'Google authentication failed');
   }
 
-  // Update last login
-  await prisma.user.update({
+  // Update last login and get complete user data
+  const updatedUser = await prisma.user.update({
     where: { id: user.id },
     data: { lastLogin: new Date() },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      mobileNum: true,
+      role: true,
+      status: true,
+      lastLogin: true,
+      profilePicture: true,
+      googleId: true,
+      isEmailVerified: true,
+      companyId: true,
+    },
   });
 
   const { accessToken, refreshToken } = generateTokens(user.id);
 
   return {
-    user,
+    user: updatedUser,
     accessToken,
     refreshToken,
-    redirectUrl: `${process.env.FRONTEND_URL}?token=${accessToken}&refresh=${refreshToken}`,
+    redirectUrl: `${process.env.FRONTEND_URL}?token=${accessToken}&refresh=${refreshToken}&user=${encodeURIComponent(JSON.stringify(updatedUser))}`,
   };
 };
 

@@ -15,6 +15,7 @@ model User {
   password              String?
   refreshToken          String?                 @map("refresh_token")
   googleId              String?                 @unique @map("google_id")
+  profilePicture        String?                 @map("profile_picture")
   isEmailVerified       Boolean                 @default(false) @map("is_email_verified")
   resetPasswordToken     String?                 @map("reset_password_token")
   resetPasswordTokenExpiry DateTime?            @map("reset_password_token_expiry")
