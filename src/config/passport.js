@@ -15,6 +15,7 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
           (process.env.NODE_ENV === 'production' 
             ? 'https://eximexperts.in/api/v1/auth/google/callback' 
             : 'http://localhost:8000/api/v1/auth/google/callback'),
+        scope: ['profile', 'email'],
       },
     async (accessToken, refreshToken, profile, done) => {
       try {
