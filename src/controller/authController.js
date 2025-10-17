@@ -139,6 +139,9 @@ export const getCurrentUser = asyncHandler(async (req, res) => {
       status: true,
       lastLogin: true,
       companyId: true,
+      profilePicture: true,
+      googleId: true,
+      isEmailVerified: true,
       company: {
         select: {
           id: true,

@@ -22,6 +22,7 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
         const email = profile.emails[0].value;
         const name = profile.displayName;
         const googleId = profile.id;
+        const profilePicture = profile.photos?.[0]?.value || null;
 
         // Check if user exists
         let user = await prisma.user.findUnique({
@@ -29,11 +30,15 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
         });
 
         if (user) {
-          // Update Google ID if not set
-          if (!user.googleId) {
+          // Update Google ID and profile picture if not set
+          const updateData = {};
+          if (!user.googleId) updateData.googleId = googleId;
+          if (!user.profilePicture && profilePicture) updateData.profilePicture = profilePicture;
+          
+          if (Object.keys(updateData).length > 0) {
             user = await prisma.user.update({
               where: { id: user.id },
-              data: { googleId },
+              data: updateData,
             });
           }
         } else {
@@ -43,6 +48,7 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
               email,
               name,
               googleId,
+              profilePicture,
               isEmailVerified: true,
               role: 'ADMIN',
             },
