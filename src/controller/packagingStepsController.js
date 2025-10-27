@@ -1122,7 +1122,16 @@ const downloadPackingListPDF = async (req, res) => {
     });
 
     // Generate PDF using puppeteer
-    const browser = await puppeteer.launch({ headless: true });
+    const browser = await puppeteer.launch({
+      headless: true,
+      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH,
+      args: process.env.PUPPETEER_ARGS ? process.env.PUPPETEER_ARGS.split(',') : [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-gpu'
+      ]
+    });
     const page = await browser.newPage();
     await page.setContent(htmlContent);
 
