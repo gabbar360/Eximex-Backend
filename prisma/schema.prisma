@@ -438,6 +438,7 @@ model PiInvoice {
   totalAmount        Float  @default(0) @map("total_amount")
   advanceAmount      Float? @map("advance_amount") // Advance payment amount
   totalWeight        Float  @default(0) @map("total_weight")
+  totalGrossWeight   Float  @default(0) @map("total_gross_weight")
   totalVolume        Float  @default(0) @map("total_volume")
   totalBoxes         Int    @default(0) @map("total_boxes")
   totalPallets       Int    @default(0) @map("total_pallets")
