@@ -475,7 +475,7 @@
                           %>
                       </td>
                       <td class="text-right">
-                        <%= gross ? (gross>= 1000 ? (gross/1000).toFixed(1) + 'T' : gross.toFixed(0) + 'kg') : '0kg' %>
+                        <%= gross ? gross.toFixed(0) + 'kg' : '0kg' %>
                       </td>
                       <td class="text-right">$ <%= (product.total || 0).toFixed(2) %>
                       </td>
@@ -492,7 +492,7 @@
                                 NET WEIGHT :-</td>
                               <td class="no-border"
                                 style="padding:3px 4px; border-right: var(--border-inner) !important;">
-                                <%= totalNet ? (totalNet.toFixed(2) + ' KGS' ) : '' %>
+                                <%= piInvoice.totalWeight ? (piInvoice.totalWeight.toFixed(2) + ' KGS' ) : '' %>
                               </td>
                             </tr>
                             <tr>
@@ -501,7 +501,7 @@
                                 GROSS WEIGHT :-</td>
                               <td class="no-border"
                                 style="padding:3px 4px; border-right: var(--border-inner) !important;">
-                                <%= totalGross ? (totalGross.toFixed(2) + ' KGS' ) : '' %>
+                                <%= piInvoice.totalGrossWeight ? (piInvoice.totalGrossWeight.toFixed(2) + ' KGS' ) : '' %>
                               </td>
                             </tr>
                           </table>

@@ -112,6 +112,33 @@ const calculateTotals = (products, charges = {}, containerType = null) => {
     (sum, product) => sum + (product.totalWeight || 0),
     0
   );
+  const totalGrossWeight = products.reduce((sum, product) => {
+    if (!product.productId) return sum;
+    
+    let boxes = 0;
+    
+    // Calculate boxes based on unit - same as frontend
+    if (product.unit === 'Box' || product.unit === 'box') {
+      boxes = product.quantity;
+    } else if (product.unit === 'pcs') {
+      boxes = product.quantity / 2000; // 50 pcs/pack × 40 pack/box
+    } else if (product.unit === 'package') {
+      boxes = product.quantity / 40; // 40 packages per box
+    } else {
+      boxes = product.quantity; // fallback assume it's boxes
+    }
+    
+    // Get gross weight per box from product data - same as frontend
+    let grossWeightPerBox = product.product?.packagingHierarchyData?.dynamicFields?.grossWeightPerBox || 
+                           product.product?.grossWeightPerBox || 10.06;
+    
+    // Convert to KG if in grams - same as frontend
+    if (grossWeightPerBox > 100) {
+      grossWeightPerBox = grossWeightPerBox / 1000;
+    }
+    
+    return sum + (boxes * grossWeightPerBox);
+  }, 0);
   const chargesTotal = Object.values(charges).reduce(
     (sum, charge) => sum + (parseFloat(charge) || 0),
     0
@@ -157,6 +184,7 @@ const calculateTotals = (products, charges = {}, containerType = null) => {
   return {
     subtotal,
     totalWeight,
+    totalGrossWeight,
     totalVolume,
     totalBoxes,
     totalPallets,
