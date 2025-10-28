@@ -4,6 +4,76 @@ import { ApiError } from '../utils/ApiError.js';
 import { DatabaseUtils } from '../utils/dbUtils.js';
 import { UserService } from './userService.js';
 
+// Utility function to transform product with packaging preview
+const transformProductWithPackagingPreview = (product) => {
+  const transformed = { ...product };
+  
+  if (product.packagingHierarchyData?.dynamicFields) {
+    const dynamicFields = product.packagingHierarchyData.dynamicFields;
+    transformed.packagingPreview = {
+      hierarchy: [],
+      weights: {},
+      totals: {}
+    };
+
+    // Extract hierarchy information - handle various field name patterns
+    Object.keys(dynamicFields).forEach(key => {
+      if (key.includes('Per') && !key.startsWith('weight')) {
+        // Handle patterns like "Square MeterPerBox", "BoxPerPallet", "PiecesPerPackage"
+        let from, to;
+        if (key.includes(' ')) {
+          // Handle "Square MeterPerBox" pattern
+          const parts = key.split('Per');
+          from = parts[0];
+          to = parts[1];
+        } else {
+          // Handle "BoxPerPallet", "PiecesPerPackage" pattern
+          const match = key.match(/^(.+)Per(.+)$/);
+          if (match) {
+            from = match[1];
+            to = match[2];
+          }
+        }
+        
+        if (from && to) {
+          transformed.packagingPreview.hierarchy.push({
+            from: from,
+            to: to,
+            quantity: dynamicFields[key],
+            field: key
+          });
+        }
+      }
+    });
+
+    // Extract weight information - handle various patterns
+    Object.keys(dynamicFields).forEach(key => {
+      if (key.startsWith('weightPer')) {
+        // Handle patterns like "weightPerSquare Meter", "weightPerPieces", "weightPerBox"
+        let unit = key.replace('weightPer', '').replace('Unit', '');
+        
+        if (key.endsWith('Unit')) {
+          transformed.packagingPreview.weights[unit + 'Unit'] = dynamicFields[key];
+        } else {
+          transformed.packagingPreview.weights[unit] = dynamicFields[key];
+        }
+      }
+    });
+
+    // Add calculated totals
+    transformed.packagingPreview.totals = {
+      totalPieces: product.totalPieces,
+      totalGrossWeight: product.totalGrossWeight,
+      totalGrossWeightUnit: product.totalGrossWeightUnit,
+      totalBoxes: product.totalBoxes,
+      grossWeightPerBox: product.grossWeightPerBox,
+      packagingMaterialWeight: product.packagingMaterialWeight
+    };
+  }
+
+  return transformed;
+};
+
 // Product Service Functions
 const getProductById = async (productId, includeRelations = false) => {
   const cacheKey = `product_${productId}_${includeRelations}`;
@@ -21,8 +91,10 @@ const getProductById = async (productId, includeRelations = false) => {
 
   if (!product) throw new ApiError(404, 'Product not found');
 
-  cacheManager.set(cacheKey, product, 10 * 60 * 1000);
-  return product;
+  const transformed = transformProductWithPackagingPreview(product);
+
+  cacheManager.set(cacheKey, transformed, 10 * 60 * 1000);
+  return transformed;
 };
 
 const getAllProducts = async (companyId, options = {}, dataFilters = {}) => {
@@ -68,8 +140,11 @@ const getAllProducts = async (companyId, options = {}, dataFilters = {}) => {
     prisma.product.count({ where }),
   ]);
 
+  // Transform products to include structured packaging preview
+  const transformedProducts = products.map(transformProductWithPackagingPreview);
+
   return {
-    data: products,
+    data: transformedProducts,
     pagination: {
       page: pageNum,
       limit: limitNum,
@@ -244,13 +319,15 @@ const createProduct = async (productData, userId, companyId) => {
     include: { category: true, subCategory: true, company: true, user: true },
   });
 
+  const transformed = transformProductWithPackagingPreview(product);
+
   cacheManager.delete(`product_${product.id}_false`);
   cacheManager.delete(`product_${product.id}_true`);
 
   // Clear dashboard cache so admin sees updated counts
   UserService.clearCompanyDashboardCache(companyId);
 
-  return product;
+  return transformed;
 };
 
 const updateProduct = async (productId, updateData, companyId) => {
@@ -412,10 +489,12 @@ const updateProduct = async (productId, updateData, companyId) => {
     include: { category: true, subCategory: true, company: true, user: true },
   });
 
+  const transformed = transformProductWithPackagingPreview(updatedProduct);
+
   cacheManager.delete(`product_${productId}_false`);
   cacheManager.delete(`product_${productId}_true`);
 
-  return updatedProduct;
+  return transformed;
 };
 
 const deleteProduct = async (productId, companyId) => {
