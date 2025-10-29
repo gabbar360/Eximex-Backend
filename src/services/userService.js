@@ -544,13 +544,15 @@ const getSuperAdminDashboardStats = async () => {
   const cached = cacheManager.get(cacheKey);
   if (cached) return cached;
 
-  const [parties, products, piInvoices, orders, vgmDocuments] =
+  const [parties, products, piInvoices, orders, vgmDocuments, companies, users] =
     await Promise.all([
       prisma.partyList.count(),
       prisma.product.count(),
       prisma.piInvoice.count(),
       prisma.order.count(),
       prisma.vgmDocument.count(),
+      prisma.company.count(),
+      prisma.user.count({ where: { status: { not: 'DELETED' } } }),
     ]);
 
   const stats = {
@@ -559,10 +561,351 @@ const getSuperAdminDashboardStats = async () => {
     piInvoices,
     orders,
     vgmDocuments,
+    companies,
+    users,
   };
 
   cacheManager.set(cacheKey, stats, 5 * 60 * 1000); // Cache for 5 minutes
   return stats;
+};
+
+// Enhanced Super Admin functions for complete database access
+const getAllDatabaseData = async (options = {}) => {
+  const { table = '', limit = 100, page = 1 } = options;
+  
+  const allData = {};
+  
+  try {
+    // Get all main tables data
+    const [users, companies, parties, products, piInvoices, orders, vgmDocuments, categories, packagingUnits] = 
+      await Promise.all([
+        prisma.user.findMany({
+          take: Number(limit),
+          skip: (Number(page) - 1) * Number(limit),
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            role: true,
+            status: true,
+            isBlocked: true,
+            lastLogin: true,
+            createdAt: true,
+            companyId: true,
+            company: { select: { name: true } }
+          },
+          orderBy: { createdAt: 'desc' }
+        }),
+        prisma.company.findMany({
+          take: Number(limit),
+          skip: (Number(page) - 1) * Number(limit),
+          include: {
+            _count: {
+              select: {
+                users: true,
+                parties: true,
+                products: true
+              }
+            }
+          },
+          orderBy: { createdAt: 'desc' }
+        }),
+        prisma.partyList.findMany({
+          take: Number(limit),
+          skip: (Number(page) - 1) * Number(limit),
+          include: {
+            company: { select: { name: true } },
+            createdByUser: { select: { name: true, email: true } }
+          },
+          orderBy: { createdAt: 'desc' }
+        }),
+        prisma.product.findMany({
+          take: Number(limit),
+          skip: (Number(page) - 1) * Number(limit),
+          include: {
+            company: { select: { name: true } },
+            createdByUser: { select: { name: true, email: true } },
+            category: { select: { name: true } }
+          },
+          orderBy: { createdAt: 'desc' }
+        }),
+        prisma.piInvoice.findMany({
+          take: Number(limit),
+          skip: (Number(page) - 1) * Number(limit),
+          include: {
+            company: { select: { name: true } },
+            createdByUser: { select: { name: true, email: true } }
+          },
+          orderBy: { createdAt: 'desc' }
+        }),
+        prisma.order.findMany({
+          take: Number(limit),
+          skip: (Number(page) - 1) * Number(limit),
+          include: {
+            company: { select: { name: true } },
+            createdByUser: { select: { name: true, email: true } }
+          },
+          orderBy: { createdAt: 'desc' }
+        }),
+        prisma.vgmDocument.findMany({
+          take: Number(limit),
+          skip: (Number(page) - 1) * Number(limit),
+          include: {
+            company: { select: { name: true } },
+            createdByUser: { select: { name: true, email: true } }
+          },
+          orderBy: { createdAt: 'desc' }
+        }),
+        prisma.itemCategory.findMany({
+          take: Number(limit),
+          skip: (Number(page) - 1) * Number(limit),
+          include: {
+            company: { select: { name: true } },
+            createdByUser: { select: { name: true, email: true } }
+          },
+          orderBy: { createdAt: 'desc' }
+        }),
+        prisma.packagingUnit.findMany({
+          take: Number(limit),
+          skip: (Number(page) - 1) * Number(limit),
+          orderBy: { createdAt: 'desc' }
+        })
+      ]);
+
+    allData.users = users;
+    allData.companies = companies;
+    allData.parties = parties;
+    allData.products = products;
+    allData.piInvoices = piInvoices;
+    allData.orders = orders;
+    allData.vgmDocuments = vgmDocuments;
+    allData.categories = categories;
+    allData.packagingUnits = packagingUnits;
+
+    // Get counts for pagination
+    const counts = await Promise.all([
+      prisma.user.count(),
+      prisma.company.count(),
+      prisma.partyList.count(),
+      prisma.product.count(),
+      prisma.piInvoice.count(),
+      prisma.order.count(),
+      prisma.vgmDocument.count(),
+      prisma.itemCategory.count(),
+      prisma.packagingUnit.count()
+    ]);
+
+    allData.counts = {
+      users: counts[0],
+      companies: counts[1],
+      parties: counts[2],
+      products: counts[3],
+      piInvoices: counts[4],
+      orders: counts[5],
+      vgmDocuments: counts[6],
+      categories: counts[7],
+      packagingUnits: counts[8]
+    };
+
+    return allData;
+  } catch (error) {
+    throw new ApiError(500, `Error fetching database data: ${error.message}`);
+  }
+};
+
+const resetUserPassword = async (userId, newPassword) => {
+  const user = await getUserById(userId);
+  if (!user) throw new ApiError(404, 'User not found');
+
+  if (user.role === 'SUPER_ADMIN') {
+    throw new ApiError(403, 'Cannot reset super admin password');
+  }
+
+  const hashedNewPassword = await bcrypt.hash(newPassword, 12);
+
+  await DatabaseUtils.update(
+    'user',
+    { id: Number(userId) },
+    { password: hashedNewPassword }
+  );
+
+  cacheManager.delete(`user_${userId}_false`);
+  cacheManager.delete(`user_${userId}_true`);
+
+  return { message: 'Password reset successfully' };
+};
+
+const getAllCompanies = async (options = {}) => {
+  const {
+    page = 1,
+    limit = 10,
+    search = '',
+    sortBy = 'createdAt',
+    sortOrder = 'desc',
+  } = options;
+
+  const where = {};
+
+  if (search) {
+    where.OR = [
+      { name: { contains: search, mode: 'insensitive' } },
+      { email: { contains: search, mode: 'insensitive' } },
+    ];
+  }
+
+  const orderBy = { [sortBy]: sortOrder };
+
+  return await DatabaseUtils.findMany('company', {
+    where,
+    include: {
+      _count: {
+        select: {
+          users: true,
+          parties: true,
+          products: true,
+          piInvoices: true,
+          orders: true
+        }
+      }
+    },
+    orderBy,
+    page: Number(page),
+    limit: Number(limit),
+  });
+};
+
+const getCompanyDetails = async (companyId) => {
+  const company = await prisma.company.findUnique({
+    where: { id: Number(companyId) },
+    include: {
+      users: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true,
+          status: true,
+          lastLogin: true,
+          createdAt: true
+        },
+        orderBy: { createdAt: 'desc' }
+      },
+      _count: {
+        select: {
+          users: true,
+          parties: true,
+          products: true,
+          piInvoices: true,
+          orders: true,
+          vgmDocuments: true
+        }
+      }
+    }
+  });
+
+  if (!company) throw new ApiError(404, 'Company not found');
+  return company;
+};
+
+const getAllTables = async () => {
+  // Return available tables for Super Admin
+  return {
+    tables: [
+      { name: 'users', description: 'All system users' },
+      { name: 'companies', description: 'All companies' },
+      { name: 'parties', description: 'Party lists' },
+      { name: 'products', description: 'All products' },
+      { name: 'piInvoices', description: 'PI Invoices' },
+      { name: 'orders', description: 'All orders' },
+      { name: 'vgmDocuments', description: 'VGM Documents' },
+      { name: 'categories', description: 'Item categories' },
+      { name: 'packagingUnits', description: 'Packaging units' },
+      { name: 'activityLogs', description: 'System activity logs' }
+    ]
+  };
+};
+
+const getTableData = async (tableName, options = {}) => {
+  const { page = 1, limit = 50, search = '' } = options;
+  
+  let data = [];
+  let count = 0;
+  
+  try {
+    switch (tableName) {
+      case 'users':
+        const userWhere = search ? {
+          OR: [
+            { name: { contains: search, mode: 'insensitive' } },
+            { email: { contains: search, mode: 'insensitive' } }
+          ]
+        } : {};
+        
+        [data, count] = await Promise.all([
+          prisma.user.findMany({
+            where: userWhere,
+            include: { company: { select: { name: true } } },
+            take: Number(limit),
+            skip: (Number(page) - 1) * Number(limit),
+            orderBy: { createdAt: 'desc' }
+          }),
+          prisma.user.count({ where: userWhere })
+        ]);
+        break;
+        
+      case 'companies':
+        const companyWhere = search ? {
+          OR: [
+            { name: { contains: search, mode: 'insensitive' } },
+            { email: { contains: search, mode: 'insensitive' } }
+          ]
+        } : {};
+        
+        [data, count] = await Promise.all([
+          prisma.company.findMany({
+            where: companyWhere,
+            include: {
+              _count: { select: { users: true, products: true } }
+            },
+            take: Number(limit),
+            skip: (Number(page) - 1) * Number(limit),
+            orderBy: { createdAt: 'desc' }
+          }),
+          prisma.company.count({ where: companyWhere })
+        ]);
+        break;
+        
+      case 'activityLogs':
+        [data, count] = await Promise.all([
+          prisma.activityLog.findMany({
+            include: {
+              user: { select: { name: true, email: true } },
+              company: { select: { name: true } }
+            },
+            take: Number(limit),
+            skip: (Number(page) - 1) * Number(limit),
+            orderBy: { createdAt: 'desc' }
+          }),
+          prisma.activityLog.count()
+        ]);
+        break;
+        
+      default:
+        throw new ApiError(400, 'Invalid table name');
+    }
+    
+    return {
+      data,
+      pagination: {
+        page: Number(page),
+        limit: Number(limit),
+        total: count,
+        pages: Math.ceil(count / Number(limit))
+      }
+    };
+  } catch (error) {
+    throw new ApiError(500, `Error fetching ${tableName} data: ${error.message}`);
+  }
 };
 
 export const UserService = {
@@ -585,4 +928,10 @@ export const UserService = {
   getAllUsersForSuperAdmin,
   toggleUserBlock,
   getSuperAdminDashboardStats,
+  getAllDatabaseData,
+  resetUserPassword,
+  getAllCompanies,
+  getCompanyDetails,
+  getAllTables,
+  getTableData,
 };

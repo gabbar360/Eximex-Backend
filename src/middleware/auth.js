@@ -107,6 +107,11 @@ export const checkCompanyExists = asyncHandler(async (req, res, next) => {
 });
 
 export const requireCompany = asyncHandler(async (req, res, next) => {
+  // Super Admin doesn't need company requirement
+  if (req.user?.role === 'SUPER_ADMIN') {
+    return next();
+  }
+  
   if (!req.user?.companyId) {
     throw new ApiError(
       400,

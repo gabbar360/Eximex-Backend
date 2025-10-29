@@ -164,3 +164,54 @@ export const getSuperAdminDashboardStats = asyncHandler(async (req, res) => {
       )
     );
 });
+
+// Enhanced Super Admin functions for complete database access
+export const getAllDatabaseData = asyncHandler(async (req, res) => {
+  const data = await UserService.getAllDatabaseData(req.query);
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, data, 'Database data fetched successfully'));
+});
+
+export const resetUserPassword = asyncHandler(async (req, res) => {
+  const { newPassword } = req.body;
+  const result = await UserService.resetUserPassword(
+    parseInt(req.params.id),
+    newPassword
+  );
+
+  return res.status(200).json(new ApiResponse(200, null, result.message));
+});
+
+export const getAllCompanies = asyncHandler(async (req, res) => {
+  const companies = await UserService.getAllCompanies(req.query);
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, companies, 'Companies fetched successfully'));
+});
+
+export const getCompanyDetails = asyncHandler(async (req, res) => {
+  const company = await UserService.getCompanyDetails(parseInt(req.params.id));
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, company, 'Company details fetched successfully'));
+});
+
+export const getAllTables = asyncHandler(async (req, res) => {
+  const tables = await UserService.getAllTables();
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, tables, 'Database tables fetched successfully'));
+});
+
+export const getTableData = asyncHandler(async (req, res) => {
+  const data = await UserService.getTableData(req.params.tableName, req.query);
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, data, `${req.params.tableName} data fetched successfully`));
+});
