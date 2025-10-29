@@ -75,6 +75,15 @@ const deleteAndReassign = {
   }),
 };
 
+const resetPassword = {
+  params: Joi.object().keys({
+    id: Joi.number().required(),
+  }),
+  body: Joi.object().keys({
+    newPassword: Joi.string().required().min(8).max(128),
+  }),
+};
+
 export const userValidation = {
   createUser,
   updateUser,
@@ -82,4 +91,5 @@ export const userValidation = {
   changePassword,
   reassignData,
   deleteAndReassign,
+  resetPassword,
 };

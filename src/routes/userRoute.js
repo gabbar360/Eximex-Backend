@@ -15,6 +15,12 @@ import {
   getAllUsersForSuperAdmin,
   toggleUserBlock,
   getSuperAdminDashboardStats,
+  getAllDatabaseData,
+  resetUserPassword,
+  getAllCompanies,
+  getCompanyDetails,
+  getAllTables,
+  getTableData,
 } from '../controller/userController.js';
 import { validate } from '../middleware/validate.js';
 import { userValidation } from '../validations/user.validation.js';
@@ -160,6 +166,51 @@ router.get(
   verifyJWT,
   authorizeRoles('SUPER_ADMIN'),
   getSuperAdminDashboardStats
+);
+
+// Enhanced Super Admin routes for complete database access
+router.get(
+  '/super-admin/database/all-data',
+  verifyJWT,
+  authorizeRoles('SUPER_ADMIN'),
+  getAllDatabaseData
+);
+
+router.patch(
+  '/super-admin/users/:id/reset-password',
+  verifyJWT,
+  authorizeRoles('SUPER_ADMIN'),
+  validate(userValidation.resetPassword),
+  ActivityLogService.createActivityLogger('User'),
+  resetUserPassword
+);
+
+router.get(
+  '/super-admin/companies',
+  verifyJWT,
+  authorizeRoles('SUPER_ADMIN'),
+  getAllCompanies
+);
+
+router.get(
+  '/super-admin/companies/:id',
+  verifyJWT,
+  authorizeRoles('SUPER_ADMIN'),
+  getCompanyDetails
+);
+
+router.get(
+  '/super-admin/database/tables',
+  verifyJWT,
+  authorizeRoles('SUPER_ADMIN'),
+  getAllTables
+);
+
+router.get(
+  '/super-admin/database/tables/:tableName',
+  verifyJWT,
+  authorizeRoles('SUPER_ADMIN'),
+  getTableData
 );
 
 export default router;
