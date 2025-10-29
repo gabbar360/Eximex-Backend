@@ -1,9 +1,9 @@
 import { PrismaClient } from '@prisma/client';
-import puppeteer from 'puppeteer';
 import ejs from 'ejs';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
+import { generatePDF } from '../utils/puppeteerConfig.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -1121,21 +1121,8 @@ const downloadPackingListPDF = async (req, res) => {
       logoBase64: logoBase64,
     });
 
-    // Generate PDF using puppeteer
-    const browser = await puppeteer.launch({
-      headless: true,
-      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH,
-      args: process.env.PUPPETEER_ARGS ? process.env.PUPPETEER_ARGS.split(',') : [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage',
-        '--disable-gpu'
-      ]
-    });
-    const page = await browser.newPage();
-    await page.setContent(htmlContent);
-
-    const pdfBuffer = await page.pdf({
+    // Generate PDF using improved configuration
+    const pdfBuffer = await generatePDF(htmlContent, {
       format: 'A4',
       printBackground: true,
       margin: {
@@ -1145,8 +1132,6 @@ const downloadPackingListPDF = async (req, res) => {
         left: '10mm',
       },
     });
-
-    await browser.close();
 
     // Set response headers for PDF download
     const filename = `packing-list-${packingListEntry.piInvoice.piNumber}-${Date.now()}.pdf`;

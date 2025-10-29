@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "nodemon src/index.js",
     "start": "node scripts/install-chrome.js && node prisma/seed.js && node src/index.js",
-    "postinstall": "echo 'Skipping Puppeteer Chrome download - will be handled by install script'",
+    "postinstall": "node scripts/install-chrome.js",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate dev",
