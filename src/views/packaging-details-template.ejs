@@ -289,216 +289,152 @@
                     </tr>
                 </table>
 
-                <!-- Description of Goods EXACTLY like PL2.png -->
+                <!-- Packing List Preview Table -->
                 <div class="table-title">Description of Goods</div>
                 <table>
                     <thead>
                         <tr class="header center">
-                            <th style="width:10%;">No &amp; Kind of Pckgs</th>
-                            <th style="width:18%;">Design Name</th>
-                            <th style="width:8%;">Size (mm)</th>
-                            <th style="width:8%;">HSN Code</th>
-                            <th style="width:10%;">Container No.</th>
-                            <th style="width:9%;">Line Seal No.</th>
-                            <th style="width:8%;">Weight / Box (Kgs)</th>
-                            <th style="width:9%;">Quantity [in SQM]</th>
-                            <th style="width:7%;">Total Pallets</th>
-                            <th style="width:7%;">Quantity [Box]</th>
-                            <th style="width:8%;">Net Weight [kg]</th>
-                            <th style="width:8%;">Gross Weight [kg]</th>
+                            <th style="width:15%;">Container</th>
+                            <th style="width:25%;">Product Name</th>
+                            <th style="width:10%;">HSN Code</th>
+                            <th style="width:8%;">Unit</th>
+                            <th style="width:10%;">Quantity</th>
+                            <th style="width:10%;">Unit Wt (kg)</th>
+                            <th style="width:10%;">Net Wt (kg)</th>
+                            <th style="width:10%;">Gross Wt (kg)</th>
+                            <!-- <th style="width:12%;">Volume (m³)</th> -->
                         </tr>
                     </thead>
                     <tbody>
-                        <!-- <tr>
-                            <td colspan="12" class="center bold">POLISHED GLAZED VITRIFIED TILES</td>
-                        </tr> -->
-
-                        <% const allContainers=piInvoice.packagingSteps && piInvoice.packagingSteps[0] &&
+                        <% const allContainers = piInvoice.packagingSteps && piInvoice.packagingSteps[0] &&
                             piInvoice.packagingSteps[0].notes && piInvoice.packagingSteps[0].notes.containers ?
                             piInvoice.packagingSteps[0].notes.containers : []; %>
-                            <% let sumQtySqm=0, sumPallets=0, sumBoxes=0, sumNet=0, sumGross=0; %>
-                            <% let rowIndex = 0; %>
-
-                            <% if (allContainers.length > 0) { %>
-                                <% allContainers.forEach((containerData, containerIndex) => { %>
-                                    <% const items = containerData && containerData.products ? containerData.products : []; %>
-                                    <% if (items.length > 0) { %>
-                                        <% items.forEach((p, i) => { %>
-                                            <% rowIndex++; %>
-                                            <% const pkg = rowIndex; %>
-                                            <% const design = p.productName || p.productDescription || p.description || 'N/A'; %>
-                                            <% const size = packingListData.boxDimensions || piInvoice.packagingSteps?.[0]?.notes?.boxDimensions || ''; %>
-                                            <% const hsn = p.hsnCode || p.hsCode || (piInvoice.products && piInvoice.products[i] && piInvoice.products[i].category?.hsnCode) || (piInvoice.products && piInvoice.products[i] && piInvoice.products[i].product?.category?.hsnCode) || '69072100'; %>
-                                            <% const cont = containerData?.containerNumber || ''; %>
-                                            <% const seal = containerData?.sealNumber || ''; %>
-                                            <% const wtBox = p.grossWeight ? (Number(p.grossWeight) / Number(p.noOfBoxes || 1)).toFixed(1) : ''; %>
-                                            <% const qtySqm = p.measurement ? Number(p.measurement) : 0; %>
-                                            <% const pallets = Math.ceil(Number(p.noOfBoxes || 0) / 50); %>
-                                            <% const boxes = Number(p.noOfBoxes || p.quantity || 0); %>
-                                            <% const net = Number(p.netWeight || 0); %>
-                                            <% const gross = Number(p.grossWeight || 0); %>
-
-                                            <% sumQtySqm += qtySqm; sumPallets += pallets; sumBoxes += boxes; sumNet += net; sumGross += gross; %>
-
-                                            <tr>
-                                                <td class="center"><%= pkg %></td>
-                                                <td><%= design %></td>
-                                                <td class="center"><%= size %></td>
-                                                <td class="center"><%= hsn %></td>
-                                                <td class="center"><%= cont %></td>
-                                                <td class="center"><%= seal %></td>
-                                                <td class="right"><%= wtBox %></td>
-                                                <td class="right"><%= qtySqm ? qtySqm.toFixed(2) : '' %></td>
-                                                <td class="center"><%= pallets || '' %></td>
-                                                <td class="center"><%= boxes || '' %></td>
-                                                <td class="right"><%= net ? net.toFixed(2) : '' %></td>
-                                                <td class="right"><%= gross ? gross.toFixed(2) : '' %></td>
-                                            </tr>
-                                        <% }); %>
-                                    <% } else { %>
-                                        <!-- Show container info even if no products -->
-                                        <% rowIndex++; %>
-                                        <% const pkg = rowIndex; %>
-                                        <% const cont = containerData?.containerNumber || `Container ${containerIndex + 1}`; %>
-                                        <% const seal = containerData?.sealNumber || ''; %>
-                                        <% const boxes = Number(containerData?.totalNoOfBoxes || 0); %>
-                                        <% const net = Number(containerData?.totalNetWeight || 0); %>
-                                        <% const gross = Number(containerData?.totalGrossWeight || 0); %>
-                                        <% const qtySqm = Number(containerData?.totalMeasurement || 0); %>
-                                        <% const pallets = Math.ceil(boxes / 50); %>
-
-                                        <% sumQtySqm += qtySqm; sumPallets += pallets; sumBoxes += boxes; sumNet += net; sumGross += gross; %>
-
+                        <% let totalQuantity = 0, totalUnitWt = 0, totalNetWt = 0, totalGrossWt = 0, totalVolume = 0; %>
+                        
+                        <% if (allContainers.length > 0) { %>
+                            <% allContainers.forEach((containerData, containerIndex) => { %>
+                                <% const items = containerData && containerData.products ? containerData.products : []; %>
+                                <% const containerName = containerData?.containerNumber || `Container ${containerIndex + 1}`; %>
+                                <% const sealInfo = containerData?.sealType && containerData?.sealNumber ? `${containerData.sealType} - ${containerData.sealNumber}` : ''; %>
+                                
+                                <% if (items.length > 0) { %>
+                                    <% items.forEach((p, productIndex) => { %>
+                                        <% const productName = p.productName || p.productDescription || p.description || '-'; %>
+                                        <% const hsnCode = p.hsnCode || p.hsCode || '484047'; %>
+                                        <% const unit = p.unit || 'Box'; %>
+                                        <% const quantity = p.unit && p.unit.toLowerCase() === 'box' ? (p.packedQuantity || p.quantity || p.noOfBoxes || '-') : (p.noOfBoxes || '-'); %>
+                                        <% const netWeight = Number(p.netWeight || 0); %>
+                                        <% const grossWeight = Number(p.grossWeight || 0); %>
+                                        <% const volume = Number(p.measurement || 0); %>
+                                        <% const boxes = Number(p.noOfBoxes || (p.unit && p.unit.toLowerCase() === 'box' ? (p.packedQuantity || p.quantity) : 0)); %>
+                                        <% const unitWeight = boxes > 0 && netWeight > 0 ? (netWeight / boxes) : 0; %>
+                                        
+                                        <% totalQuantity += boxes; %>
+                                        <% totalNetWt += netWeight; %>
+                                        <% totalGrossWt += grossWeight; %>
+                                        <% totalVolume += volume; %>
+                                        
                                         <tr>
-                                            <td class="center"><%= pkg %></td>
-                                            <td>Mixed Goods</td>
-                                            <td class="center"><%= packingListData.boxDimensions || '' %></td>
-                                            <td class="center">69072100</td>
-                                            <td class="center"><%= cont %></td>
-                                            <td class="center"><%= seal %></td>
-                                            <td class="right"><%= boxes > 0 && gross > 0 ? (gross / boxes).toFixed(1) : '' %></td>
-                                            <td class="right"><%= qtySqm ? qtySqm.toFixed(2) : '' %></td>
-                                            <td class="center"><%= pallets || '' %></td>
-                                            <td class="center"><%= boxes || '' %></td>
-                                            <td class="right"><%= net ? net.toFixed(2) : '' %></td>
-                                            <td class="right"><%= gross ? gross.toFixed(2) : '' %></td>
+                                            <% if (productIndex === 0) { %>
+                                                <td rowspan="<%= items.length %>" class="center">
+                                                    <div class="bold"><%= containerName %></div>
+                                                    <% if (sealInfo) { %>
+                                                        <div style="font-size: 9px; color: #666;"><%= sealInfo %></div>
+                                                    <% } %>
+                                                </td>
+                                            <% } %>
+                                            <td><%= productName %></td>
+                                            <td class="center"><%= hsnCode %></td>
+                                            <td class="center"><%= unit %></td>
+                                            <td class="right"><%= quantity %></td>
+                                            <td class="right"><%= unitWeight > 0 ? unitWeight.toFixed(2) : '-' %></td>
+                                            <td class="right"><%= netWeight > 0 ? netWeight.toFixed(2) : '-' %></td>
+                                            <td class="right"><%= grossWeight > 0 ? grossWeight.toFixed(2) : '-' %></td>
+                                            <!-- <td class="right"><%= volume > 0 ? volume.toFixed(4) : '-' %></td> -->
                                         </tr>
-                                    <% } %>
-                                <% }); %>
-                            <% } else { %>
-                                <!-- Fallback to original products if no container data -->
-                                <% const items = piInvoice.products || []; %>
-                                <% items.forEach((p, i) => { %>
-                                    <% rowIndex++; %>
-                                    <% const pkg = rowIndex; %>
-                                    <% const design = p.productName || p.productDescription || p.description || 'N/A'; %>
-                                    <% const size = packingListData.boxDimensions || ''; %>
-                                    <% const hsn = p.hsnCode || p.hsCode || (p.category?.hsnCode) || (p.product?.category?.hsnCode) || '69072100'; %>
-                                    <% const cont = piInvoice.packagingSteps?.[0]?.containerNumber || ''; %>
-                                    <% const seal = piInvoice.packagingSteps?.[0]?.sealNumber || ''; %>
-                                    <% const wtBox = p.grossWeight ? (Number(p.grossWeight) / Number(p.noOfBoxes || 1)).toFixed(1) : ''; %>
-                                    <% const qtySqm = p.measurement ? Number(p.measurement) : 0; %>
-                                    <% const pallets = Math.ceil(Number(p.noOfBoxes || 0) / 50); %>
-                                    <% const boxes = Number(p.noOfBoxes || p.quantity || 0); %>
-                                    <% const net = Number(p.netWeight || 0); %>
-                                    <% const gross = Number(p.grossWeight || 0); %>
-
-                                    <% sumQtySqm += qtySqm; sumPallets += pallets; sumBoxes += boxes; sumNet += net; sumGross += gross; %>
-
+                                    <% }); %>
+                                <% } else { %>
+                                    <% const boxes = Number(containerData?.totalNoOfBoxes || 0); %>
+                                    <% const netWeight = Number(containerData?.totalNetWeight || 0); %>
+                                    <% const grossWeight = Number(containerData?.totalGrossWeight || 0); %>
+                                    <% const volume = Number(containerData?.totalMeasurement || 0); %>
+                                    <% const unitWeight = boxes > 0 && netWeight > 0 ? (netWeight / boxes) : 0; %>
+                                    
+                                    <% totalQuantity += boxes; %>
+                                    <% totalNetWt += netWeight; %>
+                                    <% totalGrossWt += grossWeight; %>
+                                    <% totalVolume += volume; %>
+                                    
                                     <tr>
-                                        <td class="center"><%= pkg %></td>
-                                        <td><%= design %></td>
-                                        <td class="center"><%= size %></td>
-                                        <td class="center"><%= hsn %></td>
-                                        <td class="center"><%= cont %></td>
-                                        <td class="center"><%= seal %></td>
-                                        <td class="right"><%= wtBox %></td>
-                                        <td class="right"><%= qtySqm ? qtySqm.toFixed(2) : '' %></td>
-                                        <td class="center"><%= pallets || '' %></td>
-                                        <td class="center"><%= boxes || '' %></td>
-                                        <td class="right"><%= net ? net.toFixed(2) : '' %></td>
-                                        <td class="right"><%= gross ? gross.toFixed(2) : '' %></td>
+                                        <td class="center">
+                                            <div class="bold"><%= containerName %></div>
+                                            <% if (sealInfo) { %>
+                                                <div style="font-size: 9px; color: #666;"><%= sealInfo %></div>
+                                            <% } %>
+                                        </td>
+                                        <td>-</td>
+                                        <td class="center">-</td>
+                                        <td class="center">-</td>
+                                        <td class="right"><%= boxes || '-' %></td>
+                                        <td class="right"><%= unitWeight > 0 ? unitWeight.toFixed(2) : '-' %></td>
+                                        <td class="right"><%= netWeight > 0 ? netWeight.toFixed(2) : '-' %></td>
+                                        <td class="right"><%= grossWeight > 0 ? grossWeight.toFixed(2) : '-' %></td>
+                                        <!-- <td class="right"><%= volume > 0 ? volume.toFixed(4) : '-' %></td> -->
                                     </tr>
-                                <% }); %>
-                            <% } %>
+                                <% } %>
+                            <% }); %>
+                        <% } else { %>
+                            <% const items = piInvoice.products || []; %>
+                            <% items.forEach((p, i) => { %>
+                                <% const productName = p.productName || p.productDescription || p.description || '-'; %>
+                                <% const hsnCode = p.hsnCode || p.hsCode || (p.category?.hsnCode) || (p.product?.category?.hsnCode) || '484047'; %>
+                                <% const unit = p.unit || 'Box'; %>
+                                <% const quantity = p.unit && p.unit.toLowerCase() === 'box' ? (p.packedQuantity || p.quantity || p.noOfBoxes || '-') : (p.noOfBoxes || '-'); %>
+                                <% const netWeight = Number(p.netWeight || 0); %>
+                                <% const grossWeight = Number(p.grossWeight || 0); %>
+                                <% const volume = Number(p.measurement || 0); %>
+                                <% const boxes = Number(p.noOfBoxes || (p.unit && p.unit.toLowerCase() === 'box' ? (p.packedQuantity || p.quantity) : 0)); %>
+                                <% const unitWeight = boxes > 0 && netWeight > 0 ? (netWeight / boxes) : 0; %>
+                                <% const containerName = piInvoice.packagingSteps?.[0]?.containerNumber || 'Container 1'; %>
+                                <% const sealInfo = piInvoice.packagingSteps?.[0]?.sealType && piInvoice.packagingSteps?.[0]?.sealNumber ? `${piInvoice.packagingSteps[0].sealType} - ${piInvoice.packagingSteps[0].sealNumber}` : ''; %>
+                                
+                                <% totalQuantity += boxes; %>
+                                <% totalNetWt += netWeight; %>
+                                <% totalGrossWt += grossWeight; %>
+                                <% totalVolume += volume; %>
+                                
+                                <tr>
+                                    <td class="center">
+                                        <% if (i === 0) { %>
+                                            <div class="bold"><%= containerName %></div>
+                                            <% if (sealInfo) { %>
+                                                <div style="font-size: 9px; color: #666;"><%= sealInfo %></div>
+                                            <% } %>
+                                        <% } else { %>
+                                            -
+                                        <% } %>
+                                    </td>
+                                    <td><%= productName %></td>
+                                    <td class="center"><%= hsnCode %></td>
+                                    <td class="center"><%= unit %></td>
+                                    <td class="right"><%= quantity %></td>
+                                    <td class="right"><%= unitWeight > 0 ? unitWeight.toFixed(2) : '-' %></td>
+                                    <td class="right"><%= netWeight > 0 ? netWeight.toFixed(2) : '-' %></td>
+                                    <td class="right"><%= grossWeight > 0 ? grossWeight.toFixed(2) : '-' %></td>
+                                    <!-- <td class="right"><%= volume > 0 ? volume.toFixed(4) : '-' %></td> -->
+                                </tr>
+                            <% }); %>
+                        <% } %>
 
-                                                                                                <!-- Optional filler rows to create same visual spacing as screenshot -->
-                                                                                                <% for (let i=0; i < Math.max(0, 4 - rowIndex); i++) { %>
-                                                                                                    <tr>
-                                                                                                        <td colspan="12" style="height:26px;"></td>
-                                                                                                    </tr>
-                                                                                                <% } %>
-
-                                                                                                        <!-- TOTAL CONTAINERS row inside the table -->
-                                                                                                        <tr>
-                                                                                                            <td colspan="4"
-                                                                                                                class="center bold">
-                                                                                                                TOTAL
-                                                                                                                CONTAINERS
-                                                                                                                :- <%=
-                                                                                                                    packingListData.totalContainers
-                                                                                                                    &&
-                                                                                                                    packingListData.shipmentType
-                                                                                                                    ?
-                                                                                                                    (packingListData.totalContainers
-                                                                                                                    + ' X '
-                                                                                                                    +
-                                                                                                                    (packingListData.shipmentType
-                                                                                                                    || "20'FCL"
-                                                                                                                    )) :
-                                                                                                                    (packingListData.totalContainersDescription
-                                                                                                                    || ''
-                                                                                                                    ) %>
-                                                                                                            </td>
-                                                                                                            <td
-                                                                                                                colspan="8">
-                                                                                                            </td>
-                                                                                                        </tr>
-
-                                                                                                        <!-- Bottom TOTALS row like screenshot -->
-                                                                                                        <tr
-                                                                                                            class="bold">
-                                                                                                            <td colspan="7"
-                                                                                                                class="center">
-                                                                                                                TOTAL :-
-                                                                                                            </td>
-                                                                                                            <td
-                                                                                                                class="right">
-                                                                                                                <%= sumQtySqm
-                                                                                                                    ?
-                                                                                                                    sumQtySqm.toFixed(2)
-                                                                                                                    : '0.00'
-                                                                                                                    %>
-                                                                                                            </td>
-                                                                                                            <td
-                                                                                                                class="center">
-                                                                                                                <%= sumPallets
-                                                                                                                    || 0
-                                                                                                                    %>
-                                                                                                            </td>
-                                                                                                            <td
-                                                                                                                class="center">
-                                                                                                                <%= sumBoxes
-                                                                                                                    || 0
-                                                                                                                    %>
-                                                                                                            </td>
-                                                                                                            <td
-                                                                                                                class="right">
-                                                                                                                <%= sumNet
-                                                                                                                    ?
-                                                                                                                    sumNet.toFixed(2)
-                                                                                                                    : '0.00'
-                                                                                                                    %>
-                                                                                                            </td>
-                                                                                                            <td
-                                                                                                                class="right">
-                                                                                                                <%= sumGross
-                                                                                                                    ?
-                                                                                                                    sumGross.toFixed(2)
-                                                                                                                    : '0.00'
-                                                                                                                    %>
-                                                                                                            </td>
-                                                                                                        </tr>
+                        <!-- TOTAL row -->
+                        <tr class="bold header">
+                            <td colspan="4" class="center">TOTAL</td>
+                            <td class="right"><%= totalQuantity || 0 %></td>
+                            <td class="right"><%= totalQuantity > 0 && totalNetWt > 0 ? (totalNetWt / totalQuantity).toFixed(2) : '-' %></td>
+                            <td class="right"><%= totalNetWt ? totalNetWt.toFixed(2) : '0' %></td>
+                            <td class="right"><%= totalGrossWt ? totalGrossWt.toFixed(2) : '0' %></td>
+                            <!-- <td class="right"><%= totalVolume ? totalVolume.toFixed(2) : '0' %></td> -->
+                        </tr>
                     </tbody>
                 </table>
 
