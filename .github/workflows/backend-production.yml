@@ -135,6 +135,19 @@ jobs:
             sleep 15
           done
 
+      - name: Send email on failure
+        if: failure()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: ${{ secrets.SMTP_HOST }}
+          server_port: ${{ secrets.SMTP_PORT }}
+          username: ${{ secrets.SMTP_USER }}
+          password: ${{ secrets.SMTP_PASS }}
+          from: ${{ secrets.SMTP_FROM }}
+          to: jaydeep.flexa@gmail.com
+          subject: '❌ Backend Deployment Failed'
+          body: 'Backend production deployment failed. Check GitHub Actions logs for details.'
+
       - name: Send email on success
         if: success()
         uses: dawidd6/action-send-mail@v3
