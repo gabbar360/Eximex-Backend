@@ -1,289 +1,709 @@
-import { PrismaClient } from '@prisma/client';
-const prisma = new PrismaClient();
+import { prisma } from '../config/dbConfig.js';
 
-/**
- * Service for packaging steps operations
- */
-class PackagingStepsService {
-  /**
-   * Create packaging steps template for a category
-   */
-  static async createCategoryTemplate(categoryId, steps, userId) {
-    try {
-      // Delete existing template steps for this category
-      await prisma.productPackagingSteps.deleteMany({
-        where: {
-          categoryId: Number(categoryId),
-          productId: null, // Template steps don't have productId
+export class PackagingStepsService {
+  // Packing Lists Operations
+  static async getPackingListsWithPagination(companyId, filters, pagination) {
+    const { search, status } = filters;
+    const { page = 1, limit = 10 } = pagination;
+    const skip = (page - 1) * limit;
+
+    const where = {
+      companyId,
+      packagingSteps: {
+        some: {
+          isActive: true,
         },
-      });
+      },
+    };
 
-      const createdSteps = [];
+    if (search) {
+      where.OR = [
+        { piNumber: { contains: search, mode: 'insensitive' } },
+        { partyName: { contains: search, mode: 'insensitive' } },
+      ];
+    }
 
-      for (let i = 0; i < steps.length; i++) {
-        const step = steps[i];
+    if (status) {
+      where.status = status;
+    }
 
-        const packagingStep = await prisma.productPackagingSteps.create({
-          data: {
-            categoryId: Number(categoryId),
-            stepNumber: i + 1,
-            stepType: step.stepType || 'PACKING',
-            description: step.description,
-            packagingUnitId: step.packagingUnitId
-              ? Number(step.packagingUnitId)
-              : null,
-            quantity: step.quantity ? Number(step.quantity) : null,
-            material: step.material || null,
-            weight: step.weight ? Number(step.weight) : null,
-            weightUnit: step.weightUnit || 'kg',
-            dimensions: step.dimensions || null,
-
-            containerNumber: step.containerNumber || null,
-            sealType: step.sealType || null,
-            sealNumber: step.sealNumber || null,
-            notes: step.notes || null,
-            createdBy: userId,
+    const [piInvoices, total] = await Promise.all([
+      prisma.piInvoice.findMany({
+        where,
+        include: {
+          party: {
+            select: {
+              id: true,
+              companyName: true,
+              contactPerson: true,
+            },
           },
+          packagingSteps: {
+            where: { isActive: true },
+            select: {
+              id: true,
+              stepType: true,
+              weight: true,
+            },
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+        skip: parseInt(skip),
+        take: parseInt(limit),
+      }),
+      prisma.piInvoice.count({ where }),
+    ]);
+
+    return {
+      piInvoices,
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total,
+        pages: Math.ceil(total / limit),
+      },
+    };
+  }
+
+  static transformPackingLists(piInvoices) {
+    return piInvoices.map((pi) => ({
+      id: pi.id,
+      piId: pi.id,
+      exportInvoiceNo: pi.piNumber,
+      exportInvoiceDate: pi.invoiceDate,
+      buyerReference: pi.party?.companyName || pi.partyName || '',
+      status: pi.status,
+      totalBoxes: pi.totalBoxes || 0,
+      totalWeight: pi.totalWeight || 0,
+      totalVolume: pi.totalVolume || 0,
+      createdAt: pi.createdAt,
+      updatedAt: pi.updatedAt,
+      piInvoice: {
+        id: pi.id,
+        piNumber: pi.piNumber,
+        invoiceDate: pi.invoiceDate,
+        partyName: pi.party?.companyName || pi.partyName || '',
+        status: pi.status,
+      },
+    }));
+  }
+
+  // Packaging Step Operations
+  static async findPackagingStepById(id) {
+    return await prisma.productPackagingSteps.findFirst({
+      where: {
+        id: parseInt(id),
+        stepType: 'PACKING',
+        isActive: true,
+      },
+      include: {
+        piInvoice: {
           include: {
-            packagingUnit: true,
+            products: {
+              include: {
+                product: true,
+                category: true,
+              },
+            },
+            party: true,
+            company: true,
+            packagingSteps: {
+              where: { isActive: true },
+              include: {
+                product: true,
+                packagingUnit: true,
+              },
+            },
+          },
+        },
+      },
+    });
+  }
+
+  static async findPiInvoiceById(id, companyId) {
+    return await prisma.piInvoice.findFirst({
+      where: {
+        id: parseInt(id),
+        companyId,
+      },
+      include: {
+        products: {
+          include: {
+            product: true,
             category: true,
           },
-        });
-
-        createdSteps.push(packagingStep);
-      }
-
-      return createdSteps;
-    } catch (error) {
-      throw new Error(`Failed to create category template: ${error.message}`);
-    }
+        },
+        party: true,
+        company: true,
+        packagingSteps: {
+          where: { isActive: true },
+          include: {
+            product: true,
+            packagingUnit: true,
+          },
+        },
+      },
+    });
   }
 
-  /**
-   * Apply category template to a product
-   */
-  static async applyCategoryTemplate(
-    productId,
-    piInvoiceId,
-    categoryId,
-    userId
-  ) {
-    try {
-      // Get template steps for the category
-      const templateSteps = await prisma.productPackagingSteps.findMany({
-        where: {
-          categoryId: Number(categoryId),
-          productId: null, // Template steps
-          isActive: true,
-        },
-        orderBy: { stepNumber: 'asc' },
-      });
+  static buildPackingListResponse(piInvoice) {
+    const packingListEntry = piInvoice.packagingSteps.find(
+      (step) => step.productId === null && step.stepType === 'PACKING'
+    );
 
-      if (templateSteps.length === 0) {
-        throw new Error('No template steps found for this category');
-      }
+    let packingListData = {};
+    let actualNotes = '';
 
-      // Delete existing steps for this product-PI combination
-      await prisma.productPackagingSteps.deleteMany({
-        where: {
-          productId: Number(productId),
-          piInvoiceId: piInvoiceId ? Number(piInvoiceId) : null,
-        },
-      });
+    if (packingListEntry && packingListEntry.notes) {
+      packingListData = packingListEntry.notes;
+      actualNotes = packingListData.notes || '';
+    }
 
-      // Create new steps based on template
-      const createdSteps = [];
+    return {
+      id: packingListEntry?.id || piInvoice.id,
+      piId: piInvoice.id,
+      exportInvoiceNo: packingListData.exportInvoiceNo || piInvoice.piNumber,
+      exportInvoiceDate:
+        packingListData.exportInvoiceDate ||
+        piInvoice.invoiceDate.toISOString().split('T')[0],
+      buyerReference: packingListData.buyerReference || piInvoice.partyName,
+      consigneeDetails:
+        packingListData.consigneeDetails || piInvoice.party?.address || '',
+      buyerDetails:
+        packingListData.buyerDetails ||
+        `${piInvoice.party?.companyName || piInvoice.partyName}\n${piInvoice.party?.contactPerson || ''}\n${piInvoice.address || ''}`,
+      sellerInfo:
+        packingListData.sellerInfo ||
+        `${piInvoice.company?.name || ''}\n${piInvoice.company?.address || ''}`,
+      methodOfDispatch:
+        packingListData.methodOfDispatch || piInvoice.deliveryTerm || '',
+      shipmentType:
+        packingListData.shipmentType || piInvoice.containerType || '',
+      countryOfOrigin:
+        packingListData.countryOfOrigin || piInvoice.country || 'India',
+      finalDestinationCountry:
+        packingListData.finalDestinationCountry ||
+        piInvoice.party?.country ||
+        '',
+      portOfLoading: packingListData.portOfLoading || '',
+      portOfDischarge: packingListData.portOfDischarge || '',
+      vesselVoyageNo: packingListData.vesselVoyageNo || '',
+      dateOfDeparture: packingListData.dateOfDeparture || '',
+      containers: packingListData.containers || [],
+      notes: actualNotes,
+      totalBoxes: packingListData.totalBoxes || piInvoice.totalBoxes || 0,
+      totalNetWeight:
+        packingListData.totalNetWeight || piInvoice.totalWeight || 0,
+      totalGrossWeight:
+        packingListData.totalGrossWeight || piInvoice.totalWeight || 0,
+      totalVolume: packingListData.totalVolume || piInvoice.totalVolume || 0,
+      totalContainers:
+        packingListData.totalContainers || piInvoice.requiredContainers || 1,
+      dateOfIssue:
+        packingListData.dateOfIssue || new Date().toISOString().split('T')[0],
+      status: packingListData.status || piInvoice.status,
+      createdAt: packingListEntry?.createdAt || piInvoice.createdAt,
+      updatedAt: packingListEntry?.updatedAt || piInvoice.updatedAt,
+      pi: piInvoice,
+    };
+  }
 
-      for (const templateStep of templateSteps) {
-        const packagingStep = await prisma.productPackagingSteps.create({
-          data: {
-            productId: Number(productId),
-            piInvoiceId: piInvoiceId ? Number(piInvoiceId) : null,
-            categoryId: templateStep.categoryId,
-            stepNumber: templateStep.stepNumber,
-            stepType: templateStep.stepType,
-            description: templateStep.description,
-            packagingUnitId: templateStep.packagingUnitId,
-            quantity: templateStep.quantity,
-            material: templateStep.material,
-            weight: templateStep.weight,
-            weightUnit: templateStep.weightUnit,
-            dimensions: templateStep.dimensions,
+  // Create Operations
+  static async checkExistingPackingList(piId) {
+    return await prisma.productPackagingSteps.findFirst({
+      where: {
+        piInvoiceId: parseInt(piId),
+        stepType: 'PACKING',
+        isActive: true,
+      },
+    });
+  }
 
-            containerNumber: templateStep.containerNumber,
-            sealType: templateStep.sealType,
-            sealNumber: templateStep.sealNumber,
-            notes: templateStep.notes,
-            createdBy: userId,
-          },
+  static async getPiWithProducts(piId) {
+    return await prisma.piInvoice.findUnique({
+      where: { id: parseInt(piId) },
+      include: {
+        products: {
           include: {
-            packagingUnit: true,
+            product: true,
             category: true,
           },
-        });
+        },
+      },
+    });
+  }
 
-        createdSteps.push(packagingStep);
+  static buildPackingListData(data, existingPI) {
+    return {
+      exportInvoiceNo: data.exportInvoiceNo || existingPI.piNumber,
+      exportInvoiceDate: data.exportInvoiceDate || existingPI.invoiceDate,
+      buyerReference: data.buyerReference || existingPI.partyName,
+      consigneeDetails: data.consigneeDetails || '',
+      buyerDetails: data.buyerDetails || '',
+      sellerInfo: data.sellerInfo || '',
+      methodOfDispatch: data.methodOfDispatch || '',
+      shipmentType: data.shipmentType || '',
+      countryOfOrigin: data.countryOfOrigin || 'India',
+      finalDestinationCountry: data.finalDestinationCountry || '',
+      portOfLoading: data.portOfLoading || '',
+      portOfDischarge: data.portOfDischarge || '',
+      vesselVoyageNo: data.vesselVoyageNo || '',
+      dateOfDeparture: data.dateOfDeparture || null,
+      containers: data.containers || [],
+      notes: data.notes || '',
+      totalBoxes: parseInt(data.totalBoxes) || 0,
+      totalNetWeight: parseFloat(data.totalNetWeight) || 0,
+      totalGrossWeight: parseFloat(data.totalGrossWeight) || 0,
+      totalVolume: parseFloat(data.totalVolume) || 0,
+      totalContainers: parseInt(data.totalContainers) || 0,
+      dateOfIssue: data.dateOfIssue || new Date().toISOString().split('T')[0],
+      status: data.status || 'draft',
+    };
+  }
+
+  static extractContainerInfo(containers) {
+    let containerNumber = null;
+    let sealNumber = null;
+    let sealType = null;
+    let material = 'Packing List Items';
+    let quantity = 0;
+    let weight = 0;
+
+    if (containers && containers.length > 0) {
+      const firstContainer = containers[0];
+      containerNumber = firstContainer.containerNumber || null;
+      sealNumber = firstContainer.sealNumber || null;
+      sealType = firstContainer.sealType || null;
+
+      if (firstContainer.products && firstContainer.products.length > 0) {
+        material = firstContainer.products.map((p) => p.productName).join(', ');
       }
 
-      return createdSteps;
-    } catch (error) {
-      throw new Error(`Failed to apply category template: ${error.message}`);
+      if (firstContainer.totalNoOfBoxes) {
+        quantity = parseInt(firstContainer.totalNoOfBoxes);
+      }
+      if (firstContainer.totalGrossWeight) {
+        weight = parseFloat(firstContainer.totalGrossWeight);
+      }
     }
+
+    return { containerNumber, sealNumber, sealType, material, quantity, weight };
   }
 
-  /**
-   * Calculate packaging costs for a PI
-   */
-  static async calculatePackagingCosts(piInvoiceId) {
-    try {
-      const steps = await prisma.productPackagingSteps.findMany({
-        where: {
-          piInvoiceId: Number(piInvoiceId),
-          isActive: true,
+  static async createPackingListTransaction(data, userId) {
+    return await prisma.$transaction(async (tx) => {
+      const packingListEntry = await tx.productPackagingSteps.create({
+        data: {
+          productId: data.productId,
+          piInvoiceId: data.piId,
+          categoryId: data.categoryId,
+          packagingUnitId: data.packagingUnitId,
+          stepNumber: 1,
+          stepType: 'PACKING',
+          description: `Packing List for PI ${data.piNumber}`,
+          quantity: data.quantity,
+          material: data.material,
+          weight: data.weight,
+          weightUnit: 'kg',
+          dimensions: null,
+          containerNumber: data.containerNumber,
+          sealNumber: data.sealNumber,
+          sealType: data.sealType,
+          notes: data.packingListData,
+          createdBy: userId,
         },
         include: {
-          product: true,
+          piInvoice: {
+            include: {
+              party: true,
+              company: true,
+            },
+          },
         },
       });
 
-      // Cost calculation removed as cost field no longer exists
+      // Create additional container entries
+      const additionalEntries = [];
+      if (data.containers && data.containers.length > 1) {
+        for (let i = 1; i < data.containers.length; i++) {
+          const container = data.containers[i];
+          const containerMaterial =
+            container.products && container.products.length > 0
+              ? container.products.map((p) => p.productName).join(', ')
+              : 'Container Items';
 
-      return costBreakdown;
-    } catch (error) {
-      throw new Error(`Failed to calculate packaging costs: ${error.message}`);
-    }
-  }
-
-  /**
-   * Get packaging summary for a PI
-   */
-  static async getPackagingSummary(piInvoiceId) {
-    try {
-      const steps = await prisma.productPackagingSteps.findMany({
-        where: {
-          piInvoiceId: Number(piInvoiceId),
-          isActive: true,
-        },
-        include: {
-          product: true,
-          packagingUnit: true,
-        },
-      });
-
-      const summary = {
-        totalSteps: steps.length,
-        totalWeight: 0,
-
-        stepTypes: {},
-        materials: {},
-        products: {},
-      };
-
-      steps.forEach((step) => {
-        // Weight calculation
-        if (step.weight) {
-          summary.totalWeight += step.weight;
-        }
-
-        // Step types
-        if (!summary.stepTypes[step.stepType]) {
-          summary.stepTypes[step.stepType] = 0;
-        }
-        summary.stepTypes[step.stepType]++;
-
-        // Materials
-        if (step.material) {
-          if (!summary.materials[step.material]) {
-            summary.materials[step.material] = 0;
-          }
-          summary.materials[step.material]++;
-        }
-
-        // Products
-        if (!summary.products[step.productId]) {
-          summary.products[step.productId] = {
-            productName: step.product.name,
-            stepCount: 0,
-          };
-        }
-        summary.products[step.productId].stepCount++;
-      });
-
-      return summary;
-    } catch (error) {
-      throw new Error(`Failed to get packaging summary: ${error.message}`);
-    }
-  }
-
-  /**
-   * Validate packaging steps completeness
-   */
-  static async validatePackagingCompleteness(piInvoiceId) {
-    try {
-      // Get all products in the PI
-      const piProducts = await prisma.piProduct.findMany({
-        where: { piInvoiceId: Number(piInvoiceId) },
-        include: { product: true },
-      });
-
-      // Get packaging steps for the PI
-      const packagingSteps = await prisma.productPackagingSteps.findMany({
-        where: {
-          piInvoiceId: Number(piInvoiceId),
-          isActive: true,
-        },
-      });
-
-      const validation = {
-        isComplete: true,
-        missingProducts: [],
-        incompleteProducts: [],
-        totalProducts: piProducts.length,
-        productsWithSteps: 0,
-      };
-
-      const productStepsMap = packagingSteps.reduce((acc, step) => {
-        if (!acc[step.productId]) {
-          acc[step.productId] = [];
-        }
-        acc[step.productId].push(step);
-        return acc;
-      }, {});
-
-      piProducts.forEach((piProduct) => {
-        const productSteps = productStepsMap[piProduct.productId] || [];
-
-        if (productSteps.length === 0) {
-          validation.missingProducts.push({
-            productId: piProduct.productId,
-            productName: piProduct.productName,
+          const containerEntry = await tx.productPackagingSteps.create({
+            data: {
+              productId: null,
+              piInvoiceId: data.piId,
+              categoryId: null,
+              packagingUnitId: null,
+              stepNumber: i + 1,
+              stepType: 'CONTAINERIZING',
+              description: `Container ${i + 1} for PI ${data.piNumber}`,
+              quantity: container.totalNoOfBoxes
+                ? parseInt(container.totalNoOfBoxes)
+                : 0,
+              material: containerMaterial,
+              weight: container.totalGrossWeight
+                ? parseFloat(container.totalGrossWeight)
+                : 0,
+              weightUnit: 'kg',
+              dimensions: container.totalMeasurement
+                ? { measurement: container.totalMeasurement }
+                : null,
+              containerNumber: container.containerNumber || null,
+              sealNumber: container.sealNumber || null,
+              sealType: container.sealType || null,
+              createdBy: userId,
+            },
           });
-          validation.isComplete = false;
-        } else {
-          validation.productsWithSteps++;
-
-          // Check if essential steps are present
-          const hasPackingStep = productSteps.some(
-            (step) => step.stepType === 'PACKING'
-          );
-          if (!hasPackingStep) {
-            validation.incompleteProducts.push({
-              productId: piProduct.productId,
-              productName: piProduct.productName,
-              reason: 'Missing basic packing step',
-            });
-            validation.isComplete = false;
-          }
+          additionalEntries.push(containerEntry);
         }
+      }
+
+      // Update PI invoice
+      const updatedPI = await tx.piInvoice.update({
+        where: { id: data.piId },
+        data: {
+          deliveryTerm: data.methodOfDispatch,
+          containerType: data.shipmentType,
+          totalBoxes: data.totalBoxes || data.existingPI.totalBoxes,
+          totalWeight: data.totalGrossWeight || data.existingPI.totalWeight,
+          totalVolume: data.totalVolume || data.existingPI.totalVolume,
+          requiredContainers:
+            data.totalContainers || data.existingPI.requiredContainers,
+          updatedBy: userId,
+        },
+        include: {
+          party: true,
+          company: true,
+        },
       });
 
-      return validation;
-    } catch (error) {
-      throw new Error(
-        `Failed to validate packaging completeness: ${error.message}`
-      );
+      return { packingListEntry, additionalEntries, updatedPI };
+    });
+  }
+
+  // Update Operations
+  static async findPackingListForUpdate(id, companyId) {
+    let packingListEntry = await prisma.productPackagingSteps.findFirst({
+      where: {
+        id: parseInt(id),
+        stepType: 'PACKING',
+        piInvoice: {
+          companyId,
+        },
+      },
+      include: {
+        piInvoice: {
+          include: {
+            party: true,
+            company: true,
+          },
+        },
+      },
+    });
+
+    if (!packingListEntry) {
+      const piInvoice = await prisma.piInvoice.findFirst({
+        where: {
+          id: parseInt(id),
+          companyId,
+        },
+        include: {
+          packagingSteps: {
+            where: {
+              stepType: 'PACKING',
+              isActive: true,
+            },
+          },
+          party: true,
+          company: true,
+        },
+      });
+
+      if (piInvoice && piInvoice.packagingSteps.length > 0) {
+        packingListEntry = piInvoice.packagingSteps[0];
+        packingListEntry.piInvoice = piInvoice;
+      }
     }
+
+    return packingListEntry;
+  }
+
+  static mergePackingListData(existingData, updateData) {
+    return {
+      exportInvoiceNo:
+        updateData.exportInvoiceNo !== undefined
+          ? updateData.exportInvoiceNo
+          : existingData.exportInvoiceNo,
+      exportInvoiceDate:
+        updateData.exportInvoiceDate !== undefined
+          ? updateData.exportInvoiceDate
+          : existingData.exportInvoiceDate,
+      buyerReference:
+        updateData.buyerReference !== undefined
+          ? updateData.buyerReference
+          : existingData.buyerReference,
+      consigneeDetails:
+        updateData.consigneeDetails !== undefined
+          ? updateData.consigneeDetails
+          : existingData.consigneeDetails,
+      buyerDetails:
+        updateData.buyerDetails !== undefined
+          ? updateData.buyerDetails
+          : existingData.buyerDetails,
+      sellerInfo:
+        updateData.sellerInfo !== undefined
+          ? updateData.sellerInfo
+          : existingData.sellerInfo,
+      methodOfDispatch:
+        updateData.methodOfDispatch !== undefined
+          ? updateData.methodOfDispatch
+          : existingData.methodOfDispatch,
+      shipmentType:
+        updateData.shipmentType !== undefined
+          ? updateData.shipmentType
+          : existingData.shipmentType,
+      countryOfOrigin:
+        updateData.countryOfOrigin !== undefined
+          ? updateData.countryOfOrigin
+          : existingData.countryOfOrigin,
+      finalDestinationCountry:
+        updateData.finalDestinationCountry !== undefined
+          ? updateData.finalDestinationCountry
+          : existingData.finalDestinationCountry,
+      portOfLoading:
+        updateData.portOfLoading !== undefined
+          ? updateData.portOfLoading
+          : existingData.portOfLoading,
+      portOfDischarge:
+        updateData.portOfDischarge !== undefined
+          ? updateData.portOfDischarge
+          : existingData.portOfDischarge,
+      vesselVoyageNo:
+        updateData.vesselVoyageNo !== undefined
+          ? updateData.vesselVoyageNo
+          : existingData.vesselVoyageNo,
+      dateOfDeparture:
+        updateData.dateOfDeparture !== undefined
+          ? updateData.dateOfDeparture
+          : existingData.dateOfDeparture,
+      containers:
+        updateData.containers !== undefined
+          ? updateData.containers
+          : existingData.containers,
+      notes:
+        updateData.notes !== undefined
+          ? updateData.notes
+          : existingData.notes,
+      totalBoxes:
+        updateData.totalBoxes !== undefined
+          ? parseInt(updateData.totalBoxes) || 0
+          : existingData.totalBoxes,
+      totalNetWeight:
+        updateData.totalNetWeight !== undefined
+          ? parseFloat(updateData.totalNetWeight) || 0
+          : existingData.totalNetWeight,
+      totalGrossWeight:
+        updateData.totalGrossWeight !== undefined
+          ? parseFloat(updateData.totalGrossWeight) || 0
+          : existingData.totalGrossWeight,
+      totalVolume:
+        updateData.totalVolume !== undefined
+          ? parseFloat(updateData.totalVolume) || 0
+          : existingData.totalVolume,
+      totalContainers:
+        updateData.totalContainers !== undefined
+          ? parseInt(updateData.totalContainers) || 0
+          : existingData.totalContainers,
+      dateOfIssue:
+        updateData.dateOfIssue !== undefined
+          ? updateData.dateOfIssue
+          : existingData.dateOfIssue,
+      status:
+        updateData.status !== undefined
+          ? updateData.status
+          : existingData.status,
+    };
+  }
+
+  static async updatePackingListEntry(id, data, userId) {
+    return await prisma.productPackagingSteps.update({
+      where: { id },
+      data: {
+        productId: data.productId,
+        categoryId: data.categoryId,
+        notes: data.updatedPackingData,
+        updatedBy: userId,
+      },
+      include: {
+        piInvoice: {
+          include: {
+            party: true,
+            company: true,
+          },
+        },
+      },
+    });
+  }
+
+  static async updatePiInvoice(piId, data, userId) {
+    return await prisma.piInvoice.update({
+      where: { id: piId },
+      data: {
+        deliveryTerm: data.methodOfDispatch,
+        containerType: data.shipmentType,
+        totalBoxes: data.totalBoxes,
+        totalWeight: data.totalGrossWeight,
+        totalVolume: data.totalVolume,
+        requiredContainers: data.totalContainers,
+        updatedBy: userId,
+      },
+    });
+  }
+
+  // Delete Operations
+  static async findPackingRecordForDelete(id, companyId) {
+    let packingRecord = await prisma.productPackagingSteps.findFirst({
+      where: {
+        id: parseInt(id),
+        piInvoice: {
+          companyId,
+        },
+      },
+    });
+
+    if (!packingRecord) {
+      packingRecord = await prisma.productPackagingSteps.findFirst({
+        where: {
+          piInvoiceId: parseInt(id),
+          stepType: 'PACKING',
+          isActive: true,
+          piInvoice: {
+            companyId,
+          },
+        },
+      });
+    }
+
+    return packingRecord;
+  }
+
+  static async deletePackingRecord(id) {
+    return await prisma.productPackagingSteps.delete({
+      where: { id },
+    });
+  }
+
+  // PDF Generation Support
+  static async getPackingListForPDF(id, companyId) {
+    let packingListEntry = await prisma.productPackagingSteps.findFirst({
+      where: {
+        id: parseInt(id),
+        stepType: 'PACKING',
+        isActive: true,
+        piInvoice: {
+          companyId,
+        },
+      },
+      include: {
+        piInvoice: {
+          include: {
+            products: {
+              include: {
+                product: true,
+                category: true,
+              },
+            },
+            party: true,
+            company: true,
+            packagingSteps: {
+              where: { isActive: true },
+            },
+          },
+        },
+      },
+    });
+
+    if (!packingListEntry) {
+      const piInvoice = await prisma.piInvoice.findFirst({
+        where: {
+          id: parseInt(id),
+          companyId,
+        },
+        include: {
+          products: {
+            include: {
+              product: true,
+              category: true,
+            },
+          },
+          party: true,
+          company: true,
+          packagingSteps: {
+            where: {
+              stepType: 'PACKING',
+              isActive: true,
+            },
+          },
+        },
+      });
+
+      if (piInvoice) {
+        packingListEntry = {
+          piInvoice: piInvoice,
+        };
+      }
+    }
+
+    return packingListEntry;
+  }
+
+  static groupPackagingStepsByProduct(packagingSteps) {
+    const stepsByProduct = {};
+    if (packagingSteps) {
+      packagingSteps.forEach((step) => {
+        if (step.productId) {
+          if (!stepsByProduct[step.productId]) {
+            stepsByProduct[step.productId] = [];
+          }
+          stepsByProduct[step.productId].push(step);
+        }
+      });
+    }
+    return stepsByProduct;
+  }
+
+  static addContainerInfoToProducts(products, packingListData, packagingSteps) {
+    if (products) {
+      products.forEach((product, index) => {
+        // First try to get from packingListData.containers
+        if (
+          packingListData.containers &&
+          packingListData.containers.length > 0
+        ) {
+          const container =
+            packingListData.containers[index] ||
+            packingListData.containers[0] ||
+            {};
+          product.containerNumber = container.containerNumber || '';
+          product.sealNumber = container.sealNumber || '';
+          product.sealType = container.sealType || '';
+        } else {
+          // Fallback: try to get from packaging steps
+          const packingStep = packagingSteps?.find(
+            (step) =>
+              step.productId === product.productId ||
+              step.stepType === 'PACKING'
+          );
+          product.containerNumber = packingStep?.containerNumber || '';
+          product.sealNumber = packingStep?.sealNumber || '';
+          product.sealType = packingStep?.sealType || '';
+        }
+      });
+    }
+    return products;
   }
 }
-
-export default PackagingStepsService;

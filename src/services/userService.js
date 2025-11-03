@@ -544,15 +544,16 @@ const getSuperAdminDashboardStats = async () => {
   const cached = cacheManager.get(cacheKey);
   if (cached) return cached;
 
-  const [parties, products, piInvoices, orders, vgmDocuments, companies, users] =
+  const [parties, products, piInvoices, orders, vgmDocuments, companies, users, categories] =
     await Promise.all([
       prisma.partyList.count(),
       prisma.product.count(),
       prisma.piInvoice.count(),
       prisma.order.count(),
       prisma.vgmDocument.count(),
-      prisma.company.count(),
+      prisma.companyDetails.count(),
       prisma.user.count({ where: { status: { not: 'DELETED' } } }),
+      prisma.itemCategory.count(),
     ]);
 
   const stats = {
@@ -563,6 +564,7 @@ const getSuperAdminDashboardStats = async () => {
     vgmDocuments,
     companies,
     users,
+    categories,
   };
 
   cacheManager.set(cacheKey, stats, 5 * 60 * 1000); // Cache for 5 minutes
@@ -596,7 +598,7 @@ const getAllDatabaseData = async (options = {}) => {
           },
           orderBy: { createdAt: 'desc' }
         }),
-        prisma.company.findMany({
+        prisma.companyDetails.findMany({
           take: Number(limit),
           skip: (Number(page) - 1) * Number(limit),
           include: {
@@ -615,7 +617,7 @@ const getAllDatabaseData = async (options = {}) => {
           skip: (Number(page) - 1) * Number(limit),
           include: {
             company: { select: { name: true } },
-            createdByUser: { select: { name: true, email: true } }
+            creator: { select: { name: true, email: true } }
           },
           orderBy: { createdAt: 'desc' }
         }),
@@ -624,7 +626,7 @@ const getAllDatabaseData = async (options = {}) => {
           skip: (Number(page) - 1) * Number(limit),
           include: {
             company: { select: { name: true } },
-            createdByUser: { select: { name: true, email: true } },
+            user: { select: { name: true, email: true } },
             category: { select: { name: true } }
           },
           orderBy: { createdAt: 'desc' }
@@ -634,7 +636,7 @@ const getAllDatabaseData = async (options = {}) => {
           skip: (Number(page) - 1) * Number(limit),
           include: {
             company: { select: { name: true } },
-            createdByUser: { select: { name: true, email: true } }
+            creator: { select: { name: true, email: true } }
           },
           orderBy: { createdAt: 'desc' }
         }),
@@ -643,7 +645,7 @@ const getAllDatabaseData = async (options = {}) => {
           skip: (Number(page) - 1) * Number(limit),
           include: {
             company: { select: { name: true } },
-            createdByUser: { select: { name: true, email: true } }
+            creator: { select: { name: true, email: true } }
           },
           orderBy: { createdAt: 'desc' }
         }),
@@ -652,7 +654,7 @@ const getAllDatabaseData = async (options = {}) => {
           skip: (Number(page) - 1) * Number(limit),
           include: {
             company: { select: { name: true } },
-            createdByUser: { select: { name: true, email: true } }
+            creator: { select: { name: true, email: true } }
           },
           orderBy: { createdAt: 'desc' }
         }),
@@ -660,8 +662,8 @@ const getAllDatabaseData = async (options = {}) => {
           take: Number(limit),
           skip: (Number(page) - 1) * Number(limit),
           include: {
-            company: { select: { name: true } },
-            createdByUser: { select: { name: true, email: true } }
+            CompanyDetails: { select: { name: true } },
+            User: { select: { name: true, email: true } }
           },
           orderBy: { createdAt: 'desc' }
         }),
@@ -685,7 +687,7 @@ const getAllDatabaseData = async (options = {}) => {
     // Get counts for pagination
     const counts = await Promise.all([
       prisma.user.count(),
-      prisma.company.count(),
+      prisma.companyDetails.count(),
       prisma.partyList.count(),
       prisma.product.count(),
       prisma.piInvoice.count(),
@@ -755,7 +757,7 @@ const getAllCompanies = async (options = {}) => {
 
   const orderBy = { [sortBy]: sortOrder };
 
-  return await DatabaseUtils.findMany('company', {
+  return await DatabaseUtils.findMany('companyDetails', {
     where,
     include: {
       _count: {
@@ -775,7 +777,7 @@ const getAllCompanies = async (options = {}) => {
 };
 
 const getCompanyDetails = async (companyId) => {
-  const company = await prisma.company.findUnique({
+  const company = await prisma.companyDetails.findUnique({
     where: { id: Number(companyId) },
     include: {
       users: {
@@ -862,7 +864,7 @@ const getTableData = async (tableName, options = {}) => {
         } : {};
         
         [data, count] = await Promise.all([
-          prisma.company.findMany({
+          prisma.companyDetails.findMany({
             where: companyWhere,
             include: {
               _count: { select: { users: true, products: true } }
@@ -871,7 +873,7 @@ const getTableData = async (tableName, options = {}) => {
             skip: (Number(page) - 1) * Number(limit),
             orderBy: { createdAt: 'desc' }
           }),
-          prisma.company.count({ where: companyWhere })
+          prisma.companyDetails.count({ where: companyWhere })
         ]);
         break;
         
