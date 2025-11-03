@@ -104,6 +104,8 @@ const seedPackagingUnits = async () => {
   }
 };
 
+// Sample data creation removed - using real database data
+
 async function main() {
   console.log('🌱 Starting database seeding...');
 
@@ -114,45 +116,43 @@ async function main() {
     },
   });
 
-  if (existingSuperAdmin) {
+  if (!existingSuperAdmin) {
+    // Create Super Admin user
+    const hashedPassword = await bcrypt.hash('admin123', 12);
+
+    const superAdmin = await prisma.user.create({
+      data: {
+        name: 'Super Administrator',
+        email: 'admin@eximex.com',
+        password: hashedPassword,
+        role: 'SUPER_ADMIN',
+        status: 'ACTIVE',
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        status: true,
+        createdAt: true,
+      },
+    });
+
+    console.log('✅ Super Admin created successfully:');
+    console.log('📧 Email:', superAdmin.email);
+    console.log('🔑 Password: admin123');
+    console.log('👤 Role:', superAdmin.role);
+    console.log('📅 Created:', superAdmin.createdAt);
+  } else {
     console.log('✅ Super Admin already exists:', existingSuperAdmin.email);
-    // Still seed packaging units even if admin exists
-    console.log('\n🌱 Seeding packaging units...');
-    await seedPackagingUnits();
-    console.log('\n🎉 Database seeding completed!');
-    return;
   }
-
-  // Create Super Admin user
-  const hashedPassword = await bcrypt.hash('admin123', 12);
-
-  const superAdmin = await prisma.user.create({
-    data: {
-      name: 'Super Administrator',
-      email: 'admin@eximex.com',
-      password: hashedPassword,
-      role: 'SUPER_ADMIN',
-      status: 'ACTIVE',
-    },
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      role: true,
-      status: true,
-      createdAt: true,
-    },
-  });
-
-  console.log('✅ Super Admin created successfully:');
-  console.log('📧 Email:', superAdmin.email);
-  console.log('🔑 Password: admin123');
-  console.log('👤 Role:', superAdmin.role);
-  console.log('📅 Created:', superAdmin.createdAt);
 
   // Seed packaging units
   console.log('\n🌱 Seeding packaging units...');
   await seedPackagingUnits();
+
+  // Skip sample data creation - use real database data
+  console.log('\n✅ Using existing database data');
 
   console.log('\n🎉 Database seeding completed!');
 }
