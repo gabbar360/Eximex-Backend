@@ -1,21 +1,6 @@
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { ApiResponse } from '../utils/ApiResponse.js';
 import { CompanyService } from '../services/companyService.js';
-import multer from 'multer';
-
-const memoryStorage = multer.memoryStorage();
-
-const upload = multer({
-  storage: memoryStorage,
-  limits: { fileSize: 1 * 1024 * 1024 }, // 1MB
-  fileFilter: (req, file, cb) => {
-    // Accept image only
-    if (!file.mimetype.startsWith('image/')) {
-      return cb(new Error('Only image files are allowed!'), false);
-    }
-    cb(null, true);
-  },
-});
 
 export const createCompany = asyncHandler(async (req, res) => {
   const company = await CompanyService.createCompany(
