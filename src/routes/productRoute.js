@@ -6,11 +6,6 @@ import {
   updateProduct,
   deleteProduct,
   getProductStats,
-  getAllProductVariants,
-  getProductVariantById,
-  createProductVariant,
-  updateProductVariant,
-  deleteProductVariant,
 } from '../controller/productController.js';
 import { validate } from '../middleware/validate.js';
 import { productValidation } from '../validations/product.validation.js';
@@ -74,41 +69,5 @@ router.delete(
 );
 
 router.get('/stats/products', verifyJWT, requireCompany, getProductStats);
-
-// Product Variant routes
-router.get(
-  '/get-all/product-variants',
-  verifyJWT,
-  requireCompany,
-  getAllProductVariants
-);
-
-router.get(
-  '/get/product-variant/:id',
-  verifyJWT,
-  requireCompany,
-  getProductVariantById
-);
-
-router.post(
-  '/create/product-variant',
-  verifyJWT,
-  requireCompany,
-  createProductVariant
-);
-
-router.put(
-  '/update/product-variant/:id',
-  verifyJWT,
-  requireCompany,
-  updateProductVariant
-);
-
-router.delete(
-  '/delete/product-variant/:id',
-  verifyJWT,
-  requireCompany,
-  deleteProductVariant
-);
 
 export default router;
