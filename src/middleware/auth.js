@@ -20,7 +20,15 @@ export const verifyJWT = asyncHandler(async (req, res, next) => {
         id: true,
         email: true,
         name: true,
-        role: true,
+        roleId: true,
+        role: {
+          select: {
+            id: true,
+            name: true,
+            displayName: true,
+            permissions: true
+          }
+        },
         status: true,
         isBlocked: true,
         companyId: true,
@@ -85,9 +93,27 @@ export const verifyRefreshToken = asyncHandler(async (req, res, next) => {
   }
 });
 
-export const authorizeRoles = (...roles) => {
+export const authorizeRoles = (...roleNames) => {
   return (req, res, next) => {
-    if (!roles.includes(req.user?.role)) {
+    if (!req.user?.role || !roleNames.includes(req.user.role.name)) {
+      return next(
+        new ApiError(403, "You don't have permission to access this resource")
+      );
+    }
+    next();
+  };
+};
+
+// New permission-based authorization
+export const authorizePermissions = (...permissions) => {
+  return (req, res, next) => {
+    const userPermissions = req.user?.role?.permissions || {};
+    
+    const hasPermission = permissions.some(permission => 
+      userPermissions[permission] === true
+    );
+    
+    if (!hasPermission) {
       return next(
         new ApiError(403, "You don't have permission to access this resource")
       );
@@ -108,7 +134,7 @@ export const checkCompanyExists = asyncHandler(async (req, res, next) => {
 
 export const requireCompany = asyncHandler(async (req, res, next) => {
   // Super Admin doesn't need company requirement
-  if (req.user?.role === 'SUPER_ADMIN') {
+  if (req.user?.role?.name === 'SUPER_ADMIN') {
     return next();
   }
   
@@ -138,12 +164,12 @@ export const checkDataOwnership = (entityType) => {
     const { user } = req;
 
     // Admins can access all company data
-    if (user.role === 'ADMIN' || user.role === 'SUPER_ADMIN') {
+    if (user.role?.name === 'ADMIN' || user.role?.name === 'SUPER_ADMIN') {
       return next();
     }
 
     // Staff can only access their own data
-    if (user.role === 'STAFF') {
+    if (user.role?.name === 'STAFF') {
       const entityId = req.params.id;
       if (!entityId) return next();
 
@@ -173,7 +199,7 @@ export const filterByRole = asyncHandler(async (req, res, next) => {
   const { user } = req;
 
   // Add role-based filters
-  if (user.role === 'STAFF') {
+  if (user.role?.name === 'STAFF') {
     req.roleFilter = { createdBy: user.id };
   } else {
     req.roleFilter = {}; // Admins see all company data
@@ -188,7 +214,7 @@ export const validateStaffManagement = asyncHandler(async (req, res, next) => {
   const targetUserId = req.params.id;
 
   // Only admins can manage staff
-  if (user.role !== 'ADMIN' && user.role !== 'SUPER_ADMIN') {
+  if (user.role?.name !== 'ADMIN' && user.role?.name !== 'SUPER_ADMIN') {
     throw new ApiError(403, 'Only admins can manage staff accounts');
   }
 
@@ -206,7 +232,7 @@ export const validateStaffManagement = asyncHandler(async (req, res, next) => {
     }
 
     // Prevent admins from modifying super admins
-    if (targetUser.role === 'SUPER_ADMIN' && user.role !== 'SUPER_ADMIN') {
+    if (targetUser.role?.name === 'SUPER_ADMIN' && user.role?.name !== 'SUPER_ADMIN') {
       throw new ApiError(403, 'Cannot modify super admin accounts');
     }
   }

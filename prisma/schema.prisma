@@ -19,7 +19,8 @@ model User {
   isEmailVerified       Boolean                 @default(false) @map("is_email_verified")
   resetPasswordToken     String?                 @map("reset_password_token")
   resetPasswordTokenExpiry DateTime?            @map("reset_password_token_expiry")
-  role                  UserRole                @default(ADMIN)
+  roleId                Int?                    @map("role_id")
+  role                  Role?                   @relation(fields: [roleId], references: [id])
   status                UserStatus              @default(ACTIVE)
   isBlocked             Boolean                 @default(false) @map("is_blocked")
   lastLogin             DateTime?               @map("last_login")
@@ -260,11 +261,21 @@ enum UserStatus {
   DELETED
 }
 
-enum UserRole {
-  SUPER_ADMIN
-  ADMINISTRATOR
-  ADMIN
-  STAFF
+model Role {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  displayName String   @map("display_name")
+  description String?
+  permissions Json?    // Store permissions as JSON
+  isActive    Boolean  @default(true) @map("is_active")
+  isSystem    Boolean  @default(false) @map("is_system") // System roles cannot be deleted
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  
+  // Relations
+  users User[]
+  
+  @@map("roles")
 }
 
 model ActivityLog {

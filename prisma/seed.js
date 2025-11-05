@@ -109,10 +109,33 @@ const seedPackagingUnits = async () => {
 async function main() {
   console.log('🌱 Starting database seeding...');
 
-  // Check if super admin already exists
-  const existingSuperAdmin = await prisma.user.findFirst({
+  // Create SUPER_ADMIN role first
+  const superAdminRole = await prisma.role.upsert({
+    where: { name: 'SUPER_ADMIN' },
+    update: {},
+    create: {
+      name: 'SUPER_ADMIN',
+      displayName: 'Super Administrator',
+      description: 'Full system access across all companies',
+      isSystem: true,
+      permissions: {
+        canManageRoles: true,
+        canManageUsers: true,
+        canManageCompanies: true,
+        canViewAllData: true,
+        canManageStaff: true,
+        canReassignData: true,
+        canViewActivityLogs: true,
+        canManageSystem: true
+      }
+    }
+  });
+  console.log('✅ SUPER_ADMIN role ready');
+
+  // Check if super admin user already exists
+  const existingSuperAdmin = await prisma.user.findUnique({
     where: {
-      role: 'SUPER_ADMIN',
+      email: 'admin@eximex.com',
     },
   });
 
@@ -125,14 +148,14 @@ async function main() {
         name: 'Super Administrator',
         email: 'admin@eximex.com',
         password: hashedPassword,
-        role: 'SUPER_ADMIN',
+        roleId: superAdminRole.id,
         status: 'ACTIVE',
       },
       select: {
         id: true,
         name: true,
         email: true,
-        role: true,
+        roleId: true,
         status: true,
         createdAt: true,
       },
@@ -141,10 +164,19 @@ async function main() {
     console.log('✅ Super Admin created successfully:');
     console.log('📧 Email:', superAdmin.email);
     console.log('🔑 Password: admin123');
-    console.log('👤 Role:', superAdmin.role);
+    console.log('👤 Role ID:', superAdmin.roleId);
     console.log('📅 Created:', superAdmin.createdAt);
   } else {
-    console.log('✅ Super Admin already exists:', existingSuperAdmin.email);
+    // Update existing user's roleId if needed
+    if (!existingSuperAdmin.roleId) {
+      await prisma.user.update({
+        where: { id: existingSuperAdmin.id },
+        data: { roleId: superAdminRole.id }
+      });
+      console.log('✅ Super Admin role updated for existing user');
+    } else {
+      console.log('✅ Super Admin already exists:', existingSuperAdmin.email);
+    }
   }
 
   // Seed packaging units
