@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Bill of Lading</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            font-size: 9px;
+            line-height: 1.1;
+            color: #000;
+            background: white;
+        }
+        
+        .bl-container {
+            width: 210mm;
+            min-height: 297mm;
+            margin: 0 auto;
+            padding: 10mm;
+            background: white;
+        }
+        
+        @media print {
+            .bl-container {
+                margin: 0;
+                padding: 5mm;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="bl-container">
+        <!-- Header with Logo and Title -->
+        <div style="display: flex; align-items: center; margin-bottom: 20px; border-bottom: 3px solid #000; padding-bottom: 15px;">
+            <div style="width: 100px; margin-right: 20px;">
+                <% if (logoBase64) { %>
+                    <img src="data:image/png;base64,<%= logoBase64 %>" alt="Company Logo" style="max-width: 100%; max-height: 80px; object-fit: contain;">
+                <% } %>
+            </div>
+            <div style="flex: 1; text-align: center;">
+                <h1 style="font-size: 24px; font-weight: bold; margin: 0;">BILL OF LADING</h1>
+                <div style="font-size: 12px; margin-top: 5px;">COMBINED TRANSPORT DOCUMENT OR PORT TO PORT SHIPMENT</div>
+            </div>
+        </div>
+
+        <!-- Top Section Grid -->
+        <table style="width: 100%; border-collapse: collapse; margin-bottom: 0;">
+            <tr>
+                <td style="width: 50%; border: 2px solid #000; padding: 10px; vertical-align: top;">
+                    <div style="font-weight: bold; font-size: 11px; margin-bottom: 8px;">SHIPPER( MAX 5 LINES)</div>
+                    <div style="font-size: 10px; line-height: 1.3;">
+                        <%= company.name %><br>
+                        <%= company.address %>
+                    </div>
+                </td>
+                <td style="width: 50%; border: 2px solid #000; border-left: none; padding: 10px; vertical-align: top; text-align: right;">
+                    <div style="font-weight: bold; font-size: 14px; font-style: italic;">BOOKING NO:</div>
+                    <div style="font-size: 16px; font-weight: bold; margin-top: 5px;"><%= bl.blNumber %></div>
+                </td>
+            </tr>
+        </table>
+
+        <table style="width: 100%; border-collapse: collapse; margin-bottom: 0;">
+            <tr>
+                <td style="width: 100%; border: 2px solid #000; border-top: none; padding: 10px; vertical-align: top;">
+                    <div style="font-weight: bold; font-size: 11px; margin-bottom: 8px;">Consignee:</div>
+                    <div style="font-size: 10px; line-height: 1.3;">
+                        <%= piInvoice.partyName || (piInvoice.party && piInvoice.party.companyName) || '' %><br>
+                        <%= piInvoice.address || (piInvoice.party && piInvoice.party.address) || '' %><br>
+                        <% if (piInvoice.phone || (piInvoice.party && piInvoice.party.phone)) { %>PHONE: <%= piInvoice.phone || piInvoice.party.phone %><br><% } %>
+                        <% if (piInvoice.email || (piInvoice.party && piInvoice.party.email)) { %>EMAIL: <%= piInvoice.email || piInvoice.party.email %><% } %>
+                    </div>
+                </td>
+            </tr>
+        </table>
+
+        <table style="width: 100%; border-collapse: collapse; margin-bottom: 0;">
+            <tr>
+                <td style="width: 50%; border: 2px solid #000; border-top: none; padding: 10px; vertical-align: top;">
+                    <div style="font-weight: bold; font-size: 11px; margin-bottom: 8px;">Notify Party:</div>
+                    <div style="font-size: 10px; line-height: 1.3;">
+                        <%= piInvoice.partyName || (piInvoice.party && piInvoice.party.companyName) || '' %><br>
+                        <%= piInvoice.address || (piInvoice.party && piInvoice.party.address) || '' %><br>
+                        <% if (piInvoice.phone || (piInvoice.party && piInvoice.party.phone)) { %>PHONE: <%= piInvoice.phone || piInvoice.party.phone %><br><% } %>
+                        <% if (piInvoice.email || (piInvoice.party && piInvoice.party.email)) { %>EMAIL: <%= piInvoice.email || piInvoice.party.email %><% } %>
+                    </div>
+                </td>
+                <td style="width: 50%; border: 2px solid #000; border-top: none; border-left: none; padding: 10px; vertical-align: top;">
+                    <div style="font-weight: bold; font-size: 11px; margin-bottom: 8px;">2.Notify Party: ( MAX 5 LINES)</div>
+                </td>
+            </tr>
+        </table>
+
+        <table style="width: 100%; border-collapse: collapse; margin-bottom: 0;">
+            <tr>
+                <td style="width: 50%; border: 2px solid #000; border-top: none; padding: 10px; vertical-align: top;">
+                    <div style="font-weight: bold; font-size: 11px; margin-bottom: 8px;">Vessel and Voyage No:</div>
+                    <div style="font-size: 10px; font-weight: bold;">
+                        <% if (piInvoice.packagingSteps && piInvoice.packagingSteps.length > 0 && piInvoice.packagingSteps[0].notes && piInvoice.packagingSteps[0].notes.vesselVoyageNo) { %>
+                            <%= piInvoice.packagingSteps[0].notes.vesselVoyageNo %>
+                        <% } else { %>
+                            <%= bl.vesselName %> VOY <%= bl.voyageNumber %>
+                        <% } %>
+                    </div>
+                </td>
+                <td style="width: 50%; border: 2px solid #000; border-top: none; border-left: none; padding: 10px; vertical-align: top;">
+                    <div style="font-weight: bold; font-size: 11px; margin-bottom: 8px;">Place of Receipt:</div>
+                    <div style="font-size: 10px;">
+                        <%= piInvoice.placeOfReceipt %>
+                    </div>
+                </td>
+            </tr>
+        </table>
+
+        <table style="width: 100%; border-collapse: collapse; margin-bottom: 15px;">
+            <tr>
+                <td style="width: 33.33%; border: 2px solid #000; border-top: none; padding: 10px; vertical-align: top;">
+                    <div style="font-weight: bold; font-size: 11px; margin-bottom: 8px;">Port of Loading:</div>
+                    <div style="font-size: 10px; font-weight: bold;">
+                        <%= piInvoice.portOfLoading %>
+                    </div>
+                </td>
+                <td style="width: 33.33%; border: 2px solid #000; border-top: none; border-left: none; padding: 10px; vertical-align: top;">
+                    <div style="font-weight: bold; font-size: 11px; margin-bottom: 8px;">Port of Discharge:</div>
+                    <div style="font-size: 10px; font-weight: bold;">
+                        <%= piInvoice.portOfDischarge %>
+                    </div>
+                </td>
+                <td style="width: 33.33%; border: 2px solid #000; border-top: none; border-left: none; padding: 10px; vertical-align: top;">
+                    <div style="font-weight: bold; font-size: 11px; margin-bottom: 8px;">Place of Delivery:</div>
+                    <div style="font-size: 10px; font-weight: bold;">
+                        <%= piInvoice.finalDestination %>
+                    </div>
+                </td>
+            </tr>
+        </table>
+
+        <!-- Main Cargo Details Table -->
+        <table style="width: 100%; border-collapse: collapse; margin-bottom: 0;">
+            <thead>
+                <tr>
+                    <th style="width: 15%; border: 2px solid #000; padding: 8px; background-color: #f0f0f0; font-size: 10px; font-weight: bold; text-align: center;">Container Nos. Marks & Numbers</th>
+                    <th style="width: 25%; border: 2px solid #000; border-left: none; padding: 8px; background-color: #f0f0f0; font-size: 10px; font-weight: bold; text-align: center;">Number and Kind of Packages</th>
+                    <th style="width: 45%; border: 2px solid #000; border-left: none; padding: 8px; background-color: #f0f0f0; font-size: 10px; font-weight: bold; text-align: center;">Description of Goods</th>
+                    <th style="width: 15%; border: 2px solid #000; border-left: none; padding: 8px; background-color: #f0f0f0; font-size: 10px; font-weight: bold; text-align: center;">Gross Weight</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td style="border: 2px solid #000; border-top: none; padding: 10px; vertical-align: top; font-size: 9px;">
+                        <%= bl.marksAndNumbers %>
+                    </td>
+                    
+                    <td style="border: 2px solid #000; border-top: none; border-left: none; padding: 10px; vertical-align: top; font-size: 9px;">
+                        <strong>TOTAL</strong><br>
+                        <% const totalPallets = order.packagingSteps ? order.packagingSteps.reduce((sum, step) => sum + (parseFloat(step.quantity) || 0), 0) : piInvoice.totalPallets || 0; %>
+                        <% const containerCount = order.packagingSteps ? order.packagingSteps.length : 1; %>
+                        <% const containerSize = piInvoice.containerType || "20' FCL"; %>
+                        <%= totalPallets %> PALLETS<br>
+                        <%= containerCount.toString().padStart(2, '0') %>X <%= containerSize %> CONTAINER
+                    </td>
+                    
+                    <td style="border: 2px solid #000; border-top: none; border-left: none; padding: 10px; vertical-align: top; font-size: 9px; line-height: 1.2;">
+                        <strong><%= containerCount.toString().padStart(2, '0') %>X <%= containerSize %> CONTAINER</strong><br>
+                        <strong>SAID TO CONTAIN</strong><br>
+                        <% if (piInvoice.products && piInvoice.products.length > 0) { %>
+                            <% const firstProduct = piInvoice.products[0]; %>
+                            <% if (firstProduct.hsCode) { %>HS CODE : <%= firstProduct.hsCode %><br><% } %>
+                        <% } %>
+                        <%= bl.descriptionOfGoods %><br>
+                        <% if (piInvoice.products && piInvoice.products.length > 0) { %>
+                            <% piInvoice.products.forEach(product => { %>
+                                <%= product.productName %><br>
+                            <% }) %>
+                        <% } %>
+                        <% if (piInvoice.piNumber) { %>
+                            INVOICE NO. <%= piInvoice.piNumber %> DT. <%= new Date(piInvoice.invoiceDate).toLocaleDateString('en-GB') %><br>
+                        <% } %>
+                        <% if (order.wayBillNumber) { %>
+                            S/BILL NO: <%= order.wayBillNumber %> DT.: <%= new Date().toLocaleDateString('en-GB') %>.<br>
+                        <% } else { %>
+                            S/BILL NO:.XXXXXX DT.: XXXXXXX .<br>
+                        <% } %>
+                        <strong>TOTAL GROSS WEIGHT:</strong><br>
+                        <%= bl.grossWeight %> KGS<br>
+                        <strong>TOTAL NET WEIGHT:</strong> <%= bl.netWeight || (parseFloat(bl.grossWeight) - 500).toFixed(2) %> KGS.<br>
+                        <% if (piInvoice.finalDestination) { %>
+                            <strong>DOOR DELIVERY ADDRESS :</strong> <%= piInvoice.finalDestination %><br>
+                        <% } %>
+                        ALL OTHER DETAILS AS PER INVOICE AND PACKING LIST
+                    </td>
+                    
+                    <td style="border: 2px solid #000; border-top: none; border-left: none; padding: 10px; vertical-align: top; text-align: center; font-size: 11px;">
+                        <strong><%= bl.grossWeight %></strong><br>
+                        <strong>KGS</strong>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- Container Details Table -->
+        <table style="width: 100%; border-collapse: collapse; margin-top: 15px; margin-bottom: 20px;">
+            <thead>
+                <tr style="background-color: #90EE90;">
+                    <th style="border: 2px solid #000; padding: 6px; font-size: 9px; font-weight: bold; text-align: center;">Container No.</th>
+                    <th style="border: 2px solid #000; border-left: none; padding: 6px; font-size: 9px; font-weight: bold; text-align: center;">Seal No.</th>
+                    <th style="border: 2px solid #000; border-left: none; padding: 6px; font-size: 9px; font-weight: bold; text-align: center;">Unit</th>
+                    <th style="border: 2px solid #000; border-left: none; padding: 6px; font-size: 9px; font-weight: bold; text-align: center;">Quantity</th>
+                    <th style="border: 2px solid #000; border-left: none; padding: 6px; font-size: 9px; font-weight: bold; text-align: center;">Gross wt (Kgs)</th>
+                    <th style="border: 2px solid #000; border-left: none; padding: 6px; font-size: 9px; font-weight: bold; text-align: center;">Nett wt (Kgs)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% if (piInvoice.packagingSteps && piInvoice.packagingSteps.length > 0) { %>
+                    <% piInvoice.packagingSteps.forEach(step => { %>
+                        <tr>
+                            <td style="border: 2px solid #000; border-top: none; padding: 6px; font-size: 9px; text-align: center;"><%= step.containerNumber %></td>
+                            <td style="border: 2px solid #000; border-top: none; border-left: none; padding: 6px; font-size: 9px; text-align: center;"><%= step.sealNumber || '' %></td>
+                            <td style="border: 2px solid #000; border-top: none; border-left: none; padding: 6px; font-size: 9px; text-align: center;"><%= step.material || 'BOXES' %></td>
+                            <td style="border: 2px solid #000; border-top: none; border-left: none; padding: 6px; font-size: 9px; text-align: center;"><%= step.quantity || '' %></td>
+                            <td style="border: 2px solid #000; border-top: none; border-left: none; padding: 6px; font-size: 9px; text-align: center;"><%= step.weight ? parseFloat(step.weight).toFixed(2) : '' %></td>
+                            <td style="border: 2px solid #000; border-top: none; border-left: none; padding: 6px; font-size: 9px; text-align: center;"><%= step.weight ? (parseFloat(step.weight) - 500).toFixed(2) : '' %></td>
+                        </tr>
+                    <% }) %>
+                <% } else { %>
+                    <tr>
+                        <td colspan="6" style="border: 2px solid #000; border-top: none; padding: 10px; font-size: 9px; text-align: center; font-style: italic;">No container details available</td>
+                    </tr>
+                <% } %>
+            </tbody>
+        </table>
+
+    </div>
+</body>
+</html>

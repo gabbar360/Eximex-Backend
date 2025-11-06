@@ -9,6 +9,7 @@ import {
   deleteOrder,
   createOrderFromPi,
   downloadOrderInvoicePdf,
+  downloadBLDraftPdf,
 } from '../controller/orderController.js';
 import { verifyJWT, requireCompany, filterByRole } from '../middleware/auth.js';
 import {
@@ -71,6 +72,9 @@ router.patch(
 router.post('/from-pi/:piId', createOrderFromPi);
 
 // Download order invoice PDF
-router.get('/:id/download-invoice-pdf', downloadOrderInvoicePdf);
+router.get('/orders/:id/download-invoice-pdf', downloadOrderInvoicePdf);
+
+// Download BL draft PDF
+router.get('/orders/:id/bl-draft-pdf', downloadBLDraftPdf);
 
 export default router;

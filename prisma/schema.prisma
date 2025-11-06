@@ -44,6 +44,7 @@ model User {
   updatedPurchaseOrders PurchaseOrder[]         @relation("PoUpdater")
   activityLogs          ActivityLog[]
   payments              Payment[]
+
 }
 
 model CompanyDetails {
@@ -79,6 +80,7 @@ model CompanyDetails {
   purchaseOrders  PurchaseOrder[]
   activityLogs    ActivityLog[]
   payments        Payment[]
+
 }
 
 model PartyList {
@@ -583,12 +585,17 @@ model Order {
   // shipping details
   wayBillNumber String?        @map("way_bill_number")
   truckNumber   String?        @map("truck_number")
+  
+  // BL Details (optional - can be auto-generated from other data)
+  blNumber      String?        @map("bl_number")
+  
   // Relations
   company          CompanyDetails          @relation(fields: [companyId], references: [id])
   piInvoice        PiInvoice               @relation(fields: [piInvoiceId], references: [id])
   creator          User?                   @relation("OrderCreator", fields: [createdBy], references: [id])
   updater          User?                   @relation("OrderUpdater", fields: [updatedBy], references: [id])
   packagingSteps   ProductPackagingSteps[] @relation("OrderPackagingSteps")
+
 
   @@map("orders")
 }

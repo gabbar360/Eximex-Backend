@@ -138,3 +138,23 @@ export const downloadOrderInvoicePdf = asyncHandler(async (req, res) => {
   res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
   res.send(pdfBuffer);
 });
+
+export const downloadBLDraftPdf = asyncHandler(async (req, res) => {
+  const order = await OrderService.getOrderById(
+    parseInt(req.params.id),
+    req.user.companyId
+  );
+
+  const pdfBuffer = await OrderService.generateBLDraftPdf(
+    parseInt(req.params.id),
+    req.user.companyId
+  );
+
+  const orderNumber = order.orderNumber.replace(/[^a-zA-Z0-9]/g, '-');
+  const date = new Date().toISOString().split('T')[0];
+  const filename = `BL-Draft-${orderNumber}-${date}.pdf`;
+
+  res.setHeader('Content-Type', 'application/pdf');
+  res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+  res.send(pdfBuffer);
+});

@@ -106,13 +106,15 @@ const calculatePackingBreakdown = (product, quantity, unit) => {
   };
 };
 
-const calculateTotals = (products, charges = {}, containerType = null) => {
+const calculateTotals = (products, charges = {}, containerType = null, frontendGrossWeight = null) => {
   const subtotal = products.reduce((sum, product) => sum + product.total, 0);
   const totalWeight = products.reduce(
     (sum, product) => sum + (product.totalWeight || 0),
     0
   );
-  const totalGrossWeight = products.reduce((sum, product) => {
+  
+  // Use frontend calculated gross weight if provided, otherwise calculate
+  const totalGrossWeight = frontendGrossWeight !== null ? frontendGrossWeight : products.reduce((sum, product) => {
     if (!product.productId) return sum;
     
     let boxes = 0;
@@ -200,6 +202,9 @@ const createPiInvoice = async (data, userId, req = {}) => {
   if (!companyId) {
     throw new ApiError(400, 'Company ID is required');
   }
+  
+  // Log the received gross weight from frontend
+  console.log('Frontend totalGrossWeight received:', piData.totalGrossWeight);
 
   const piNumber = await generatePiNumber();
 
@@ -235,7 +240,8 @@ const createPiInvoice = async (data, userId, req = {}) => {
   const totals = calculateTotals(
     productsWithTotals,
     piData.charges,
-    piData.containerType
+    piData.containerType,
+    piData.totalGrossWeight
   );
 
   // Ensure numberOfContainers is never 0
@@ -394,6 +400,9 @@ const updatePiInvoice = async (id, data, userId, companyId, req = {}) => {
 
   // Separate products and exclude companyId from update data
   const { products, companyId: _, ...piData } = data;
+  
+  // Log the received gross weight from frontend
+  console.log('Frontend totalGrossWeight received for update:', piData.totalGrossWeight);
 
   try {
     const updatedPi = await prisma.$transaction(async (tx) => {
@@ -451,7 +460,8 @@ const updatePiInvoice = async (id, data, userId, companyId, req = {}) => {
       const totals = calculateTotals(
         productsForCalculation,
         piData.charges || existingPi.charges || {},
-        containerType
+        containerType,
+        piData.totalGrossWeight
       );
 
       // Ensure numberOfContainers is never 0
@@ -619,7 +629,7 @@ const addPiProduct = async (piInvoiceId, productData, companyId) => {
       where: { piInvoiceId },
     });
 
-    const totals = calculateTotals(allProducts, piInvoice.charges);
+    const totals = calculateTotals(allProducts, piInvoice.charges, null, null);
 
     await tx.piInvoice.update({
       where: { id: piInvoiceId },
@@ -659,7 +669,7 @@ const updatePiProduct = async (
       where: { piInvoiceId },
     });
 
-    const totals = calculateTotals(allProducts, piInvoice.charges);
+    const totals = calculateTotals(allProducts, piInvoice.charges, null, null);
 
     await tx.piInvoice.update({
       where: { id: piInvoiceId },
@@ -690,7 +700,7 @@ const deletePiProduct = async (piInvoiceId, productId, companyId) => {
       where: { piInvoiceId },
     });
 
-    const totals = calculateTotals(allProducts, piInvoice.charges);
+    const totals = calculateTotals(allProducts, piInvoice.charges, null, null);
 
     await tx.piInvoice.update({
       where: { id: piInvoiceId },
