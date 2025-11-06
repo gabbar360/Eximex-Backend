@@ -496,4 +496,53 @@ export class OrderService {
 
     return pdfBuffer;
   }
+
+  static async generateBLDraftPdf(orderId, companyId) {
+    const order = await this.getOrderById(orderId, companyId);
+
+    const templatePath = join(__dirname, '../views/bl-document.ejs');
+    const htmlContent = await ejs.renderFile(templatePath, {
+      order: order,
+      company: order.company,
+      piInvoice: order.piInvoice,
+      bl: {
+        blNumber: `BL-${order.orderNumber}-DRAFT`,
+        vesselName: order.vesselVoyageInfo || 'TBD',
+        voyageNumber: order.bookingNumber || 'TBD',
+        marksAndNumbers: order.containerNumber || 'TBD'
+      },
+      logoBase64: null
+    });
+
+    const browser = await puppeteer.launch({
+      headless: true,
+      args: ['--no-sandbox', '--disable-setuid-sandbox'],
+    });
+    const page = await browser.newPage();
+
+    await page.setViewport({ width: 1200, height: 800 });
+
+    await page.setContent(htmlContent, {
+      waitUntil: 'networkidle0',
+      timeout: 30000,
+    });
+
+    const pdfBuffer = await page.pdf({
+      format: 'A4',
+      printBackground: true,
+      margin: {
+        top: '15mm',
+        right: '10mm',
+        bottom: '15mm',
+        left: '10mm',
+      },
+      displayHeaderFooter: false,
+      preferCSSPageSize: true,
+      scale: 0.8,
+    });
+
+    await browser.close();
+
+    return pdfBuffer;
+  }
 }
