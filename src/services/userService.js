@@ -278,12 +278,12 @@ const getUserStats = async (companyId = null) => {
     DatabaseUtils.count('user', { ...baseWhere, status: 'ACTIVE' }),
     DatabaseUtils.count('user', {
       ...baseWhere,
-      role: 'STAFF',
+      role: { name: 'STAFF' },
       status: { not: 'DELETED' },
     }),
     DatabaseUtils.count('user', {
       ...baseWhere,
-      role: 'ADMIN',
+      role: { name: 'ADMIN' },
       status: { not: 'DELETED' },
     }),
   ]);

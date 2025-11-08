@@ -21,6 +21,7 @@ const updateOrder = {
     bookingDate: Joi.date().optional(),
     wayBillNumber: Joi.string().optional(),
     truckNumber: Joi.string().optional(),
+    blNumber: Joi.string().optional(),
     orderStatus: Joi.string()
       .valid(
         'pending',

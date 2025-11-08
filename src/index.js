@@ -14,8 +14,10 @@ import { prisma } from './config/dbConfig.js';
 import { logger } from './config/logger.js';
 // import { generalLimiter } from './middleware/rateLimiter.js';
 import { errorHandler, notFound } from './middleware/errorHandler.js';
+import socketManager from './socket/socketManager.js';
+import { createServer } from 'http';
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8000;
 
 // Trust proxy for deployment platforms like Render, Heroku, etc.
 app.set('trust proxy', 1);
@@ -128,9 +130,29 @@ const startServer = async () => {
     app.use(notFound);
     app.use(errorHandler);
 
-    app.listen(PORT, () => {
-      logger.info(`🚀 Server is running at: http://localhost:${PORT}`);
-      logger.info(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
+    // Create HTTP server
+    const server = createServer(app);
+    httpServer = server; // Store reference for graceful shutdown
+    
+    // Start server first
+    server.listen(PORT, () => {
+      logger.info(`🚀 Server running on port ${PORT}`);
+      
+      // Initialize Socket.io after server starts
+      socketManager.initialize(server);
+      logger.info('🔌 Socket.io ready');
+    });
+    
+    // Handle server errors
+    server.on('error', (err) => {
+      if (err.code === 'EADDRINUSE') {
+        logger.error(`❌ Port ${PORT} is already in use`);
+        logger.info('💡 Try: pkill -f "node.*index.js" or use different port');
+        process.exit(1);
+      } else {
+        logger.error('❌ Server error:', err);
+        process.exit(1);
+      }
     });
   } catch (error) {
     logger.error('❌ Failed to start server:', error);
@@ -138,17 +160,26 @@ const startServer = async () => {
   }
 };
 
-// Graceful shutdown
-process.on('SIGTERM', async () => {
-  logger.info('SIGTERM received, shutting down gracefully');
-  await prisma.$disconnect();
-  process.exit(0);
-});
+// Store server reference for graceful shutdown
+let httpServer = null;
 
-process.on('SIGINT', async () => {
-  logger.info('SIGINT received, shutting down gracefully');
+// Graceful shutdown
+const gracefulShutdown = async (signal) => {
+  logger.info(`${signal} received, shutting down gracefully`);
+  
+  if (httpServer) {
+    httpServer.close(() => {
+      logger.info('HTTP server closed');
+    });
+  }
+  
   await prisma.$disconnect();
+  logger.info('Database disconnected');
   process.exit(0);
-});
+};
+
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+process.on('SIGUSR2', () => gracefulShutdown('SIGUSR2')); // For nodemon
 
 startServer();

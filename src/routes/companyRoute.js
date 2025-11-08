@@ -38,6 +38,7 @@ import {
 } from '../controller/companyController.js';
 import { companyValidation } from '../validations/company.validation.js';
 import { uploadLogo, handleMulterError } from '../config/multer.js';
+import { trackActivity } from '../middleware/activityTracker.js';
 
 const router = Router();
 
@@ -50,6 +51,7 @@ router.post(
   uploadLogo,
   handleMulterError,
   validate(companyValidation.create),
+  trackActivity('Company', 'CREATE'),
   createCompany
 );
 router.put(
@@ -58,9 +60,10 @@ router.put(
   uploadLogo,
   handleMulterError,
   validate(companyValidation.update),
+  trackActivity('Company', 'UPDATE'),
   updateCompany
 );
-router.delete('/delete/company/:id', verifyJWT, deleteCompany);
-router.patch('/restore/company/:id', verifyJWT, restoreCompany);
+router.delete('/delete/company/:id', verifyJWT, trackActivity('Company', 'DELETE'), deleteCompany);
+router.patch('/restore/company/:id', verifyJWT, trackActivity('Company', 'UPDATE'), restoreCompany);
 
 export default router;

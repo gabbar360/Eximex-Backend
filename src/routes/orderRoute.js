@@ -18,6 +18,7 @@ import {
   ensureEntityScoping,
 } from '../middleware/dataAccess.js';
 import { ActivityLogService } from '../services/activityLogService.js';
+import { trackOrderActivity } from '../middleware/activityTracker.js';
 import { validate } from '../middleware/validate.js';
 import { orderValidation } from '../validations/order.validation.js';
 
@@ -33,6 +34,7 @@ router.post(
   ensureEntityScoping,
   validate(orderValidation.createOrder),
   ActivityLogService.createActivityLogger('Order'),
+  trackOrderActivity('CREATE'),
   createOrder
 );
 router.get(
@@ -47,12 +49,14 @@ router.put(
   checkEntityOwnership('order'),
   validate(orderValidation.updateOrder),
   ActivityLogService.createActivityLogger('Order'),
+  trackOrderActivity('UPDATE'),
   updateOrder
 );
 router.delete(
   '/delete-order/:id',
   checkEntityOwnership('order'),
   ActivityLogService.createActivityLogger('Order'),
+  trackOrderActivity('DELETE'),
   deleteOrder
 );
 
@@ -60,16 +64,18 @@ router.delete(
 router.patch(
   '/:id/status',
   validate(orderValidation.updateOrderStatus),
+  trackOrderActivity('UPDATE'),
   updateOrderStatus
 );
 router.patch(
   '/:id/payment-status',
   validate(orderValidation.updatePaymentStatus),
+  trackOrderActivity('UPDATE'),
   updatePaymentStatus
 );
 
 // Create order from confirmed PI
-router.post('/from-pi/:piId', createOrderFromPi);
+router.post('/from-pi/:piId', trackOrderActivity('CREATE'), createOrderFromPi);
 
 // Download order invoice PDF
 router.get('/orders/:id/download-invoice-pdf', downloadOrderInvoicePdf);
