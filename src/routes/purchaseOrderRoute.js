@@ -23,6 +23,7 @@ import {
   checkEntityOwnership,
   ensureEntityScoping,
 } from '../middleware/dataAccess.js';
+import { trackActivity } from '../middleware/activityTracker.js';
 
 const router = express.Router();
 
@@ -38,6 +39,7 @@ router.post(
   '/purchase-order',
   ensureEntityScoping,
   validateRequest(createPurchaseOrderSchema),
+  trackActivity('PurchaseOrder', 'CREATE'),
   createPurchaseOrder
 );
 router.get(
@@ -60,11 +62,13 @@ router.put(
   '/purchase-order/:id',
   checkEntityOwnership('purchaseOrder'),
   validateRequest(updatePurchaseOrderSchema),
+  trackActivity('PurchaseOrder', 'UPDATE'),
   updatePurchaseOrder
 );
 router.delete(
   '/purchase-order/:id',
   checkEntityOwnership('purchaseOrder'),
+  trackActivity('PurchaseOrder', 'DELETE'),
   deletePurchaseOrder
 );
 

@@ -33,6 +33,7 @@ import {
   checkDataOwnership,
 } from '../middleware/auth.js';
 import { ActivityLogService } from '../services/activityLogService.js';
+import { trackUserActivity } from '../middleware/activityTracker.js';
 
 const router = Router();
 
@@ -76,6 +77,7 @@ router.post(
   authorizeRoles('ADMIN', 'SUPER_ADMIN'),
   validate(userValidation.createUser),
   ActivityLogService.createActivityLogger('User'),
+  trackUserActivity('CREATE'),
   createUser
 );
 
@@ -86,6 +88,7 @@ router.put(
   // validateStaffManagement,
   validate(userValidation.updateUser),
   ActivityLogService.createActivityLogger('User'),
+  trackUserActivity('UPDATE'),
   updateUser
 );
 
@@ -96,6 +99,7 @@ router.delete(
   validateStaffManagement,
   validate(userValidation.getUser),
   ActivityLogService.createActivityLogger('User'),
+  trackUserActivity('DELETE'),
   deleteUser
 );
 
@@ -158,6 +162,7 @@ router.patch(
   authorizeRoles('SUPER_ADMIN'),
   validate(userValidation.getUser),
   ActivityLogService.createActivityLogger('User'),
+  trackUserActivity('UPDATE'),
   toggleUserBlock
 );
 
@@ -182,6 +187,7 @@ router.patch(
   authorizeRoles('SUPER_ADMIN'),
   validate(userValidation.resetPassword),
   ActivityLogService.createActivityLogger('User'),
+  trackUserActivity('UPDATE'),
   resetUserPassword
 );
 

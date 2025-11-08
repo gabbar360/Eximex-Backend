@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { verifyJWT, authorizeRoles } from '../middleware/auth.js';
+import { trackActivity } from '../middleware/activityTracker.js';
 import {
   getAllRoles,
   createRole,
@@ -13,12 +14,12 @@ const router = Router();
 router.get('/roles', verifyJWT, getAllRoles);
 
 // Create role (Super Admin only)
-router.post('/roles', verifyJWT, authorizeRoles('SUPER_ADMIN'), createRole);
+router.post('/roles', verifyJWT, authorizeRoles('SUPER_ADMIN'), trackActivity('Role', 'CREATE'), createRole);
 
 // Update role (Super Admin only)
-router.put('/roles/:id', verifyJWT, authorizeRoles('SUPER_ADMIN'), updateRole);
+router.put('/roles/:id', verifyJWT, authorizeRoles('SUPER_ADMIN'), trackActivity('Role', 'UPDATE'), updateRole);
 
 // Delete role (Super Admin only)
-router.delete('/roles/:id', verifyJWT, authorizeRoles('SUPER_ADMIN'), deleteRole);
+router.delete('/roles/:id', verifyJWT, authorizeRoles('SUPER_ADMIN'), trackActivity('Role', 'DELETE'), deleteRole);
 
 export default router;

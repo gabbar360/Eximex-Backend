@@ -9,6 +9,7 @@ import {
   requireCompany,
 } from '../middleware/auth.js';
 import { ActivityLogService } from '../services/activityLogService.js';
+import { trackActivity } from '../middleware/activityTracker.js';
 
 const router = Router();
 
@@ -19,6 +20,7 @@ router.post(
   requireCompany,
   authorizeRoles('ADMIN', 'SUPER_ADMIN'),
   ActivityLogService.createActivityLogger('DataAssignment'),
+  trackActivity('DataAssignment', 'CREATE'),
   assignData
 );
 

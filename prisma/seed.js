@@ -132,6 +132,52 @@ async function main() {
   });
   console.log('✅ SUPER_ADMIN role ready');
 
+  // Create ADMIN role (default for new users)
+  const adminRole = await prisma.role.upsert({
+    where: { name: 'ADMIN' },
+    update: {},
+    create: {
+      name: 'ADMIN',
+      displayName: 'Administrator',
+      description: 'Company administrator with full company access',
+      isSystem: true,
+      permissions: {
+        canManageRoles: false,
+        canManageUsers: true,
+        canManageCompanies: false,
+        canViewAllData: true,
+        canManageStaff: true,
+        canReassignData: true,
+        canViewActivityLogs: true,
+        canManageSystem: false
+      }
+    }
+  });
+  console.log('✅ ADMIN role ready');
+
+  // Create STAFF role
+  const staffRole = await prisma.role.upsert({
+    where: { name: 'STAFF' },
+    update: {},
+    create: {
+      name: 'STAFF',
+      displayName: 'Staff Member',
+      description: 'Regular staff member with limited access',
+      isSystem: true,
+      permissions: {
+        canManageRoles: false,
+        canManageUsers: false,
+        canManageCompanies: false,
+        canViewAllData: false,
+        canManageStaff: false,
+        canReassignData: false,
+        canViewActivityLogs: false,
+        canManageSystem: false
+      }
+    }
+  });
+  console.log('✅ STAFF role ready');
+
   // Check if super admin user already exists
   const existingSuperAdmin = await prisma.user.findUnique({
     where: {

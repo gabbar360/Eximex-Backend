@@ -14,6 +14,7 @@ import { validate } from '../middleware/validate.js';
 import { authValidation } from '../validations/auth.validation.js';
 // import { authLimiter, apiLimiter } from '../middleware/rateLimiter.js';
 import { verifyJWT, verifyRefreshToken } from '../middleware/auth.js';
+import { trackActivity } from '../middleware/activityTracker.js';
 
 const router = Router();
 
@@ -24,8 +25,8 @@ router.post(
   validate(authValidation.register),
   registerUser
 );
-router.post('/login', validate(authValidation.login), login); //authLimiter,
-router.post('/logout', verifyJWT, logout);
+router.post('/login', validate(authValidation.login), trackActivity('Auth', 'LOGIN'), login); //authLimiter,
+router.post('/logout', verifyJWT, trackActivity('Auth', 'LOGOUT'), logout);
 router.post(
   '/refresh-token',
   // apiLimiter,
