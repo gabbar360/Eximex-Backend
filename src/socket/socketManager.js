@@ -18,8 +18,6 @@ class SocketManager {
 
     const allowedOrigins = [
       process.env.FRONTEND_URL,
-      process.env.PRODUCTION_URL,
-      "https://eximexperts.in"
     ].filter(Boolean);
 
     if (allowedOrigins.length === 0) {
@@ -350,9 +348,15 @@ class SocketManager {
     try {
       const notification = await prisma.notification.create({
         data: {
-          companyId,
-          userId,
-          createdBy,
+          company: {
+            connect: { id: companyId }
+          },
+          user: userId ? {
+            connect: { id: userId }
+          } : undefined,
+          creator: {
+            connect: { id: createdBy }
+          },
           type,
           title,
           message,
