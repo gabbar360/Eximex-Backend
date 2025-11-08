@@ -44,8 +44,7 @@ model User {
   updatedPurchaseOrders PurchaseOrder[]         @relation("PoUpdater")
   activityLogs          ActivityLog[]
   payments              Payment[]
-  notifications         Notification[]         @relation("UserNotifications")
-  createdNotifications  Notification[]         @relation("NotificationCreator")
+
 
 }
 
@@ -82,7 +81,7 @@ model CompanyDetails {
   purchaseOrders  PurchaseOrder[]
   activityLogs    ActivityLog[]
   payments        Payment[]
-  notifications   Notification[]
+
 
 }
 
@@ -826,46 +825,4 @@ model Payment {
   @@map("payments")
 }
 
-model Notification {
-  id          Int              @id @default(autoincrement())
-  companyId   Int              @map("company_id")
-  userId      Int?             @map("user_id") // null for company-wide notifications
-  createdBy   Int              @map("created_by")
-  type        NotificationType
-  title       String
-  message     String
-  entityType  String?          @map("entity_type") // Party, Product, PiInvoice, Order, etc.
-  entityId    Int?             @map("entity_id")
-  metadata    Json?            // Additional data
-  isRead      Boolean          @default(false) @map("is_read")
-  readAt      DateTime?        @map("read_at")
-  priority    NotificationPriority @default(MEDIUM)
-  createdAt   DateTime         @default(now()) @map("created_at")
-  updatedAt   DateTime         @updatedAt @map("updated_at")
-  
-  // Relations
-  company CompanyDetails @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  user    User?          @relation("UserNotifications", fields: [userId], references: [id], onDelete: Cascade)
-  creator User           @relation("NotificationCreator", fields: [createdBy], references: [id])
-  
-  @@map("notifications")
-}
 
-enum NotificationType {
-  USER_ACTIVITY
-  SYSTEM_ALERT
-  ORDER_UPDATE
-  PAYMENT_REMINDER
-  PI_STATUS_CHANGE
-  NEW_USER_REGISTRATION
-  LOGIN_ACTIVITY
-  DATA_EXPORT
-  GENERAL
-}
-
-enum NotificationPriority {
-  LOW
-  MEDIUM
-  HIGH
-  URGENT
-}

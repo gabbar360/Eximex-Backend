@@ -10,7 +10,6 @@ import {
   downloadPackingListPDF,
 } from '../controller/packagingStepsController.js';
 import { verifyJWT } from '../middleware/auth.js';
-import { trackActivity } from '../middleware/activityTracker.js';
 
 /**
  * @route GET /api/v1/packing-lists
@@ -31,21 +30,18 @@ router.get('/packing-lists/:id', verifyJWT, getPackingListById);
  * @desc Create new packing list
  * @access Private
  */
-router.post('/packing-lists', verifyJWT, trackActivity('PackingList', 'CREATE'), createPackingList);
 
 /**
  * @route PUT /api/v1/packing-lists/:id
  * @desc Update packing list
  * @access Private
  */
-router.put('/packing-lists/:id', verifyJWT, trackActivity('PackingList', 'UPDATE'), updatePackingList);
 
 /**
  * @route DELETE /api/v1/packing-lists/:id
  * @desc Delete packing list
  * @access Private
  */
-router.delete('/packing-lists/:id', verifyJWT, trackActivity('PackingList', 'DELETE'), deletePackingList);
 
 /**
  * @route GET /api/v1/packing-lists/:id/pdf
