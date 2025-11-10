@@ -22,7 +22,6 @@ import {
   ensureEntityScoping,
 } from '../middleware/dataAccess.js';
 import { ActivityLogService } from '../services/activityLogService.js';
-import { trackPiInvoiceActivity, trackActivity } from '../middleware/activityTracker.js';
 
 const router = Router();
 
@@ -35,7 +34,6 @@ router.post(
   '/create/pi-invoice',
   ensureEntityScoping,
   ActivityLogService.createActivityLogger('PiInvoice'),
-  trackPiInvoiceActivity('CREATE'),
   createPiInvoice
 );
 router.get(
@@ -56,29 +54,21 @@ router.put(
   '/update/pi-invoice/:id',
   checkEntityOwnership('piInvoice'),
   ActivityLogService.createActivityLogger('PiInvoice'),
-  trackPiInvoiceActivity('UPDATE'),
   updatePiInvoice
 );
 router.delete(
   '/delete/pi-invoice/:id',
   checkEntityOwnership('piInvoice'),
   ActivityLogService.createActivityLogger('PiInvoice'),
-  trackPiInvoiceActivity('DELETE'),
   deletePiInvoice
 );
 router.put(
   '/:id/update-pi-status',
   checkEntityOwnership('piInvoice'),
   ActivityLogService.createActivityLogger('PiInvoice'),
-  trackPiInvoiceActivity('UPDATE'),
   updatePiStatus
 );
-router.put('/:id/update-amount', trackPiInvoiceActivity('UPDATE'), updatePiAmount);
-router.post('/:id/email', trackPiInvoiceActivity('UPDATE'), emailInvoice);
 
 // PI Product routes
-router.post('/:piId/products', trackActivity('PiProduct', 'CREATE'), addPiProduct);
-router.put('/:piId/products/:productId', trackActivity('PiProduct', 'UPDATE'), updatePiProduct);
-router.delete('/:piId/products/:productId', trackActivity('PiProduct', 'DELETE'), deletePiProduct);
 
 export default router;

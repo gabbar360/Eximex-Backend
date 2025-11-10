@@ -16,7 +16,7 @@ import {
   ensureEntityScoping,
 } from '../middleware/dataAccess.js';
 import { ActivityLogService } from '../services/activityLogService.js';
-import { trackProductActivity } from '../middleware/activityTracker.js';
+
 
 const router = Router();
 
@@ -46,7 +46,7 @@ router.post(
   ensureEntityScoping,
   validate(productValidation.createProduct),
   ActivityLogService.createActivityLogger('Product'),
-  trackProductActivity('CREATE'),
+
   createProduct
 );
 
@@ -57,7 +57,7 @@ router.put(
   checkEntityOwnership('product'),
   validate(productValidation.updateProduct),
   ActivityLogService.createActivityLogger('Product'),
-  trackProductActivity('UPDATE'),
+
   updateProduct
 );
 
@@ -68,7 +68,7 @@ router.delete(
   checkEntityOwnership('product'),
   validate(productValidation.getProduct),
   ActivityLogService.createActivityLogger('Product'),
-  trackProductActivity('DELETE'),
+
   deleteProduct
 );
 

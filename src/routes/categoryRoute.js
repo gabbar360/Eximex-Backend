@@ -17,7 +17,6 @@ import {
   ensureEntityScoping,
 } from '../middleware/dataAccess.js';
 import { ActivityLogService } from '../services/activityLogService.js';
-import { trackActivity } from '../middleware/activityTracker.js';
 
 const router = Router();
 
@@ -28,7 +27,6 @@ router.post(
   ensureEntityScoping,
   validate(categoryValidation.createCategory),
   ActivityLogService.createActivityLogger('Category'),
-  trackActivity('Category', 'CREATE'),
   createCategory
 );
 
@@ -57,7 +55,6 @@ router.put(
   checkEntityOwnership('itemCategory'),
   validate(categoryValidation.updateCategory),
   ActivityLogService.createActivityLogger('Category'),
-  trackActivity('Category', 'UPDATE'),
   updateCategory
 );
 router.delete(
@@ -67,7 +64,6 @@ router.delete(
   checkEntityOwnership('itemCategory'),
   validate(categoryValidation.getCategory),
   ActivityLogService.createActivityLogger('Category'),
-  trackActivity('Category', 'DELETE'),
   deleteCategory
 );
 router.get('/stats/categories', verifyJWT, requireCompany, getCategoryStats);

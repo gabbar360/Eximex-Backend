@@ -9,14 +9,12 @@ import {
   createPackagingUnits,
 } from '../controller/packagingController.js';
 import { verifyJWT } from '../middleware/auth.js';
-import { trackActivity } from '../middleware/activityTracker.js';
 
 /**
  * @route POST /api/v1/packaging/hierarchy
  * @desc Create or update packaging hierarchy for a category
  * @access Private
  */
-router.post('/packaging/hierarchy', verifyJWT, trackActivity('PackagingHierarchy', 'CREATE'), createPackagingHierarchy);
 
 /**
  * @route GET /api/v1/packaging/hierarchy/:categoryId
@@ -45,7 +43,6 @@ router.get(
  * @desc Convert units based on packaging hierarchy
  * @access Private
  */
-router.post('/packaging/convert', verifyJWT, trackActivity('PackagingConvert', 'CREATE'), convertUnits);
 
 /**
  * @route GET /api/v1/packaging/units
@@ -61,6 +58,5 @@ router.get('/packaging/units', getAllPackagingUnits);
  * @access Private
  */
 // router.post('/packaging/units/seed', verifyJWT, createPackagingUnits);
-router.post('/packaging/units/seed', trackActivity('PackagingUnit', 'CREATE'), createPackagingUnits);
 
 export default router;
