@@ -840,10 +840,6 @@ const updatePiStatus = async (
               paymentAmount: paymentAmount,
               productQty,
               deliveryTerms: piInvoice.deliveryTerm || 'Standard',
-              bookingNumber: null, // Will be updated later when booking details are available
-              bookingDate: null, // Will be updated later when booking details are available
-              wayBillNumber: null, // Will be updated later when shipping details are available
-              truckNumber: null, // Will be updated later when shipping details are available
               orderStatus: 'confirmed',
               createdBy: userId,
             },
