@@ -14,7 +14,7 @@ import { prisma } from './config/dbConfig.js';
 import { logger } from './config/logger.js';
 // import { generalLimiter } from './middleware/rateLimiter.js';
 import { errorHandler, notFound } from './middleware/errorHandler.js';
-import socketManager from './socket/socketManager.js';
+import socketManager from './socket/socket.js';
 import { createServer } from 'http';
 
 const PORT = process.env.PORT || 8000;
