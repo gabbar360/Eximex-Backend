@@ -45,6 +45,8 @@ model User {
   activityLogs          ActivityLog[]
   payments              Payment[]
 
+  createdShipments      Shipment[]             @relation("ShipmentCreator")
+  updatedShipments      Shipment[]             @relation("ShipmentUpdater")
 
 }
 
@@ -82,6 +84,7 @@ model CompanyDetails {
   activityLogs    ActivityLog[]
   payments        Payment[]
 
+  shipments       Shipment[]
 
 }
 
@@ -572,24 +575,11 @@ model Order {
   // Delivery Terms
   deliveryTerms String @map("delivery_terms")
 
-  // Booking Information
-  bookingNumber String?   @map("booking_number")
-  bookingDate   DateTime? @map("booking_date")
-
-  // Container and seal information moved to packaging steps
-
   // Timestamps
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
   createdBy Int?     @map("created_by")
   updatedBy Int?     @map("updated_by")
-
-  // shipping details
-  wayBillNumber String?        @map("way_bill_number")
-  truckNumber   String?        @map("truck_number")
-  
-  // BL Details (optional - can be auto-generated from other data)
-  blNumber      String?        @map("bl_number")
   
   // Relations
   company          CompanyDetails          @relation(fields: [companyId], references: [id])
@@ -597,9 +587,42 @@ model Order {
   creator          User?                   @relation("OrderCreator", fields: [createdBy], references: [id])
   updater          User?                   @relation("OrderUpdater", fields: [updatedBy], references: [id])
   packagingSteps   ProductPackagingSteps[] @relation("OrderPackagingSteps")
-
+  shipment         Shipment?
 
   @@map("orders")
+}
+
+model Shipment {
+  id               Int       @id @default(autoincrement())
+  companyId        Int       @map("company_id")
+  orderId          Int       @unique @map("order_id")
+  shipmentNumber   String    @unique @map("shipment_number")
+  
+  // Booking Information
+  bookingNumber    String?   @map("booking_number")
+  bookingDate      DateTime? @map("booking_date")
+  
+  // Vessel & Container Details
+  vesselVoyageInfo String?   @map("vessel_voyage_info")
+  
+  // Transport Details
+  wayBillNumber    String?   @map("way_bill_number")
+  truckNumber      String?   @map("truck_number")
+  blNumber         String?   @map("bl_number")
+  
+  // Timestamps
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  createdBy Int      @map("created_by")
+  updatedBy Int?     @map("updated_by")
+  
+  // Relations
+  company CompanyDetails @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  order   Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  creator User           @relation("ShipmentCreator", fields: [createdBy], references: [id])
+  updater User?          @relation("ShipmentUpdater", fields: [updatedBy], references: [id])
+  
+  @@map("shipments")
 }
 
 model ProductPackagingSteps {

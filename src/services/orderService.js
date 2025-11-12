@@ -62,22 +62,6 @@ export class OrderService {
               : null,
           productQty,
           deliveryTerms: data.deliveryTerms || piInvoice.deliveryTerm,
-          bookingNumber:
-            data.bookingNumber && data.bookingNumber !== ''
-              ? data.bookingNumber
-              : null,
-          bookingDate:
-            data.bookingDate && data.bookingDate !== ''
-              ? new Date(data.bookingDate)
-              : null,
-          wayBillNumber:
-            data.wayBillNumber && data.wayBillNumber !== ''
-              ? data.wayBillNumber
-              : null,
-          truckNumber:
-            data.truckNumber && data.truckNumber !== ''
-              ? data.truckNumber
-              : null,
           orderStatus: 'confirmed',
           createdBy: userId,
         },
@@ -175,14 +159,10 @@ export class OrderService {
         orderNumber,
         piNumber: piInvoice.piNumber,
         totalAmount: piInvoice.totalAmount,
-        paymentAmount: null, // Will be updated when payment is made
+        paymentAmount: null,
         productQty,
         deliveryTerms: piInvoice.deliveryTerm,
-        bookingNumber: null, // Will be updated later when booking details are available
-        bookingDate: null, // Will be updated later when booking details are available
-        wayBillNumber: null, // Will be updated later when shipping details are available
-        truckNumber: null, // Will be updated later when shipping details are available
-        orderStatus: 'confirmed', // Set to confirmed since PI is already confirmed
+        orderStatus: 'confirmed',
         createdBy: userId,
       },
       include: {
@@ -211,9 +191,6 @@ export class OrderService {
         OR: [
           { orderNumber: { contains: search, mode: 'insensitive' } },
           { piNumber: { contains: search, mode: 'insensitive' } },
-          { bookingNumber: { contains: search, mode: 'insensitive' } },
-          { wayBillNumber: { contains: search, mode: 'insensitive' } },
-          { truckNumber: { contains: search, mode: 'insensitive' } },
         ],
       }),
     };
@@ -246,6 +223,7 @@ export class OrderService {
             },
           },
           packagingSteps: true,
+          shipment: true,
         },
         orderBy: { createdAt: 'desc' },
         skip,
@@ -307,6 +285,7 @@ export class OrderService {
         },
         company: true,
         packagingSteps: true,
+        shipment: true,
         creator: {
           select: { id: true, name: true, email: true },
         },
@@ -334,9 +313,6 @@ export class OrderService {
 
     const processedData = {
       ...updateData,
-      ...(updateData.bookingDate && {
-        bookingDate: new Date(updateData.bookingDate),
-      }),
       updatedBy: userId,
     };
 
@@ -505,6 +481,7 @@ export class OrderService {
       order: order,
       company: order.company,
       piInvoice: order.piInvoice,
+      shipment: order.shipment,
       bl: {
         blNumber: `BL-${order.orderNumber}-DRAFT`,
         vesselName: order.vesselVoyageInfo || 'TBD',

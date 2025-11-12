@@ -42,6 +42,11 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
             });
           }
         } else {
+          // Find ADMIN role first
+          const adminRole = await prisma.role.findFirst({
+            where: { name: 'ADMIN' }
+          });
+
           // Create new user
           user = await prisma.user.create({
             data: {
@@ -50,7 +55,7 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
               googleId,
               profilePicture,
               isEmailVerified: true,
-              role: 'ADMIN',
+              roleId: adminRole?.id || null,
             },
           });
         }
