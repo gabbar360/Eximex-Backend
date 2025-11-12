@@ -323,29 +323,20 @@
                                     <% items.forEach((p, productIndex) => { %>
                                         <% 
                                             const baseName = p.productName || p.productDescription || p.description || '-';
-                                            // Try multiple possible field names for packaging data
-                                            const pcsPerPack = p.pcsPerPack || p.piecePerPack || p.pcs_per_pack || p.piece_per_pack || p.piecesPerPack || p.packingDetails?.pcsPerPack || 0;
-                                            const packsPerBox = p.packsPerBox || p.packPerBox || p.packs_per_box || p.pack_per_box || p.packsPerBox || p.packingDetails?.packsPerBox || 0;
+                                            // Get packaging data from packing list structure
+                                            const packagingData = p.productData?.product?.packagingHierarchyData?.dynamicFields || {};
+                                            const pcsPerPack = packagingData.PiecesPerPack || 0;
+                                            const packsPerBox = packagingData.PackPerBox || 0;
                                             const totalPcsPerBox = pcsPerPack * packsPerBox;
+                                            
+                                            // Get dynamic unit names
+                                            const pieceUnit = packagingData.PieceUnit || p.productData?.product?.packagingHierarchyData?.pieceUnit || 'pcs';
+                                            const packUnit = packagingData.PackUnit || p.productData?.product?.packagingHierarchyData?.packUnit || 'pack';
+                                            const boxUnit = packagingData.BoxUnit || p.productData?.product?.packagingHierarchyData?.boxUnit || 'box';
                                             
                                             let packingDescription = '';
                                             if (pcsPerPack > 0 && packsPerBox > 0) {
-                                                packingDescription = `${pcsPerPack}pcs/pack, ${pcsPerPack}pcs*${packsPerBox}pack = ${totalPcsPerBox} pcs/box`;
-                                            } else if (pcsPerPack > 0) {
-                                                // Show only pcs per pack if available
-                                                packingDescription = `${pcsPerPack}pcs/pack`;
-                                            } else {
-                                                // Fallback: try to construct from available quantity data
-                                                const qty = p.quantity || p.packedQuantity || 0;
-                                                const boxes = p.noOfBoxes || 0;
-                                                if (qty > 0 && boxes > 0) {
-                                                    const pcsPerBoxCalc = Math.round(qty / boxes);
-                                                    packingDescription = `${pcsPerBoxCalc} pcs/box`;
-                                                }
-                                            }
-                                            // Debug: show what values we found
-                                            if (!packingDescription) {
-                                                packingDescription = `DEBUG: pcsPerPack=${pcsPerPack}, packsPerBox=${packsPerBox}`;
+                                                packingDescription = `${pcsPerPack}${pieceUnit}*${packsPerBox}${packUnit} = ${totalPcsPerBox} ${pieceUnit}/${boxUnit}`;
                                             }
                                         %>
                                         <% const hsnCode = p.hsnCode || p.hsCode || '484047'; %>
@@ -374,7 +365,7 @@
                                             <td>
                                                 <div><%= baseName %></div>
                                                 <% if (packingDescription) { %>
-                                                    <div style="font-size: 9px; color: #666; margin-top: 2px;"><%= packingDescription %></div>
+                                                    <div style="font-size: 9px; color: #000; margin-top: 2px;"><%= packingDescription %></div>
                                                 <% } %>
                                             </td>
                                             <td class="center"><%= hsnCode %></td>
