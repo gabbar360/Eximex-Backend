@@ -68,6 +68,18 @@ router.put(
   ActivityLogService.createActivityLogger('PiInvoice'),
   updatePiStatus
 );
+router.put(
+  '/:id/update-amount',
+  checkEntityOwnership('piInvoice'),
+  ActivityLogService.createActivityLogger('PiInvoice'),
+  updatePiAmount
+);
+router.post(
+  '/:id/email',
+  checkEntityOwnership('piInvoice'),
+  ActivityLogService.createActivityLogger('PiInvoice'),
+  emailInvoice
+);
 
 // PI Product routes
 
