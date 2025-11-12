@@ -30,18 +30,21 @@ router.get('/packing-lists/:id', verifyJWT, getPackingListById);
  * @desc Create new packing list
  * @access Private
  */
+router.post('/packing-lists', verifyJWT, createPackingList);
 
 /**
  * @route PUT /api/v1/packing-lists/:id
  * @desc Update packing list
  * @access Private
  */
+router.put('/packing-lists/:id', verifyJWT, updatePackingList);
 
 /**
  * @route DELETE /api/v1/packing-lists/:id
  * @desc Delete packing list
  * @access Private
  */
+router.delete('/packing-lists/:id', verifyJWT, deletePackingList);
 
 /**
  * @route GET /api/v1/packing-lists/:id/pdf

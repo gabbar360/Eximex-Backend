@@ -202,7 +202,7 @@ export class OrderService {
           piInvoice: {
             include: {
               party: true,
-              packagingSteps: true,
+              packingLists: true,
               vgmDocuments: {
                 select: {
                   id: true,
@@ -211,7 +211,7 @@ export class OrderService {
                   status: true,
                   verifiedBy: true,
                   verificationDate: true,
-                  productPackagingStep: {
+                  packingList: {
                     select: {
                       containerNumber: true,
                       sealNumber: true,
@@ -222,7 +222,7 @@ export class OrderService {
               },
             },
           },
-          packagingSteps: true,
+          packingLists: true,
           shipment: true,
         },
         orderBy: { createdAt: 'desc' },
@@ -263,7 +263,7 @@ export class OrderService {
               },
             },
             party: true,
-            packagingSteps: true,
+            packingLists: true,
             vgmDocuments: {
               select: {
                 id: true,
@@ -272,7 +272,7 @@ export class OrderService {
                 status: true,
                 verifiedBy: true,
                 verificationDate: true,
-                productPackagingStep: {
+                packingList: {
                   select: {
                     containerNumber: true,
                     sealNumber: true,
@@ -284,7 +284,7 @@ export class OrderService {
           },
         },
         company: true,
-        packagingSteps: true,
+        packingLists: true,
         shipment: true,
         creator: {
           select: { id: true, name: true, email: true },

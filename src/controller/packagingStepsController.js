@@ -336,7 +336,7 @@ const getPackingListsByPI = async (req, res) => {
       where: {
         id: parseInt(piId),
         companyId: req.user.companyId,
-        packagingSteps: {
+        packingLists: {
           some: {
             isActive: true,
           },
@@ -350,7 +350,7 @@ const getPackingListsByPI = async (req, res) => {
             contactPerson: true,
           },
         },
-        packagingSteps: {
+        packingLists: {
           where: { isActive: true },
         },
       },
@@ -418,16 +418,16 @@ const downloadPackingListPDF = async (req, res) => {
       }
     }
 
-    // Group packaging steps by product
+    // Group packing lists by product
     const stepsByProduct = PackagingStepsService.groupPackagingStepsByProduct(
-      packingListEntry.piInvoice.packagingSteps
+      packingListEntry.piInvoice.packingLists
     );
 
     // Add container and seal numbers to products
     PackagingStepsService.addContainerInfoToProducts(
       packingListEntry.piInvoice.products,
       packingListData,
-      packingListEntry.piInvoice.packagingSteps
+      packingListEntry.piInvoice.packingLists
     );
 
     // Convert company logo to base64
