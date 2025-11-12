@@ -36,8 +36,8 @@ model User {
   piInvoiceHistory      PiInvoiceHistory[]
   createdOrders         Order[]                 @relation("OrderCreator")
   updatedOrders         Order[]                 @relation("OrderUpdater")
-  createdPackagingSteps ProductPackagingSteps[] @relation("StepCreator")
-  updatedPackagingSteps ProductPackagingSteps[] @relation("StepUpdater")
+  createdPackingLists PackingList[] @relation("PackingListCreator")
+  updatedPackingLists PackingList[] @relation("PackingListUpdater")
   createdVgmDocuments   VgmDocument[]           @relation("VgmCreator")
   updatedVgmDocuments   VgmDocument[]           @relation("VgmUpdater")
   createdPurchaseOrders PurchaseOrder[]         @relation("PoCreator")
@@ -191,7 +191,7 @@ model Product {
   company        CompanyDetails          @relation(fields: [companyId], references: [id])
   user           User                    @relation(fields: [createdBy], references: [id])
   piProducts     PiProduct[]
-  packagingSteps ProductPackagingSteps[]
+  packingLists PackingList[]
 
   @@map("product")
 }
@@ -219,7 +219,7 @@ model ItemCategory {
   piProductCategories    PiProduct[]             @relation("PiProductCategory")
   piProductSubcategories PiProduct[]             @relation("PiProductSubcategory")
   packagingHierarchy     PackagingHierarchy[]
-  packagingSteps         ProductPackagingSteps[]
+  packingLists         PackingList[]
 }
 
 model PackagingUnit {
@@ -234,7 +234,7 @@ model PackagingUnit {
   // Relations
   parentPackaging PackagingHierarchy[]    @relation("ParentUnit")
   childPackaging  PackagingHierarchy[]    @relation("ChildUnit")
-  packagingSteps  ProductPackagingSteps[]
+  packingLists  PackingList[]
 
   @@map("packaging_units")
 }
@@ -476,7 +476,7 @@ model PiInvoice {
   products       PiProduct[]
   history        PiInvoiceHistory[]
   orders         Order[]
-  packagingSteps ProductPackagingSteps[]
+  packingLists PackingList[]
   vgmDocuments   VgmDocument[]
   payments       Payment[]
 
@@ -586,7 +586,7 @@ model Order {
   piInvoice        PiInvoice               @relation(fields: [piInvoiceId], references: [id])
   creator          User?                   @relation("OrderCreator", fields: [createdBy], references: [id])
   updater          User?                   @relation("OrderUpdater", fields: [updatedBy], references: [id])
-  packagingSteps   ProductPackagingSteps[] @relation("OrderPackagingSteps")
+  packingLists   PackingList[] @relation("OrderPackingList")
   shipment         Shipment?
 
   @@map("orders")
@@ -625,7 +625,7 @@ model Shipment {
   @@map("shipments")
 }
 
-model ProductPackagingSteps {
+model PackingList {
   id              Int               @id @default(autoincrement())
   productId       Int?              @map("product_id")
   piInvoiceId     Int?              @map("pi_invoice_id") // Link to specific PI
@@ -653,15 +653,15 @@ model ProductPackagingSteps {
   // Relations
   product       Product?       @relation(fields: [productId], references: [id], onDelete: Cascade)
   piInvoice     PiInvoice?     @relation(fields: [piInvoiceId], references: [id], onDelete: Cascade)
-  order         Order?         @relation("OrderPackagingSteps", fields: [orderId], references: [id], onDelete: Cascade)
+  order         Order?         @relation("OrderPackingList", fields: [orderId], references: [id], onDelete: Cascade)
   category      ItemCategory?  @relation(fields: [categoryId], references: [id])
   packagingUnit PackagingUnit? @relation(fields: [packagingUnitId], references: [id])
-  creator       User           @relation("StepCreator", fields: [createdBy], references: [id])
-  updater       User?          @relation("StepUpdater", fields: [updatedBy], references: [id])
+  creator       User           @relation("PackingListCreator", fields: [createdBy], references: [id])
+  updater       User?          @relation("PackingListUpdater", fields: [updatedBy], references: [id])
   vgmDocuments  VgmDocument[] // Relation to VGM documents
 
   // Note: Unique constraint modified to handle null productId for packing lists
-  @@map("product_packaging_steps")
+  @@map("packing_lists")
 }
 
 enum PackagingStepType {
@@ -726,7 +726,7 @@ model VgmDocument {
   // Relations
   company              CompanyDetails         @relation(fields: [companyId], references: [id])
   piInvoice            PiInvoice              @relation(fields: [piInvoiceId], references: [id])
-  productPackagingStep ProductPackagingSteps? @relation(fields: [productPackagingStepId], references: [id])
+  packingList PackingList? @relation(fields: [productPackagingStepId], references: [id])
   creator              User                   @relation("VgmCreator", fields: [createdBy], references: [id])
   updater              User?                  @relation("VgmUpdater", fields: [updatedBy], references: [id])
 

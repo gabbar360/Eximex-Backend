@@ -9,7 +9,7 @@ export class PackagingStepsService {
 
     const where = {
       companyId,
-      packagingSteps: {
+      packingLists: {
         some: {
           isActive: true,
         },
@@ -38,7 +38,7 @@ export class PackagingStepsService {
               contactPerson: true,
             },
           },
-          packagingSteps: {
+          packingLists: {
             where: { isActive: true },
             select: {
               id: true,
@@ -90,7 +90,7 @@ export class PackagingStepsService {
 
   // Packaging Step Operations
   static async findPackagingStepById(id) {
-    return await prisma.productPackagingSteps.findFirst({
+    return await prisma.packingList.findFirst({
       where: {
         id: parseInt(id),
         stepType: 'PACKING',
@@ -107,7 +107,7 @@ export class PackagingStepsService {
             },
             party: true,
             company: true,
-            packagingSteps: {
+            packingLists: {
               where: { isActive: true },
               include: {
                 product: true,
@@ -135,7 +135,7 @@ export class PackagingStepsService {
         },
         party: true,
         company: true,
-        packagingSteps: {
+        packingLists: {
           where: { isActive: true },
           include: {
             product: true,
@@ -147,7 +147,7 @@ export class PackagingStepsService {
   }
 
   static buildPackingListResponse(piInvoice) {
-    const packingListEntry = piInvoice.packagingSteps.find(
+    const packingListEntry = piInvoice.packingLists.find(
       (step) => step.productId === null && step.stepType === 'PACKING'
     );
 
@@ -210,7 +210,7 @@ export class PackagingStepsService {
 
   // Create Operations
   static async checkExistingPackingList(piId) {
-    return await prisma.productPackagingSteps.findFirst({
+    return await prisma.packingList.findFirst({
       where: {
         piInvoiceId: parseInt(piId),
         stepType: 'PACKING',
@@ -292,7 +292,7 @@ export class PackagingStepsService {
 
   static async createPackingListTransaction(data, userId) {
     return await prisma.$transaction(async (tx) => {
-      const packingListEntry = await tx.productPackagingSteps.create({
+      const packingListEntry = await tx.packingList.create({
         data: {
           productId: data.productId,
           piInvoiceId: data.piId,
@@ -332,7 +332,7 @@ export class PackagingStepsService {
               ? container.products.map((p) => p.productName).join(', ')
               : 'Container Items';
 
-          const containerEntry = await tx.productPackagingSteps.create({
+          const containerEntry = await tx.packingList.create({
             data: {
               productId: null,
               piInvoiceId: data.piId,
@@ -387,7 +387,7 @@ export class PackagingStepsService {
 
   // Update Operations
   static async findPackingListForUpdate(id, companyId) {
-    let packingListEntry = await prisma.productPackagingSteps.findFirst({
+    let packingListEntry = await prisma.packingList.findFirst({
       where: {
         id: parseInt(id),
         stepType: 'PACKING',
@@ -412,7 +412,7 @@ export class PackagingStepsService {
           companyId,
         },
         include: {
-          packagingSteps: {
+          packingLists: {
             where: {
               stepType: 'PACKING',
               isActive: true,
@@ -423,8 +423,8 @@ export class PackagingStepsService {
         },
       });
 
-      if (piInvoice && piInvoice.packagingSteps.length > 0) {
-        packingListEntry = piInvoice.packagingSteps[0];
+      if (piInvoice && piInvoice.packingLists.length > 0) {
+        packingListEntry = piInvoice.packingLists[0];
         packingListEntry.piInvoice = piInvoice;
       }
     }
@@ -530,7 +530,7 @@ export class PackagingStepsService {
   }
 
   static async updatePackingListEntry(id, data, userId) {
-    return await prisma.productPackagingSteps.update({
+    return await prisma.packingList.update({
       where: { id },
       data: {
         productId: data.productId,
@@ -566,7 +566,7 @@ export class PackagingStepsService {
 
   // Delete Operations
   static async findPackingRecordForDelete(id, companyId) {
-    let packingRecord = await prisma.productPackagingSteps.findFirst({
+    let packingRecord = await prisma.packingList.findFirst({
       where: {
         id: parseInt(id),
         piInvoice: {
@@ -576,7 +576,7 @@ export class PackagingStepsService {
     });
 
     if (!packingRecord) {
-      packingRecord = await prisma.productPackagingSteps.findFirst({
+      packingRecord = await prisma.packingList.findFirst({
         where: {
           piInvoiceId: parseInt(id),
           stepType: 'PACKING',
@@ -592,14 +592,14 @@ export class PackagingStepsService {
   }
 
   static async deletePackingRecord(id) {
-    return await prisma.productPackagingSteps.delete({
+    return await prisma.packingList.delete({
       where: { id },
     });
   }
 
   // PDF Generation Support
   static async getPackingListForPDF(id, companyId) {
-    let packingListEntry = await prisma.productPackagingSteps.findFirst({
+    let packingListEntry = await prisma.packingList.findFirst({
       where: {
         id: parseInt(id),
         stepType: 'PACKING',
@@ -619,7 +619,7 @@ export class PackagingStepsService {
             },
             party: true,
             company: true,
-            packagingSteps: {
+            packingLists: {
               where: { isActive: true },
             },
           },
@@ -642,7 +642,7 @@ export class PackagingStepsService {
           },
           party: true,
           company: true,
-          packagingSteps: {
+          packingLists: {
             where: {
               stepType: 'PACKING',
               isActive: true,
