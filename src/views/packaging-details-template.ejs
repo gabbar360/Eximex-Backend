@@ -269,10 +269,10 @@
                         <td>
                             <%= piInvoice.vesselFlightNo || (packingListData.vesselVoyageNo &&
                                 packingListData.vesselVoyageNo.trim()) ? packingListData.vesselVoyageNo :
-                                (Array.isArray(piInvoice.packagingSteps) && piInvoice.packagingSteps.length> 0 &&
-                                piInvoice.packagingSteps[0].notes &&
-                                piInvoice.packagingSteps[0].notes.vesselVoyageNo
-                                ? piInvoice.packagingSteps[0].notes.vesselVoyageNo
+                                (Array.isArray(piInvoice.packingLists) && piInvoice.packingLists.length> 0 &&
+                                piInvoice.packingLists[0].notes &&
+                                piInvoice.packingLists[0].notes.vesselVoyageNo
+                                ? piInvoice.packingLists[0].notes.vesselVoyageNo
                                 : 'N/A'
                                 )
                                 %>
@@ -306,9 +306,9 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <% const allContainers = piInvoice.packagingSteps && piInvoice.packagingSteps[0] &&
-                            piInvoice.packagingSteps[0].notes && piInvoice.packagingSteps[0].notes.containers ?
-                            piInvoice.packagingSteps[0].notes.containers : []; %>
+                        <% const allContainers = piInvoice.packingLists && piInvoice.packingLists[0] &&
+                            piInvoice.packingLists[0].notes && piInvoice.packingLists[0].notes.containers ?
+                            piInvoice.packingLists[0].notes.containers : []; %>
                         <% let totalQuantity = 0, totalUnitWt = 0, totalNetWt = 0, totalGrossWt = 0, totalVolume = 0; %>
                         
                         <% if (allContainers.length > 0) { %>
@@ -395,8 +395,8 @@
                                 <% const volume = Number(p.measurement || 0); %>
                                 <% const boxes = Number(p.noOfBoxes || (p.unit && p.unit.toLowerCase() === 'box' ? (p.packedQuantity || p.quantity) : 0)); %>
                                 <% const unitWeight = boxes > 0 && netWeight > 0 ? (netWeight / boxes) : 0; %>
-                                <% const containerName = piInvoice.packagingSteps?.[0]?.containerNumber || 'Container 1'; %>
-                                <% const sealInfo = piInvoice.packagingSteps?.[0]?.sealType && piInvoice.packagingSteps?.[0]?.sealNumber ? `${piInvoice.packagingSteps[0].sealType} - ${piInvoice.packagingSteps[0].sealNumber}` : ''; %>
+                                <% const containerName = piInvoice.packingLists?.[0]?.containerNumber || 'Container 1'; %>
+                                <% const sealInfo = piInvoice.packingLists?.[0]?.sealType && piInvoice.packingLists?.[0]?.sealNumber ? `${piInvoice.packingLists[0].sealType} - ${piInvoice.packingLists[0].sealNumber}` : ''; %>
                                 
                                 <% totalQuantity += boxes; %>
                                 <% totalNetWt += netWeight; %>
