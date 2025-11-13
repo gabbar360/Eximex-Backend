@@ -447,10 +447,115 @@ const downloadPackingListPDF = async (req, res) => {
       console.error('Error reading company logo file:', error);
     }
 
+    // Get shipment data if available
+    let shipment = null;
+    if (packingListEntry.piInvoice.orders && packingListEntry.piInvoice.orders.length > 0) {
+      const order = packingListEntry.piInvoice.orders[0];
+      if (order.shipment) {
+        shipment = order.shipment;
+      }
+    }
+
     // Render EJS template
     const templatePath = join(
       __dirname,
       '../views/packaging-details-template.ejs'
+    );
+    const htmlContent = await ejs.renderFile(templatePath, {
+      piInvoice: packingListEntry.piInvoice,
+      stepsByProduct: stepsByProduct,
+      packingListData: packingListData,
+      logoBase64: logoBase64,
+      shipment: shipment,
+    });
+
+    // Generate PDF
+    const pdfBuffer = await generatePDF(htmlContent, {
+      format: 'A4',
+      printBackground: true,
+      margin: {
+        top: '10mm',
+        right: '10mm',
+        bottom: '10mm',
+        left: '10mm',
+      },
+    });
+
+    // Set response headers for PDF download
+    const filename = `packing-list-${packingListEntry.piInvoice.piNumber}-${Date.now()}.pdf`;
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.setHeader('Content-Length', pdfBuffer.length);
+
+    res.send(pdfBuffer);
+  } catch (error) {
+    console.error('Error downloading packing list PDF:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Failed to download packing list PDF',
+    });
+  }
+};
+
+const downloadPackingingListPortDetailsPDF = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    let packingListEntry = await PackagingStepsService.getPackingListForPortPDF(id, req.user.companyId);
+    
+    if (!packingListEntry) {
+      return res.status(404).json({
+        success: false,
+        message: 'Packing list not found',
+      });
+    }
+
+    // Parse packing list data for container info
+    let packingListData = {};
+    if (packingListEntry.notes) {
+      try {
+        packingListData =
+          typeof packingListEntry.notes === 'string'
+            ? JSON.parse(packingListEntry.notes)
+            : packingListEntry.notes;
+      } catch (error) {
+        console.error('Error parsing packing list data:', error);
+      }
+    }
+
+    // Group packing lists by product
+    const stepsByProduct = PackagingStepsService.groupPackagingStepsByProduct(
+      packingListEntry.piInvoice.packingLists
+    );
+
+    // Add container and seal numbers to products
+    PackagingStepsService.addContainerInfoToProducts(
+      packingListEntry.piInvoice.products,
+      packingListData,
+      packingListEntry.piInvoice.packingLists
+    );
+
+    // Convert company logo to base64
+    let logoBase64 = null;
+    try {
+      if (packingListEntry.piInvoice.company?.logo) {
+        const logoFilename = packingListEntry.piInvoice.company.logo
+          .split('/')
+          .pop();
+        const logoPath = join(__dirname, '../../uploads/logos', logoFilename);
+        if (fs.existsSync(logoPath)) {
+          const logoBuffer = fs.readFileSync(logoPath);
+          logoBase64 = logoBuffer.toString('base64');
+        }
+      }
+    } catch (error) {
+      console.error('Error reading company logo file:', error);
+    }
+
+    // Render EJS template
+    const templatePath = join(
+      __dirname,
+      '../views/packaging-port-delivery-details-template.ejs'
     );
     const htmlContent = await ejs.renderFile(templatePath, {
       piInvoice: packingListEntry.piInvoice,
@@ -486,7 +591,6 @@ const downloadPackingListPDF = async (req, res) => {
     });
   }
 };
-
 export {
   getAllPackingLists,
   getPackingListById,
@@ -495,4 +599,5 @@ export {
   deletePackingList,
   getPackingListsByPI,
   downloadPackingListPDF,
+  downloadPackingingListPortDetailsPDF
 };

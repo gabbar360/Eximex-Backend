@@ -622,6 +622,79 @@ export class PackagingStepsService {
             packingLists: {
               where: { isActive: true },
             },
+            orders: {
+              include: {
+                shipment: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!packingListEntry) {
+      const piInvoice = await prisma.piInvoice.findFirst({
+        where: {
+          id: parseInt(id),
+          companyId,
+        },
+        include: {
+          products: {
+            include: {
+              product: true,
+              category: true,
+            },
+          },
+          party: true,
+          company: true,
+          packingLists: {
+            where: {
+              stepType: 'PACKING',
+              isActive: true,
+            },
+          },
+          orders: {
+            include: {
+              shipment: true,
+            },
+          },
+        },
+      });
+
+      if (piInvoice) {
+        packingListEntry = {
+          piInvoice: piInvoice,
+        };
+      }
+    }
+
+    return packingListEntry;
+  }
+
+    static async getPackingListForPortPDF(id, companyId) {
+    let packingListEntry = await prisma.packingList.findFirst({
+      where: {
+        id: parseInt(id),
+        stepType: 'PACKING',
+        isActive: true,
+        piInvoice: {
+          companyId,
+        },
+      },
+      include: {
+        piInvoice: {
+          include: {
+            products: {
+              include: {
+                product: true,
+                category: true,
+              },
+            },
+            party: true,
+            company: true,
+            packingLists: {
+              where: { isActive: true },
+            },
           },
         },
       },
