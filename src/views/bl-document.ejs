@@ -61,7 +61,7 @@
                 </td>
                 <td style="width: 50%; border: 2px solid #000; border-left: none; padding: 12px; vertical-align: top; text-align: right;">
                     <div style="font-weight: bold; font-size: 16px; font-style: italic;">BOOKING NO:</div>
-                    <div style="font-size: 18px; font-weight: bold; margin-top: 5px;"><%= order.blNumber || bl.blNumber %></div>
+                    <div style="font-size: 18px; font-weight: bold; margin-top: 5px;"><%=  shipment.blNumber %></div>
                 </td>
             </tr>
         </table>
@@ -102,8 +102,8 @@
                 <td style="width: 50%; border: 2px solid #000; border-top: none; padding: 10px; vertical-align: top;">
                     <div style="font-weight: bold; font-size: 11px; margin-bottom: 8px;">Vessel and Voyage No:</div>
                     <div style="font-size: 10px; font-weight: bold;">
-                        <% if (piInvoice.packagingSteps && piInvoice.packagingSteps.length > 0 && piInvoice.packagingSteps[0].notes && piInvoice.packagingSteps[0].notes.vesselVoyageNo) { %>
-                            <%= piInvoice.packagingSteps[0].notes.vesselVoyageNo %>
+                        <% if (piInvoice.packingLists && piInvoice.packingLists.length > 0 && piInvoice.packingLists[0].notes && piInvoice.packingLists[0].notes.vesselVoyageNo) { %>
+                            <%= piInvoice.packingLists[0].notes.vesselVoyageNo %>
                         <% } else { %>
                             <%= bl.vesselName %> VOY <%= bl.voyageNumber %>
                         <% } %>
@@ -159,13 +159,13 @@
                         let totalBoxes = 0;
                         let totalPallets = 0;
                         
-                        if (piInvoice.packagingSteps && piInvoice.packagingSteps.length > 0 && piInvoice.packagingSteps[0].notes && piInvoice.packagingSteps[0].notes.containers) {
-                            piInvoice.packagingSteps[0].notes.containers.forEach(container => {
+                        if (piInvoice.packingLists && piInvoice.packingLists.length > 0 && piInvoice.packingLists[0].notes && piInvoice.packingLists[0].notes.containers) {
+                            piInvoice.packingLists[0].notes.containers.forEach(container => {
                                 totalBoxes += parseInt(container.totalNoOfBoxes) || 0;
                                 totalPallets += parseInt(container.totalPallets) || 0;
                             });
-                        } else if (order && order.packagingSteps) {
-                            totalPallets = order.packagingSteps.reduce((sum, step) => sum + (parseFloat(step.quantity) || 0), 0);
+                        } else if (order && order.packingLists) {
+                            totalPallets = order.packingLists.reduce((sum, step) => sum + (parseFloat(step.quantity) || 0), 0);
                         } else {
                             totalPallets = piInvoice.totalPallets || 0;
                         }
@@ -185,7 +185,7 @@
                     
                     <td style="border: 2px solid #000; border-top: none; border-left: none; padding: 12px; vertical-align: top; font-size: 11px; line-height: 1.3;">
                         <% 
-                        const containerCount = (piInvoice.packagingSteps && piInvoice.packagingSteps[0] && piInvoice.packagingSteps[0].notes && piInvoice.packagingSteps[0].notes.containers) ? piInvoice.packagingSteps[0].notes.containers.length : (order && order.packagingSteps ? order.packagingSteps.length : 1);
+                        const containerCount = (piInvoice.packingLists && piInvoice.packingLists[0] && piInvoice.packingLists[0].notes && piInvoice.packingLists[0].notes.containers) ? piInvoice.packingLists[0].notes.containers.length : (order && order.packingLists ? order.packingLists.length : 1);
                         const containerSize = piInvoice.containerType || "20' FCL";
                         %>
                         
@@ -199,8 +199,8 @@
                             
                             // First, collect all products with their box counts from containers
                             const productBoxCounts = {};
-                            if (piInvoice.packagingSteps && piInvoice.packagingSteps.length > 0 && piInvoice.packagingSteps[0].notes && piInvoice.packagingSteps[0].notes.containers) {
-                                piInvoice.packagingSteps[0].notes.containers.forEach(container => {
+                            if (piInvoice.packingLists && piInvoice.packingLists.length > 0 && piInvoice.packingLists[0].notes && piInvoice.packingLists[0].notes.containers) {
+                                piInvoice.packingLists[0].notes.containers.forEach(container => {
                                     if (container.products) {
                                         container.products.forEach(containerProduct => {
                                             if (containerProduct.productData) {
@@ -261,8 +261,8 @@
                         let totalGrossWeight = 0;
                         let totalNetWeight = 0;
                         
-                        if (piInvoice.packagingSteps && piInvoice.packagingSteps.length > 0 && piInvoice.packagingSteps[0].notes && piInvoice.packagingSteps[0].notes.containers) {
-                            piInvoice.packagingSteps[0].notes.containers.forEach(container => {
+                        if (piInvoice.packingLists && piInvoice.packingLists.length > 0 && piInvoice.packingLists[0].notes && piInvoice.packingLists[0].notes.containers) {
+                            piInvoice.packingLists[0].notes.containers.forEach(container => {
                                 totalGrossWeight += parseFloat(container.totalGrossWeight) || 0;
                                 totalNetWeight += parseFloat(container.totalNetWeight) || 0;
                             });
@@ -308,8 +308,8 @@
                 </tr>
             </thead>
             <tbody>
-                <% if (piInvoice.packagingSteps && piInvoice.packagingSteps.length > 0 && piInvoice.packagingSteps[0].notes && piInvoice.packagingSteps[0].notes.containers) { %>
-                    <% piInvoice.packagingSteps[0].notes.containers.forEach(container => { %>
+                <% if (piInvoice.packingLists && piInvoice.packingLists.length > 0 && piInvoice.packingLists[0].notes && piInvoice.packingLists[0].notes.containers) { %>
+                    <% piInvoice.packingLists[0].notes.containers.forEach(container => { %>
                         <tr>
                             <td style="border: 2px solid #000; border-top: none; padding: 6px; font-size: 9px; text-align: center;"><%= container.containerNumber %></td>
                             <td style="border: 2px solid #000; border-top: none; border-left: none; padding: 6px; font-size: 9px; text-align: center;"><%= container.sealNumber %></td>

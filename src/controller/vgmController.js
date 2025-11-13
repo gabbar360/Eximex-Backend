@@ -1,18 +1,19 @@
-import { PrismaClient } from '@prisma/client';
 import ejs from 'ejs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
 import { generatePDF } from '../utils/puppeteerConfig.js';
 import { UserService } from '../services/userService.js';
+import { VgmService } from '../services/vgmService.js';
+import { prisma } from '../config/dbConfig.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const prisma = new PrismaClient();
 
 // Create VGM Document
 const createVgmDocument = async (req, res) => {
   try {
+    console.log('VGM Create - Start');
     const { companyId, id: userId } = req.user;
     const {
       piInvoiceId,
@@ -29,16 +30,19 @@ const createVgmDocument = async (req, res) => {
       remarks,
     } = req.body;
 
+    console.log('VGM Create - Before packaging step check');
     // If no productPackagingStepId provided, get the first packaging step from the PI
     let finalPackagingStepId = productPackagingStepId;
     if (!finalPackagingStepId) {
-      const firstPackagingStep = await prisma.productPackagingSteps.findFirst({
+      console.log('VGM Create - Getting first packaging step');
+      const firstPackagingStep = await prisma.packingList.findFirst({
         where: { piInvoiceId },
         orderBy: { stepNumber: 'asc' },
       });
       finalPackagingStepId = firstPackagingStep?.id || null;
     }
 
+    console.log('VGM Create - Creating document');
     const vgmDocument = await prisma.vgmDocument.create({
       data: {
         companyId,
@@ -58,7 +62,7 @@ const createVgmDocument = async (req, res) => {
       },
       include: {
         piInvoice: { select: { piNumber: true } },
-        productPackagingStep: {
+        packingList: {
           select: {
             containerNumber: true,
             sealNumber: true,
@@ -79,6 +83,7 @@ const createVgmDocument = async (req, res) => {
     });
   } catch (error) {
     console.error('Error creating VGM document:', error);
+    console.error('Error stack:', error.stack);
     res.status(500).json({
       success: false,
       message: 'Failed to create VGM document',
@@ -97,25 +102,7 @@ const getVgmDocuments = async (req, res) => {
     if (piInvoiceId) where.piInvoiceId = parseInt(piInvoiceId);
     if (status) where.status = status;
 
-    const vgmDocuments = await prisma.vgmDocument.findMany({
-      where,
-      include: {
-        piInvoice: { select: { piNumber: true, partyName: true } },
-        productPackagingStep: {
-          select: {
-            containerNumber: true,
-            sealNumber: true,
-            sealType: true,
-          },
-        },
-        creator: { select: { name: true } },
-      },
-      orderBy: { createdAt: 'desc' },
-      skip: (page - 1) * limit,
-      take: parseInt(limit),
-    });
-
-    const total = await prisma.vgmDocument.count({ where });
+    const { vgmDocuments, total } = await VgmService.getVgmDocuments(where, page, limit);
 
     res.json({
       success: true,
@@ -143,29 +130,7 @@ const getVgmDocument = async (req, res) => {
     const { companyId } = req.user;
     const { id } = req.params;
 
-    let vgmDocument = await prisma.vgmDocument.findFirst({
-      where: { id: parseInt(id), companyId },
-      include: {
-        piInvoice: {
-          select: {
-            piNumber: true,
-            partyName: true,
-            containerType: true,
-            numberOfContainers: true,
-          },
-        },
-        productPackagingStep: {
-          select: {
-            containerNumber: true,
-            sealNumber: true,
-            sealType: true,
-            description: true,
-          },
-        },
-        creator: { select: { name: true } },
-        updater: { select: { name: true } },
-      },
-    });
+    let vgmDocument = await VgmService.getVgmDocument(id, companyId);
 
     if (!vgmDocument) {
       return res.status(404).json({
@@ -176,7 +141,7 @@ const getVgmDocument = async (req, res) => {
 
     // If productPackagingStepId is null, try to link to first packaging step
     if (!vgmDocument.productPackagingStepId) {
-      const firstPackagingStep = await prisma.productPackagingSteps.findFirst({
+      const firstPackagingStep = await prisma.packingList.findFirst({
         where: { piInvoiceId: vgmDocument.piInvoiceId },
         orderBy: { stepNumber: 'asc' },
       });
@@ -194,7 +159,7 @@ const getVgmDocument = async (req, res) => {
                 numberOfContainers: true,
               },
             },
-            productPackagingStep: {
+            packingList: {
               select: {
                 containerNumber: true,
                 sealNumber: true,
@@ -234,21 +199,7 @@ const updateVgmDocument = async (req, res) => {
       updateData.verificationDate = new Date(updateData.verificationDate);
     }
 
-    const vgmDocument = await prisma.vgmDocument.update({
-      where: { id: parseInt(id), companyId },
-      data: updateData,
-      include: {
-        piInvoice: { select: { piNumber: true } },
-        productPackagingStep: {
-          select: {
-            containerNumber: true,
-            sealNumber: true,
-            sealType: true,
-          },
-        },
-        creator: { select: { name: true } },
-      },
-    });
+    const vgmDocument = await VgmService.updateVgmDocument(id, companyId, updateData);
 
     res.json({
       success: true,
@@ -271,9 +222,7 @@ const deleteVgmDocument = async (req, res) => {
     const { companyId } = req.user;
     const { id } = req.params;
 
-    await prisma.vgmDocument.delete({
-      where: { id: parseInt(id), companyId },
-    });
+    await VgmService.deleteVgmDocument(id, companyId);
 
     res.json({
       success: true,
@@ -308,7 +257,7 @@ const generateVgmPdf = async (req, res) => {
             countryOfOrigin: true,
             countryOfDestination: true,
             finalDestination: true,
-            packagingSteps: {
+            packingLists: {
               where: {
                 containerNumber: { not: null },
               },
@@ -322,7 +271,7 @@ const generateVgmPdf = async (req, res) => {
             },
           },
         },
-        productPackagingStep: {
+        packingList: {
           select: {
             containerNumber: true,
             sealNumber: true,
@@ -356,10 +305,10 @@ const generateVgmPdf = async (req, res) => {
     let voyageNumber = '';
 
     if (
-      vgmDocument.piInvoice.packagingSteps &&
-      vgmDocument.piInvoice.packagingSteps.length > 0
+      vgmDocument.piInvoice.packingLists &&
+      vgmDocument.piInvoice.packingLists.length > 0
     ) {
-      const packagingStep = vgmDocument.piInvoice.packagingSteps[0];
+      const packagingStep = vgmDocument.piInvoice.packingLists[0];
       if (packagingStep.notes) {
         try {
           packingData =

@@ -269,15 +269,7 @@
                     </tr>
                     <tr class="center">
                         <td>
-                            <%= piInvoice.vesselFlightNo || (packingListData.vesselVoyageNo &&
-                                packingListData.vesselVoyageNo.trim()) ? packingListData.vesselVoyageNo :
-                                (Array.isArray(piInvoice.packingLists) && piInvoice.packingLists.length> 0 &&
-                                piInvoice.packingLists[0].notes &&
-                                piInvoice.packingLists[0].notes.vesselVoyageNo
-                                ? piInvoice.packingLists[0].notes.vesselVoyageNo
-                                : 'N/A'
-                                )
-                                %>
+                            <%= shipment?.vesselVoyageInfo || '-' %>
                         </td>
                         <td>
                             <%= piInvoice.portOfLoading || '-' %>

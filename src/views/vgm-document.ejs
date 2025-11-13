@@ -286,8 +286,8 @@
             </tr>
         </thead>
         <tbody>
-            <% if (piInvoice.packagingSteps && piInvoice.packagingSteps.length > 0) { %>
-                <% piInvoice.packagingSteps.forEach((step, index) => { %>
+            <% if (piInvoice.packingLists && piInvoice.packingLists.length > 0) { %>
+                <% piInvoice.packingLists.forEach((step, index) => { %>
                     <tr>
                         <td><%= index + 1 %></td>
                         <td><%= step.containerNumber %></td>
@@ -302,7 +302,7 @@
             <% } else { %>
                 <tr>
                     <td>1</td>
-                    <td><%= vgm.productPackagingStep?.containerNumber || 'N/A' %></td>
+                    <td><%= vgm.packingList?.containerNumber || 'N/A' %></td>
                     <td><%= piInvoice.maxPermissibleWeight || '30480.00' %></td>
                     <td><%= vgm.verifiedGrossMass.toFixed(2) %></td>
                     <td><%= vgm.cargoWeight ? vgm.cargoWeight.toFixed(2) : (vgm.verifiedGrossMass - 2200).toFixed(2) %></td>

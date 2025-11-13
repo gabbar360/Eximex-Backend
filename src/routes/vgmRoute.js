@@ -15,8 +15,11 @@ const router = express.Router();
 router.use(verifyJWT);
 
 // VGM Document routes
+router.post('/vgm', createVgmDocument);
 router.get('/vgm', getVgmDocuments);
 router.get('/vgm/:id', getVgmDocument);
+router.put('/vgm/:id', updateVgmDocument);
+router.delete('/vgm/:id', deleteVgmDocument);
 router.get('/vgm/:id/pdf', generateVgmPdf);
 
 export default router;
