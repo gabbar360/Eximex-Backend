@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Commercial Packing List</title>
+    <title>Commercial Packing List...................</title>
     <style>
         :root {
             --outer: 2px solid #000;
@@ -186,28 +186,8 @@
                     <tr>
                         <td style="width: 40%;">
                             <div class="bold" style="margin-top:2px;">
-                                <%= packingListData.consigneeDetails || piInvoice.party?.companyName ||
-                                    piInvoice.partyName || 'N/A' %>
+                                (To The Order)
                             </div>
-                            <div>Address: <%= piInvoice.party?.address || piInvoice.address || '' %>
-                            </div>
-                            <% if (piInvoice.party?.buildingName) { %>
-                                <div>Building Name: <%= piInvoice.party.buildingName %>
-                                </div>
-                                <% } %>
-                                    <div>
-                                        <%= piInvoice.party?.city || '' %>
-                                            <%= piInvoice.party?.state ? ', ' + piInvoice.party.state : '' %>
-                                                <%= piInvoice.party?.zip || '' %>
-                                    </div>
-                                    <% if (piInvoice.party?.phone) { %>
-                                        <div>Phone: <%= piInvoice.party.phone %>
-                                        </div>
-                                        <% } %>
-                                            <% if (piInvoice.party?.email) { %>
-                                                <div>Email: <%= piInvoice.party.email %>
-                                                </div>
-                                                <% } %>
                         </td>
                         <td style="width: 40%;">
                             <div class="bold" style="margin-top:2px;">
@@ -269,7 +249,15 @@
                     </tr>
                     <tr class="center">
                         <td>
-                            <%= shipment?.vesselVoyageInfo || '-' %>
+                            <%= piInvoice.vesselFlightNo || (packingListData.vesselVoyageNo &&
+                                packingListData.vesselVoyageNo.trim()) ? packingListData.vesselVoyageNo :
+                                (Array.isArray(piInvoice.packingLists) && piInvoice.packingLists.length> 0 &&
+                                piInvoice.packingLists[0].notes &&
+                                piInvoice.packingLists[0].notes.vesselVoyageNo
+                                ? piInvoice.packingLists[0].notes.vesselVoyageNo
+                                : 'N/A'
+                                )
+                                %>
                         </td>
                         <td>
                             <%= piInvoice.portOfLoading || '-' %>

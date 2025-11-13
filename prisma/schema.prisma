@@ -530,11 +530,14 @@ model PiProduct {
   @@map("pi_products")
 }
 
-model PiDailyCounter {
-  date                  DateTime @id @map("date")
+model PiYearlyCounter {
+  id                    Int      @id @default(autoincrement())
+  financialYear         String   @unique @map("financial_year")
   lastIncrementalNumber Int      @default(0) @map("last_incremental_number")
+  createdAt             DateTime @default(now()) @map("created_at")
+  updatedAt             DateTime @updatedAt @map("updated_at")
 
-  @@map("pi_daily_counters")
+  @@map("pi_yearly_counters")
 }
 
 model PiInvoiceHistory {
