@@ -57,13 +57,20 @@ const getAllParties = async (companyId, options = {}, dataFilters = {}) => {
 
   const orderBy = { [sortBy]: sortOrder };
 
-  return await DatabaseUtils.findMany('partyList', {
-    where,
-    orderBy,
-    page,
-    limit,
-    include: { company: true, user: true },
-  });
+  try {
+    const result = await DatabaseUtils.findMany('partyList', {
+      where,
+      orderBy,
+      page: parseInt(page),
+      limit: parseInt(limit),
+      include: { company: true, user: true },
+    });
+    
+    return result;
+  } catch (error) {
+    console.error('Party service error:', error);
+    throw error;
+  }
 };
 
 const createParty = async (partyData, companyId, userId = null) => {

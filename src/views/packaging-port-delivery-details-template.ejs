@@ -99,7 +99,7 @@
     <!-- <pre><%= JSON.stringify(piInvoice.products?.[0] || (piInvoice.packingLists?.[0]?.notes?.containers?.[0]?.products?.[0]), null, 2) %></pre> -->
     <!-- <pre><%= JSON.stringify(packingListData) %></pre> -->
     <div class="page">
-        <div class="title">COMMERCIAL PORT PACKING LIST</div>
+        <div class="title">COMMERCIAL PACKING LIST</div>
         <div class="subtitle">SUPPLY MEANT FOR EXPORT UNDER BOND &amp; LUT - LETTER OF UNDERTAKING WITHOUT PAYMENT OF
             INTEGRATED TAX</div>
 
@@ -276,8 +276,9 @@
                 <table>
                     <thead>
                         <tr class="header center">
-                            <th style="width:15%;">Container</th>
-                            <th style="width:25%;">Product Name</th>
+                            <th style="width:5%;">Sr.</th>
+                            <th style="width:22%;">Product Name</th>
+                            <th style="width:13%;">Container</th>
                             <th style="width:10%;">HSN Code</th>
                             <th style="width:8%;">Unit</th>
                             <th style="width:10%;">Quantity</th>
@@ -293,6 +294,7 @@
                             piInvoice.packingLists[0].notes.containers : []; %>
                         <% let totalQuantity = 0, totalUnitWt = 0, totalNetWt = 0, totalGrossWt = 0, totalVolume = 0; %>
                         
+                        <% let globalProductIndex = 1; %>
                         <% if (allContainers.length > 0) { %>
                             <% allContainers.forEach((containerData, containerIndex) => { %>
                                 <% const items = containerData && containerData.products ? containerData.products : []; %>
@@ -334,6 +336,13 @@
                                         <% totalVolume += volume; %>
                                         
                                         <tr>
+                                            <td class="center"><%= globalProductIndex++ %></td>
+                                            <td>
+                                                <div><%= baseName %></div>
+                                                <% if (packingDescription) { %>
+                                                    <div style="font-size: 9px; color: #000; margin-top: 2px;"><%= packingDescription %></div>
+                                                <% } %>
+                                            </td>
                                             <% if (productIndex === 0) { %>
                                                 <td rowspan="<%= items.length %>" class="center">
                                                     <div class="bold"><%= containerName %></div>
@@ -342,12 +351,6 @@
                                                     <% } %>
                                                 </td>
                                             <% } %>
-                                            <td>
-                                                <div><%= baseName %></div>
-                                                <% if (packingDescription) { %>
-                                                    <div style="font-size: 9px; color: #000; margin-top: 2px;"><%= packingDescription %></div>
-                                                <% } %>
-                                            </td>
                                             <td class="center"><%= hsnCode %></td>
                                             <td class="center"><%= unit %></td>
                                             <td class="right"><%= quantity %></td>
@@ -370,13 +373,14 @@
                                     <% totalVolume += volume; %>
                                     
                                     <tr>
+                                        <td class="center"><%= globalProductIndex++ %></td>
+                                        <td>-</td>
                                         <td class="center">
                                             <div class="bold"><%= containerName %></div>
                                             <% if (sealInfo) { %>
                                                 <div style="font-size: 9px; color: #666;"><%= sealInfo %></div>
                                             <% } %>
                                         </td>
-                                        <td>-</td>
                                         <td class="center">-</td>
                                         <td class="center">-</td>
                                         <td class="right"><%= boxes || '-' %></td>
@@ -434,6 +438,13 @@
                                 <% totalVolume += volume; %>
                                 
                                 <tr>
+                                    <td class="center"><%= globalProductIndex++ %></td>
+                                    <td>
+                                        <div><%= baseName %></div>
+                                        <% if (packingDescription) { %>
+                                            <div style="font-size: 9px; color: #666; margin-top: 2px;"><%= packingDescription %></div>
+                                        <% } %>
+                                    </td>
                                     <td class="center">
                                         <% if (i === 0) { %>
                                             <div class="bold"><%= containerName %></div>
@@ -442,12 +453,6 @@
                                             <% } %>
                                         <% } else { %>
                                             -
-                                        <% } %>
-                                    </td>
-                                    <td>
-                                        <div><%= baseName %></div>
-                                        <% if (packingDescription) { %>
-                                            <div style="font-size: 9px; color: #666; margin-top: 2px;"><%= packingDescription %></div>
                                         <% } %>
                                     </td>
                                     <td class="center"><%= hsnCode %></td>
@@ -463,7 +468,7 @@
 
                         <!-- TOTAL row -->
                         <tr class="bold header">
-                            <td colspan="4" class="center">TOTAL</td>
+                            <td colspan="5" class="center">TOTAL</td>
                             <td class="right"><%= totalQuantity || 0 %></td>
                             <td class="right"><%= totalQuantity > 0 && totalNetWt > 0 ? (totalNetWt / totalQuantity).toFixed(2) : '-' %></td>
                             <td class="right"><%= totalNetWt ? totalNetWt.toFixed(2) : '0' %></td>

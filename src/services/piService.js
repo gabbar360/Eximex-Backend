@@ -13,37 +13,42 @@ const __dirname = dirname(__filename);
 
 const generatePiNumber = async () => {
   const date = new Date();
-  const y = date.getFullYear().toString().slice(-2);
-  const m = (date.getMonth() + 1).toString().padStart(2, '0');
-  const d = date.getDate().toString().padStart(2, '0');
-  const dateStr = `${y}${m}${d}`;
-  const currentDate = new Date(
-    date.getFullYear(),
-    date.getMonth(),
-    date.getDate()
-  );
-
+  const currentYear = date.getFullYear();
+  const financialYear = date.getMonth() >= 3 ? currentYear : currentYear - 1; // April to March
+  const nextYear = financialYear + 1;
+  const yearSuffix = `${financialYear.toString().slice(-2)}-${nextYear.toString().slice(-2)}`;
+  
   const counter = await prisma.$transaction(async (tx) => {
-    const existing = await tx.piDailyCounter.findUnique({
-      where: { date: currentDate },
+    // Use financial year as key instead of daily date
+    const yearKey = `${financialYear}-${nextYear}`;
+    
+    const existing = await tx.piYearlyCounter.findUnique({
+      where: { financialYear: yearKey },
     });
 
     if (existing) {
-      const updated = await tx.piDailyCounter.update({
-        where: { date: currentDate },
+      const updated = await tx.piYearlyCounter.update({
+        where: { financialYear: yearKey },
         data: { lastIncrementalNumber: existing.lastIncrementalNumber + 1 },
       });
       return updated.lastIncrementalNumber;
     } else {
-      const created = await tx.piDailyCounter.create({
-        data: { date: currentDate, lastIncrementalNumber: 1 },
+      const created = await tx.piYearlyCounter.create({
+        data: { financialYear: yearKey, lastIncrementalNumber: 1 },
       });
       return created.lastIncrementalNumber;
     }
   });
 
-  const incremental = counter.toString().padStart(3, '0');
-  return `PI${dateStr}-${incremental}`;
+  // Determine number of digits based on counter value
+  let paddedCounter;
+  if (counter <= 999) {
+    paddedCounter = counter.toString().padStart(3, '0');
+  } else {
+    paddedCounter = counter.toString().padStart(4, '0');
+  }
+  
+  return `VGR-${paddedCounter}-${yearSuffix}`;
 };
 
 // Enhanced packing breakdown calculation
