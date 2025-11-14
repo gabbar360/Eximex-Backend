@@ -119,6 +119,10 @@ const getAllCategories = async (companyId, options = {}, dataFilters = {}) => {
     sortOrder = 'desc',
     parentId = null,
   } = options;
+  
+  // Convert to integers
+  const pageNum = parseInt(page) || 1;
+  const limitNum = parseInt(limit) || 10;
 
   const where = {
     companyId: Number(companyId),
@@ -146,8 +150,8 @@ const getAllCategories = async (companyId, options = {}, dataFilters = {}) => {
   const parentCategories = await prisma.itemCategory.findMany({
     where,
     orderBy,
-    skip: (page - 1) * limit,
-    take: limit,
+    skip: (pageNum - 1) * limitNum,
+    take: limitNum,
     include: {
       other_ItemCategory: true, // subcategories
     },
@@ -212,12 +216,12 @@ const getAllCategories = async (companyId, options = {}, dataFilters = {}) => {
   return {
     data: formatted,
     pagination: {
-      page,
-      limit,
+      page: pageNum,
+      limit: limitNum,
       total,
-      totalPages: Math.ceil(total / limit),
-      hasNext: page * limit < total,
-      hasPrev: page > 1,
+      totalPages: Math.ceil(total / limitNum),
+      hasNext: pageNum * limitNum < total,
+      hasPrev: pageNum > 1,
     },
   };
 };
