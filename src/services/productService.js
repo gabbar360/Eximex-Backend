@@ -107,7 +107,7 @@ const getAllProducts = async (companyId, options = {}, dataFilters = {}) => {
     categoryId = null,
   } = options;
 
-  // Convert to integers
+  // Convert to integers to avoid Prisma type errors
   const pageNum = parseInt(page) || 1;
   const limitNum = parseInt(limit) || 50;
 
