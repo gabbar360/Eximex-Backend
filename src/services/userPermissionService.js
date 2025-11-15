@@ -83,29 +83,26 @@ export const userPermissionService = {
       },
       include: {
         menuItem: {
-          where: { isActive: true },
           include: { 
-            children: {
-              where: { isActive: true },
-              orderBy: { sortOrder: 'asc' }
-            }
+            children: true
           }
         }
-      },
-      orderBy: {
-        menuItem: { sortOrder: 'asc' }
       }
     });
 
-    return permissions.map(p => ({
+    // Filter active menu items and sort
+    const activePermissions = permissions.filter(p => p.menuItem.isActive);
+    
+    return activePermissions.map(p => ({
       ...p.menuItem,
+      children: p.menuItem.children.filter(child => child.isActive).sort((a, b) => a.sortOrder - b.sortOrder),
       permissions: {
         canView: p.canView,
         canCreate: p.canCreate,
         canUpdate: p.canUpdate,
         canDelete: p.canDelete
       }
-    }));
+    })).sort((a, b) => a.sortOrder - b.sortOrder);
   },
 
   async getUserWithPermissions(userId) {

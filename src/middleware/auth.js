@@ -59,11 +59,84 @@ export const verifyJWT = asyncHandler(async (req, res, next) => {
     }
 
     req.user = user;
-    next();
+    
+    // Auto permission check
+    await autoCheckPermissions(req, res, next);
   } catch (error) {
     throw new ApiError(401, error?.message || 'Invalid access token');
   }
 });
+
+// Auto permission check function
+const autoCheckPermissions = async (req, res, next) => {
+  const userId = req.user.id;
+  const method = req.method;
+  const path = req.path;
+
+  // Skip for specific routes
+  if (path.includes('/auth/') || path.includes('/super-admin/') || path.includes('/getroles') || path.includes('/my-sidebar-menu') || path.includes('/user-permissions')) {
+    return next();
+  }
+
+  // Map HTTP methods to permissions
+  const methodToPermission = {
+    'GET': 'canView',
+    'POST': 'canCreate',
+    'PUT': 'canUpdate',
+    'PATCH': 'canUpdate', 
+    'DELETE': 'canDelete'
+  };
+
+  // Map route paths to menu slugs
+  const pathToMenuMap = {
+    '/categories': 'categories',
+    '/category': 'categories'
+  };
+
+  // Find menu slug from path
+  let menuSlug = null;
+  for (const [pathPattern, slug] of Object.entries(pathToMenuMap)) {
+    if (path.includes(pathPattern)) {
+      menuSlug = slug;
+      break;
+    }
+  }
+
+  // Skip if no menu mapping found
+  if (!menuSlug) {
+    return next();
+  }
+
+  const requiredPermission = methodToPermission[method];
+  if (!requiredPermission) {
+    return next();
+  }
+
+  // Get menu item
+  const menuItem = await prisma.menuItem.findUnique({
+    where: { slug: menuSlug }
+  });
+
+  if (!menuItem) {
+    return next();
+  }
+
+  // Get user permission
+  const userPermission = await prisma.userPermission.findFirst({
+    where: {
+      userId: userId,
+      menuItemId: menuItem.id
+    }
+  });
+
+  // Check permission
+  if (!userPermission || !userPermission[requiredPermission]) {
+    const actionName = requiredPermission.replace('can', '').toLowerCase();
+    throw new ApiError(403, `You don't have ${actionName} permission for this resource`);
+  }
+
+  next();
+};
 
 // Global permission check middleware
 export const checkPermissions = asyncHandler(async (req, res, next) => {
