@@ -269,7 +269,7 @@
                     </tr>
                     <tr class="center">
                         <td>
-                            <%= shipment?.vesselVoyageInfo || '-' %>
+                            <%= (typeof shipment !== 'undefined' && shipment?.vesselVoyageInfo) || '-' %>
                         </td>
                         <td>
                             <%= piInvoice.portOfLoading || '-' %>
@@ -356,11 +356,13 @@
                                                 <% } %>
                                             </td>
                                             <% if (productIndex === 0) { %>
-                                                <td rowspan="<%= items.length %>" class="center">
-                                                    <div class="bold"><%= containerName %></div>
-                                                    <% if (sealInfo) { %>
-                                                        <div style="font-size: 9px; color: #666;"><%= sealInfo %></div>
-                                                    <% } %>
+                                                <td rowspan="<%= items.length %>" class="center" style="vertical-align: middle;">
+                                                    <div class="bold" style="display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100%;">
+                                                        <div><%= containerName %></div>
+                                                        <% if (sealInfo) { %>
+                                                            <div style="font-size: 9px; color: #666; margin-top: 2px;"><%= sealInfo %></div>
+                                                        <% } %>
+                                                    </div>
                                                 </td>
                                             <% } %>
                                             <td class="center"><%= hsnCode %></td>
@@ -387,11 +389,13 @@
                                     <tr>
                                         <td class="center"><%= globalProductIndex++ %></td>
                                         <td>-</td>
-                                        <td class="center">
-                                            <div class="bold"><%= containerName %></div>
-                                            <% if (sealInfo) { %>
-                                                <div style="font-size: 9px; color: #666;"><%= sealInfo %></div>
-                                            <% } %>
+                                        <td class="center" style="vertical-align: middle;">
+                                            <div class="bold" style="display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100%;">
+                                                <div><%= containerName %></div>
+                                                <% if (sealInfo) { %>
+                                                    <div style="font-size: 9px; color: #666; margin-top: 2px;"><%= sealInfo %></div>
+                                                <% } %>
+                                            </div>
                                         </td>
                                         <td class="center">-</td>
                                         <td class="center">-</td>
@@ -457,12 +461,14 @@
                                             <div style="font-size: 9px; color: #666; margin-top: 2px;"><%= packingDescription %></div>
                                         <% } %>
                                     </td>
-                                    <td class="center">
+                                    <td class="center" style="vertical-align: middle;">
                                         <% if (i === 0) { %>
-                                            <div class="bold"><%= containerName %></div>
-                                            <% if (sealInfo) { %>
-                                                <div style="font-size: 9px; color: #666;"><%= sealInfo %></div>
-                                            <% } %>
+                                            <div class="bold" style="display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100%;">
+                                                <div><%= containerName %></div>
+                                                <% if (sealInfo) { %>
+                                                    <div style="font-size: 9px; color: #666; margin-top: 2px;"><%= sealInfo %></div>
+                                                <% } %>
+                                            </div>
                                         <% } else { %>
                                             -
                                         <% } %>
