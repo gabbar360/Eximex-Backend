@@ -117,17 +117,7 @@ async function main() {
       name: 'SUPER_ADMIN',
       displayName: 'Super Administrator',
       description: 'Full system access across all companies',
-      isSystem: true,
-      permissions: {
-        canManageRoles: true,
-        canManageUsers: true,
-        canManageCompanies: true,
-        canViewAllData: true,
-        canManageStaff: true,
-        canReassignData: true,
-        canViewActivityLogs: true,
-        canManageSystem: true
-      }
+      isSystem: true
     }
   });
   console.log('✅ SUPER_ADMIN role ready');
@@ -140,17 +130,7 @@ async function main() {
       name: 'ADMIN',
       displayName: 'Administrator',
       description: 'Company administrator with full company access',
-      isSystem: true,
-      permissions: {
-        canManageRoles: false,
-        canManageUsers: true,
-        canManageCompanies: false,
-        canViewAllData: true,
-        canManageStaff: true,
-        canReassignData: true,
-        canViewActivityLogs: true,
-        canManageSystem: false
-      }
+      isSystem: true
     }
   });
   console.log('✅ ADMIN role ready');
@@ -163,17 +143,7 @@ async function main() {
       name: 'STAFF',
       displayName: 'Staff Member',
       description: 'Regular staff member with limited access',
-      isSystem: true,
-      permissions: {
-        canManageRoles: false,
-        canManageUsers: false,
-        canManageCompanies: false,
-        canViewAllData: false,
-        canManageStaff: false,
-        canReassignData: false,
-        canViewActivityLogs: false,
-        canManageSystem: false
-      }
+      isSystem: true
     }
   });
   console.log('✅ STAFF role ready');

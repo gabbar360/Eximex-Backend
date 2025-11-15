@@ -65,6 +65,83 @@ export const verifyJWT = asyncHandler(async (req, res, next) => {
   }
 });
 
+// Global permission check middleware
+export const checkPermissions = asyncHandler(async (req, res, next) => {
+  // Skip permission check for certain routes
+  const skipRoutes = ['/auth/', '/super-admin/', '/getroles', '/my-sidebar-menu'];
+  const shouldSkip = skipRoutes.some(route => req.path.includes(route));
+  
+  if (shouldSkip) {
+    return next();
+  }
+
+  // Auto-detect menu slug from route path
+  const pathSegments = req.path.split('/').filter(Boolean);
+  let menuSlug = null;
+  
+  // Map route patterns to menu slugs
+  const routeToMenuMap = {
+    'categories': 'categories',
+    'products': 'products', 
+    'users': 'users',
+    'companies': 'companies',
+    'orders': 'orders',
+    'parties': 'parties'
+  };
+  
+  // Find matching menu slug
+  for (const segment of pathSegments) {
+    if (routeToMenuMap[segment]) {
+      menuSlug = routeToMenuMap[segment];
+      break;
+    }
+  }
+  
+  if (!menuSlug) {
+    return next(); // Skip if no menu mapping found
+  }
+  
+  // Check permissions
+  const userId = req.user.id;
+  const method = req.method;
+  
+  const methodToPermission = {
+    'GET': 'canView',
+    'POST': 'canCreate',
+    'PUT': 'canUpdate', 
+    'PATCH': 'canUpdate',
+    'DELETE': 'canDelete'
+  };
+  
+  const requiredPermission = methodToPermission[method];
+  if (!requiredPermission) {
+    return next();
+  }
+  
+  // Get menu item and check permission
+  const menuItem = await prisma.menuItem.findUnique({
+    where: { slug: menuSlug }
+  });
+  
+  if (!menuItem) {
+    return next(); // Skip if menu item not found
+  }
+  
+  const userPermission = await prisma.userPermission.findFirst({
+    where: {
+      userId: userId,
+      menuItemId: menuItem.id
+    }
+  });
+  
+  if (!userPermission || !userPermission[requiredPermission]) {
+    const actionName = requiredPermission.replace('can', '').toLowerCase();
+    throw new ApiError(403, `You don't have ${actionName} permission for this resource`);
+  }
+  
+  next();
+});
+
 export const verifyRefreshToken = asyncHandler(async (req, res, next) => {
   try {
     const refreshToken = req.cookies?.refreshToken || req.body?.refreshToken;

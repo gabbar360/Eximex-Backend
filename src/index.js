@@ -14,6 +14,7 @@ import { prisma } from './config/dbConfig.js';
 import { logger } from './config/logger.js';
 // import { generalLimiter } from './middleware/rateLimiter.js';
 import { errorHandler, notFound } from './middleware/errorHandler.js';
+import { checkPermissions } from './middleware/auth.js';
 import socketManager from './socket/socket.js';
 import { createServer } from 'http';
 
@@ -125,6 +126,9 @@ const startServer = async () => {
     await prisma.$connect();
     logger.info('✅ Database connected successfully');
 
+    // Add global permission check BEFORE loading routes
+    app.use('/api/v1', checkPermissions);
+    
     await loadRoutes(); // ← Load dynamic routes here
 
     app.use(notFound);
