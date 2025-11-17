@@ -15,8 +15,6 @@ import {
   checkEntityOwnership,
   ensureEntityScoping,
 } from '../middleware/dataAccess.js';
-import { ActivityLogService } from '../services/activityLogService.js';
-
 
 const router = Router();
 
@@ -45,8 +43,6 @@ router.post(
   requireCompany,
   ensureEntityScoping,
   validate(productValidation.createProduct),
-  ActivityLogService.createActivityLogger('Product'),
-
   createProduct
 );
 
@@ -56,8 +52,6 @@ router.put(
   requireCompany,
   checkEntityOwnership('product'),
   validate(productValidation.updateProduct),
-  ActivityLogService.createActivityLogger('Product'),
-
   updateProduct
 );
 
@@ -67,8 +61,6 @@ router.delete(
   requireCompany,
   checkEntityOwnership('product'),
   validate(productValidation.getProduct),
-  ActivityLogService.createActivityLogger('Product'),
-
   deleteProduct
 );
 

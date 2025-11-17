@@ -12,6 +12,9 @@ const seedMenuItems = async () => {
     { name: 'Proforma Invoices', slug: 'proforma-invoices', path: '/proforma-invoices', icon: 'HiOutlineDocumentText', sortOrder: 5, isActive: true },
     { name: 'Orders', slug: 'orders', path: null, icon: 'MdShoppingCart', sortOrder: 6, isActive: true },
     { name: 'Purchase Orders', slug: 'purchase-orders', path: '/purchase-orders', icon: 'HiOutlineClipboardDocumentList', sortOrder: 7, isActive: true },
+    { name: 'Staff Management', slug: 'staff-management', path: '/staff-management', icon: 'MdSupervisorAccount', sortOrder: 8, isActive: true },
+
+    { name: 'User Profile', slug: 'user-profile', path: '/profile', icon: 'MdAccountCircle', sortOrder: 10, isActive: true }
     { name: 'User Profile', slug: 'user-profile', path: '/profile', icon: 'MdAccountCircle', sortOrder: 8, isActive: true }
   ];
 

@@ -13,8 +13,6 @@ import {
   checkEntityOwnership,
   ensureEntityScoping,
 } from '../middleware/dataAccess.js';
-import { ActivityLogService } from '../services/activityLogService.js';
-
 
 const router = Router();
 
@@ -23,8 +21,6 @@ router.post(
   verifyJWT,
   requireCompany,
   ensureEntityScoping,
-  ActivityLogService.createActivityLogger('Party'),
-
   createParty
 );
 
@@ -52,8 +48,6 @@ router.put(
   verifyJWT,
   requireCompany,
   checkEntityOwnership('partyList'),
-  ActivityLogService.createActivityLogger('Party'),
-
   updateParty
 );
 
@@ -62,8 +56,6 @@ router.delete(
   verifyJWT,
   requireCompany,
   checkEntityOwnership('partyList'),
-  ActivityLogService.createActivityLogger('Party'),
-
   deleteParty
 );
 

@@ -42,7 +42,7 @@ model User {
   updatedVgmDocuments   VgmDocument[]           @relation("VgmUpdater")
   createdPurchaseOrders PurchaseOrder[]         @relation("PoCreator")
   updatedPurchaseOrders PurchaseOrder[]         @relation("PoUpdater")
-  activityLogs          ActivityLog[]
+
   payments              Payment[]
 
   createdShipments      Shipment[]             @relation("ShipmentCreator")
@@ -82,7 +82,7 @@ model CompanyDetails {
   orders          Order[]
   vgmDocuments    VgmDocument[]
   purchaseOrders  PurchaseOrder[]
-  activityLogs    ActivityLog[]
+
   payments        Payment[]
 
   shipments       Shipment[]
@@ -286,26 +286,7 @@ model Role {
   @@map("roles")
 }
 
-model ActivityLog {
-  id          Int      @id @default(autoincrement())
-  companyId   Int      @map("company_id")
-  userId      Int      @map("user_id")
-  action      String   // CREATE, UPDATE, DELETE, VIEW
-  entityType  String   @map("entity_type") // Party, Product, PiInvoice, Order, etc.
-  entityId    Int?     @map("entity_id")
-  entityName  String?  @map("entity_name")
-  description String?
-  metadata    Json?    // Additional data about the action
-  ipAddress   String?  @map("ip_address")
-  userAgent   String?  @map("user_agent")
-  createdAt   DateTime @default(now()) @map("created_at")
 
-  // Relations
-  company CompanyDetails @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  user    User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@map("activity_logs")
-}
 
 enum PartyRole {
   Customer
