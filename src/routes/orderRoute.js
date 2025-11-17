@@ -73,7 +73,7 @@ router.patch(
 
 // Download order invoice PDF
 router.get('/orders/:id/download-invoice-pdf', downloadOrderInvoicePdf);
-router.get('/:id/download-invoice-pdf', downloadOrderInvoicePdf);
+
 
 // Download BL draft PDF
 router.get('/orders/:id/bl-draft-pdf', downloadBLDraftPdf);

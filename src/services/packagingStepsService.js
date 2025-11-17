@@ -695,6 +695,11 @@ export class PackagingStepsService {
             packingLists: {
               where: { isActive: true },
             },
+            orders: {
+              include: {
+                shipment: true,
+              },
+            },
           },
         },
       },
@@ -719,6 +724,11 @@ export class PackagingStepsService {
             where: {
               stepType: 'PACKING',
               isActive: true,
+            },
+          },
+          orders: {
+            include: {
+              shipment: true,
             },
           },
         },

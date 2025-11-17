@@ -552,6 +552,15 @@ const downloadPackingingListPortDetailsPDF = async (req, res) => {
       console.error('Error reading company logo file:', error);
     }
 
+    // Get shipment data if available
+    let shipment = null;
+    if (packingListEntry.piInvoice.orders && packingListEntry.piInvoice.orders.length > 0) {
+      const order = packingListEntry.piInvoice.orders[0];
+      if (order.shipment) {
+        shipment = order.shipment;
+      }
+    }
+
     // Render EJS template
     const templatePath = join(
       __dirname,
@@ -562,6 +571,7 @@ const downloadPackingingListPortDetailsPDF = async (req, res) => {
       stepsByProduct: stepsByProduct,
       packingListData: packingListData,
       logoBase64: logoBase64,
+      shipment: shipment,
     });
 
     // Generate PDF

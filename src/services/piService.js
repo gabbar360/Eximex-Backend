@@ -323,7 +323,9 @@ const createPiInvoice = async (data, userId, req = {}) => {
 
 const getPiInvoices = async (companyId, filters = {}, dataFilters = {}) => {
   const { page = 1, limit = 10, status, search } = filters;
-  const skip = (page - 1) * limit;
+  const pageNum = parseInt(page) || 1;
+  const limitNum = parseInt(limit) || 10;
+  const skip = (pageNum - 1) * limitNum;
 
   const where = {
     ...dataFilters, // This includes companyId and createdBy for staff
@@ -346,7 +348,7 @@ const getPiInvoices = async (companyId, filters = {}, dataFilters = {}) => {
       },
       orderBy: { createdAt: 'desc' },
       skip,
-      take: limit,
+      take: limitNum,
     }),
     prisma.piInvoice.count({ where }),
   ]);
@@ -354,10 +356,10 @@ const getPiInvoices = async (companyId, filters = {}, dataFilters = {}) => {
   return {
     piInvoices,
     pagination: {
-      page,
-      limit,
+      page: pageNum,
+      limit: limitNum,
       total,
-      pages: Math.ceil(total / limit),
+      pages: Math.ceil(total / limitNum),
     },
   };
 };
