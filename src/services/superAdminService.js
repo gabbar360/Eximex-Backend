@@ -67,7 +67,7 @@ export const superAdminService = {
 
   // Update user
   async updateUser(id, data) {
-    const { name, email, roleId, companyId } = data;
+    const { name, email, roleId, companyId, status } = data;
 
     return await prisma.user.update({
       where: { id: parseInt(id) },
@@ -75,7 +75,8 @@ export const superAdminService = {
         name,
         email,
         roleId: parseInt(roleId),
-        companyId: companyId ? parseInt(companyId) : null
+        companyId: companyId ? parseInt(companyId) : null,
+        status
       },
       include: {
         role: true,
