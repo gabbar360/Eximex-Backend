@@ -1,6 +1,5 @@
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { UserService } from '../services/userService.js';
-import { ActivityLogService } from '../services/activityLogService.js';
 import { ApiResponse } from '../utils/ApiResponse.js';
 
 export const getAllUsers = asyncHandler(async (req, res) => {

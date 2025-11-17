@@ -13,7 +13,7 @@ const seedMenuItems = async () => {
     { name: 'Orders', slug: 'orders', path: '/orders', icon: 'MdShoppingCart', sortOrder: 6, isActive: true },
     { name: 'Purchase Orders', slug: 'purchase-orders', path: '/purchase-orders', icon: 'HiOutlineClipboardDocumentList', sortOrder: 7, isActive: true },
     { name: 'Staff Management', slug: 'staff-management', path: '/staff-management', icon: 'MdSupervisorAccount', sortOrder: 8, isActive: true },
-    { name: 'Activity Logs', slug: 'activity-logs', path: '/activity-logs', icon: 'MdAnalytics', sortOrder: 9, isActive: true },
+
     { name: 'User Profile', slug: 'user-profile', path: '/profile', icon: 'MdAccountCircle', sortOrder: 10, isActive: true }
   ];
 

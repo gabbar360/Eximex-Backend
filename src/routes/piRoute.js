@@ -21,7 +21,7 @@ import {
   checkEntityOwnership,
   ensureEntityScoping,
 } from '../middleware/dataAccess.js';
-import { ActivityLogService } from '../services/activityLogService.js';
+
 
 const router = Router();
 
@@ -33,7 +33,6 @@ router.use(requireCompany);
 router.post(
   '/create/pi-invoice',
   ensureEntityScoping,
-  ActivityLogService.createActivityLogger('PiInvoice'),
   createPiInvoice
 );
 router.get(
@@ -53,31 +52,26 @@ router.get('/confirmed-for-order', getConfirmedPisForOrder);
 router.put(
   '/update/pi-invoice/:id',
   checkEntityOwnership('piInvoice'),
-  ActivityLogService.createActivityLogger('PiInvoice'),
   updatePiInvoice
 );
 router.delete(
   '/delete/pi-invoice/:id',
   checkEntityOwnership('piInvoice'),
-  ActivityLogService.createActivityLogger('PiInvoice'),
   deletePiInvoice
 );
 router.put(
   '/:id/update-pi-status',
   checkEntityOwnership('piInvoice'),
-  ActivityLogService.createActivityLogger('PiInvoice'),
   updatePiStatus
 );
 router.put(
   '/:id/update-amount',
   checkEntityOwnership('piInvoice'),
-  ActivityLogService.createActivityLogger('PiInvoice'),
   updatePiAmount
 );
 router.post(
   '/:id/email',
   checkEntityOwnership('piInvoice'),
-  ActivityLogService.createActivityLogger('PiInvoice'),
   emailInvoice
 );
 

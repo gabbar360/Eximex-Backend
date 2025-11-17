@@ -32,8 +32,6 @@ import {
   validateStaffManagement,
   checkDataOwnership,
 } from '../middleware/auth.js';
-import { ActivityLogService } from '../services/activityLogService.js';
-
 
 const router = Router();
 
@@ -43,7 +41,6 @@ router.get(
   verifyJWT,
   requireCompany,
   authorizeRoles('ADMIN', 'SUPER_ADMIN'),
-  ActivityLogService.createActivityLogger('User'),
   getAllUsers
 );
 
@@ -76,7 +73,6 @@ router.post(
   requireCompany,
   authorizeRoles('ADMIN', 'SUPER_ADMIN'),
   validate(userValidation.createUser),
-  ActivityLogService.createActivityLogger('User'),
   createUser
 );
 
@@ -86,7 +82,6 @@ router.put(
   requireCompany,
   // validateStaffManagement,
   validate(userValidation.updateUser),
-  ActivityLogService.createActivityLogger('User'),
   updateUser
 );
 
@@ -96,7 +91,6 @@ router.delete(
   requireCompany,
   validateStaffManagement,
   validate(userValidation.getUser),
-  ActivityLogService.createActivityLogger('User'),
   deleteUser
 );
 
@@ -131,7 +125,6 @@ router.post(
   requireCompany,
   authorizeRoles('ADMIN', 'SUPER_ADMIN'),
   validate(userValidation.reassignData),
-  ActivityLogService.createActivityLogger('UserDataReassignment'),
   reassignUserData
 );
 
@@ -141,7 +134,6 @@ router.delete(
   requireCompany,
   validateStaffManagement,
   validate(userValidation.deleteAndReassign),
-  ActivityLogService.createActivityLogger('User'),
   deleteStaffAndReassign
 );
 
@@ -158,7 +150,6 @@ router.patch(
   verifyJWT,
   authorizeRoles('SUPER_ADMIN'),
   validate(userValidation.getUser),
-  ActivityLogService.createActivityLogger('User'),
   toggleUserBlock
 );
 
@@ -182,7 +173,6 @@ router.patch(
   verifyJWT,
   authorizeRoles('SUPER_ADMIN'),
   validate(userValidation.resetPassword),
-  ActivityLogService.createActivityLogger('User'),
   resetUserPassword
 );
 

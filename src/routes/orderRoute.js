@@ -17,8 +17,6 @@ import {
   checkEntityOwnership,
   ensureEntityScoping,
 } from '../middleware/dataAccess.js';
-import { ActivityLogService } from '../services/activityLogService.js';
-
 import { validate } from '../middleware/validate.js';
 import { orderValidation } from '../validations/order.validation.js';
 
@@ -33,7 +31,6 @@ router.post(
   '/create-order',
   ensureEntityScoping,
   validate(orderValidation.createOrder),
-  ActivityLogService.createActivityLogger('Order'),
   createOrder
 );
 router.get(
@@ -47,13 +44,11 @@ router.put(
   '/update-order/:id',
   checkEntityOwnership('order'),
   validate(orderValidation.updateOrder),
-  ActivityLogService.createActivityLogger('Order'),
   updateOrder
 );
 router.delete(
   '/delete-order/:id',
   checkEntityOwnership('order'),
-  ActivityLogService.createActivityLogger('Order'),
   deleteOrder
 );
 
