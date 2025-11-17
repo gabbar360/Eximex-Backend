@@ -6,17 +6,16 @@ const prisma = new PrismaClient();
 const seedMenuItems = async () => {
   const menuItems = [
     { name: 'Dashboard', slug: 'dashboard', path: '/dashboard', icon: 'MdDashboard', sortOrder: 1, isActive: true },
-    { name: 'Customer & Prospect', slug: 'customer-prospect', path: '/cprospect', icon: 'MdPeople', sortOrder: 2, isActive: true },
+    { name: 'Customer&prospect', slug: 'customer-prospect', path: '/cprospect', icon: 'MdPeople', sortOrder: 2, isActive: true },
     { name: 'Categories', slug: 'categories', path: '/categories', icon: 'MdCategory', sortOrder: 3, isActive: true },
     { name: 'Products', slug: 'products', path: '/products', icon: 'MdInventory', sortOrder: 4, isActive: true },
     { name: 'Proforma Invoices', slug: 'proforma-invoices', path: '/proforma-invoices', icon: 'HiOutlineDocumentText', sortOrder: 5, isActive: true },
-    { name: 'Orders', slug: 'orders', path: '/orders', icon: 'MdShoppingCart', sortOrder: 6, isActive: true },
+    { name: 'Orders', slug: 'orders', path: null, icon: 'MdShoppingCart', sortOrder: 6, isActive: true },
     { name: 'Purchase Orders', slug: 'purchase-orders', path: '/purchase-orders', icon: 'HiOutlineClipboardDocumentList', sortOrder: 7, isActive: true },
-    { name: 'Staff Management', slug: 'staff-management', path: '/staff-management', icon: 'MdSupervisorAccount', sortOrder: 8, isActive: true },
-    { name: 'Activity Logs', slug: 'activity-logs', path: '/activity-logs', icon: 'MdAnalytics', sortOrder: 9, isActive: true },
-    { name: 'User Profile', slug: 'user-profile', path: '/profile', icon: 'MdAccountCircle', sortOrder: 10, isActive: true }
+    { name: 'User Profile', slug: 'user-profile', path: '/profile', icon: 'MdAccountCircle', sortOrder: 8, isActive: true }
   ];
 
+  // Create parent menu items first
   for (const item of menuItems) {
     await prisma.menuItem.upsert({
       where: { slug: item.slug },
@@ -24,6 +23,31 @@ const seedMenuItems = async () => {
       create: item
     });
     console.log(`✅ Menu: ${item.name}`);
+  }
+
+  // Get Orders parent menu item
+  const ordersMenu = await prisma.menuItem.findUnique({
+    where: { slug: 'orders' }
+  });
+
+  // Create sub menu items for Orders
+  if (ordersMenu) {
+    const subMenuItems = [
+      { name: 'All Orders', slug: 'all-orders', path: '/orders', parentId: ordersMenu.id, sortOrder: 1, isActive: true },
+      { name: 'Shipments', slug: 'shipments', path: '/orders/shipments', parentId: ordersMenu.id, sortOrder: 2, isActive: true },
+      { name: 'Packing Lists', slug: 'packing-lists', path: '/orders/packing-lists', parentId: ordersMenu.id, sortOrder: 3, isActive: true },
+      { name: 'VGM Documents', slug: 'vgm-documents', path: '/orders/vgm', parentId: ordersMenu.id, sortOrder: 4, isActive: true },
+      { name: 'Reports', slug: 'reports', path: '/orders/reports', parentId: ordersMenu.id, sortOrder: 5, isActive: true }
+    ];
+
+    for (const subItem of subMenuItems) {
+      await prisma.menuItem.upsert({
+        where: { slug: subItem.slug },
+        update: subItem,
+        create: subItem
+      });
+      console.log(`✅ SubMenu: ${subItem.name}`);
+    }
   }
 };
 
