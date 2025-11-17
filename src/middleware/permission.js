@@ -7,12 +7,12 @@ export const checkPermission = (menuItemSlug, action) => {
   return asyncHandler(async (req, res, next) => {
     const userId = req.user.id;
 
-    // Get menu item by slug
-    const menuItem = await prisma.menuItem.findUnique({
+    // Get menu item by slug from new Menu table
+    const menu = await prisma.menu.findUnique({
       where: { slug: menuItemSlug }
     });
 
-    if (!menuItem) {
+    if (!menu) {
       throw new ApiError(404, 'Menu item not found');
     }
 
@@ -20,7 +20,8 @@ export const checkPermission = (menuItemSlug, action) => {
     const userPermission = await prisma.userPermission.findFirst({
       where: {
         userId: userId,
-        menuItemId: menuItem.id
+        menuId: menu.id,
+        submenuId: null
       }
     });
 

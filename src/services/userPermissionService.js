@@ -2,65 +2,175 @@ import { prisma } from '../config/dbConfig.js';
 
 export const userPermissionService = {
   async getUserPermissions(userId) {
-    return await prisma.userPermission.findMany({
-      where: { userId },
+    // Get user with role
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
       include: {
-        menuItem: {
-          include: { children: true }
+        role: true,
+        userPermissions: {
+          include: {
+            menu: true,
+            submenu: true
+          }
         }
       }
     });
+
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    // Get all menus with submenus
+    const allMenus = await prisma.menu.findMany({
+      where: { isActive: true },
+      include: {
+        submenus: {
+          where: { isActive: true },
+          orderBy: { sortOrder: 'asc' }
+        }
+      },
+      orderBy: { sortOrder: 'asc' }
+    });
+
+    // Build response
+    const response = {
+      userId: user.id,
+      userInfo: {
+        name: user.name,
+        email: user.email,
+        roleName: user.role?.name || null
+      },
+      menus: allMenus.map(menu => {
+        // Find menu permission
+        const menuPermission = user.userPermissions.find(p => p.menuId === menu.id);
+        
+        return {
+          menuId: menu.id,
+          menuName: menu.name,
+          menuSlug: menu.slug,
+          permissions: {
+            canView: menuPermission?.canView || false,
+            canCreate: menuPermission?.canCreate || false,
+            canUpdate: menuPermission?.canUpdate || false,
+            canDelete: menuPermission?.canDelete || false
+          },
+          submenus: menu.submenus.map(submenu => {
+            // Find submenu permission
+            const submenuPermission = user.userPermissions.find(p => p.submenuId === submenu.id);
+            
+            return {
+              submenuId: submenu.id,
+              submenuName: submenu.name,
+              submenuSlug: submenu.slug,
+              permissions: {
+                canView: submenuPermission?.canView || false,
+                canCreate: submenuPermission?.canCreate || false,
+                canUpdate: submenuPermission?.canUpdate || false,
+                canDelete: submenuPermission?.canDelete || false
+              }
+            };
+          })
+        };
+      })
+    };
+
+    return response;
   },
 
   async setUserPermissions(userId, permissions) {
+    // Delete existing permissions
     await prisma.userPermission.deleteMany({
       where: { userId }
     });
 
-    const permissionData = permissions.map(p => ({
-      userId,
-      menuItemId: p.menuItemId,
-      canView: p.canView || false,
-      canCreate: p.canCreate || false,
-      canUpdate: p.canUpdate || false,
-      canDelete: p.canDelete || false
-    }));
+    if (!permissions || !Array.isArray(permissions)) {
+      throw new Error('Permissions must be an array');
+    }
 
-    return await prisma.userPermission.createMany({
-      data: permissionData
+    const permissionData = [];
+    
+    permissions.forEach(p => {
+      // Menu permission
+      if (p.menuId) {
+        permissionData.push({
+          userId,
+          menuId: p.menuId,
+          submenuId: null,
+          canView: p.canView || false,
+          canCreate: p.canCreate || false,
+          canUpdate: p.canUpdate || false,
+          canDelete: p.canDelete || false
+        });
+      }
+      
+      // Submenu permission
+      if (p.submenuId) {
+        permissionData.push({
+          userId,
+          menuId: null,
+          submenuId: p.submenuId,
+          canView: p.canView || false,
+          canCreate: p.canCreate || false,
+          canUpdate: p.canUpdate || false,
+          canDelete: p.canDelete || false
+        });
+      }
     });
+
+    if (permissionData.length > 0) {
+      return await prisma.userPermission.createMany({
+        data: permissionData
+      });
+    }
+    
+    return { count: 0 };
   },
 
   async updateUserPermissions(userId, permissions) {
-    const results = [];
+    // Simple approach: Delete all and recreate
+    await prisma.userPermission.deleteMany({
+      where: { userId }
+    });
+
+    if (!permissions || !Array.isArray(permissions)) {
+      return { count: 0 };
+    }
+
+    const permissionData = [];
     
-    for (const permission of permissions) {
-      const result = await prisma.userPermission.upsert({
-        where: {
-          userId_menuItemId: {
-            userId: userId,
-            menuItemId: permission.menuItemId
-          }
-        },
-        update: {
-          canView: permission.canView || false,
-          canCreate: permission.canCreate || false,
-          canUpdate: permission.canUpdate || false,
-          canDelete: permission.canDelete || false
-        },
-        create: {
+    permissions.forEach(p => {
+      if (p.menuId) {
+        permissionData.push({
           userId,
-          menuItemId: permission.menuItemId,
-          canView: permission.canView || false,
-          canCreate: permission.canCreate || false,
-          canUpdate: permission.canUpdate || false,
-          canDelete: permission.canDelete || false
-        }
+          menuId: p.menuId,
+          submenuId: null,
+          canView: p.canView || false,
+          canCreate: p.canCreate || false,
+          canUpdate: p.canUpdate || false,
+          canDelete: p.canDelete || false
+        });
+      }
+      
+      if (p.submenuId) {
+        permissionData.push({
+          userId,
+          menuId: null,
+          submenuId: p.submenuId,
+          canView: p.canView || false,
+          canCreate: p.canCreate || false,
+          canUpdate: p.canUpdate || false,
+          canDelete: p.canDelete || false
+        });
+      }
+    });
+
+    if (permissionData.length > 0) {
+      return await prisma.userPermission.createMany({
+        data: permissionData
       });
-      results.push(result);
     }
     
-    return results;
+    return { count: 0 };
   },
 
   async deleteUserPermissions(userId, menuItemIds = null) {
