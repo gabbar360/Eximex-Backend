@@ -127,54 +127,97 @@ export const userPermissionService = {
   },
 
   async updateUserPermissions(userId, permissions, submenuPermissions) {
-    // Simple approach: Delete all and recreate
-    await prisma.userPermission.deleteMany({
-      where: { userId }
-    });
-
-    const permissionData = [];
+    const results = [];
     
     // Handle menu permissions
     if (permissions && Array.isArray(permissions)) {
-      permissions.forEach(p => {
+      for (const p of permissions) {
         if (p.menuId) {
-          permissionData.push({
-            userId,
-            menuId: p.menuId,
-            submenuId: null,
-            canView: p.canView || false,
-            canCreate: p.canCreate || false,
-            canUpdate: p.canUpdate || false,
-            canDelete: p.canDelete || false
+          // Find existing permission
+          const existing = await prisma.userPermission.findFirst({
+            where: {
+              userId,
+              menuId: p.menuId,
+              submenuId: null
+            }
           });
+          
+          if (existing) {
+            // Update existing
+            const result = await prisma.userPermission.update({
+              where: { id: existing.id },
+              data: {
+                canView: p.canView || false,
+                canCreate: p.canCreate || false,
+                canUpdate: p.canUpdate || false,
+                canDelete: p.canDelete || false
+              }
+            });
+            results.push(result);
+          } else {
+            // Create new
+            const result = await prisma.userPermission.create({
+              data: {
+                userId,
+                menuId: p.menuId,
+                submenuId: null,
+                canView: p.canView || false,
+                canCreate: p.canCreate || false,
+                canUpdate: p.canUpdate || false,
+                canDelete: p.canDelete || false
+              }
+            });
+            results.push(result);
+          }
         }
-      });
+      }
     }
     
     // Handle submenu permissions
     if (submenuPermissions && Array.isArray(submenuPermissions)) {
-      submenuPermissions.forEach(p => {
+      for (const p of submenuPermissions) {
         if (p.submenuId) {
-          permissionData.push({
-            userId,
-            menuId: null,
-            submenuId: p.submenuId,
-            canView: p.canView || false,
-            canCreate: p.canCreate || false,
-            canUpdate: p.canUpdate || false,
-            canDelete: p.canDelete || false
+          // Find existing permission
+          const existing = await prisma.userPermission.findFirst({
+            where: {
+              userId,
+              menuId: null,
+              submenuId: p.submenuId
+            }
           });
+          
+          if (existing) {
+            // Update existing
+            const result = await prisma.userPermission.update({
+              where: { id: existing.id },
+              data: {
+                canView: p.canView || false,
+                canCreate: p.canCreate || false,
+                canUpdate: p.canUpdate || false,
+                canDelete: p.canDelete || false
+              }
+            });
+            results.push(result);
+          } else {
+            // Create new
+            const result = await prisma.userPermission.create({
+              data: {
+                userId,
+                menuId: null,
+                submenuId: p.submenuId,
+                canView: p.canView || false,
+                canCreate: p.canCreate || false,
+                canUpdate: p.canUpdate || false,
+                canDelete: p.canDelete || false
+              }
+            });
+            results.push(result);
+          }
         }
-      });
-    }
-
-    if (permissionData.length > 0) {
-      return await prisma.userPermission.createMany({
-        data: permissionData
-      });
+      }
     }
     
-    return { count: 0 };
+    return results;
   },
 
   async deleteUserPermissions(userId, menuItemIds = null) {
@@ -266,5 +309,36 @@ export const userPermissionService = {
       },
       menuPermissions: menuWithPermissions
     };
+  },
+
+  async getAllUsersWithPermissions() {
+    const users = await prisma.user.findMany({
+      include: {
+        role: true,
+        userPermissions: {
+          include: {
+            menu: true,
+            submenu: true
+          }
+        }
+      }
+    });
+
+    return users.map(user => ({
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      permissions: user.userPermissions.map(p => ({
+        menuId: p.menuId,
+        submenuId: p.submenuId,
+        menuName: p.menu?.name,
+        submenuName: p.submenu?.name,
+        canView: p.canView,
+        canCreate: p.canCreate,
+        canUpdate: p.canUpdate,
+        canDelete: p.canDelete
+      }))
+    }));
   }
 };
