@@ -126,43 +126,47 @@ export const userPermissionService = {
     return { count: 0 };
   },
 
-  async updateUserPermissions(userId, permissions) {
+  async updateUserPermissions(userId, permissions, submenuPermissions) {
     // Simple approach: Delete all and recreate
     await prisma.userPermission.deleteMany({
       where: { userId }
     });
 
-    if (!permissions || !Array.isArray(permissions)) {
-      return { count: 0 };
-    }
-
     const permissionData = [];
     
-    permissions.forEach(p => {
-      if (p.menuId) {
-        permissionData.push({
-          userId,
-          menuId: p.menuId,
-          submenuId: null,
-          canView: p.canView || false,
-          canCreate: p.canCreate || false,
-          canUpdate: p.canUpdate || false,
-          canDelete: p.canDelete || false
-        });
-      }
-      
-      if (p.submenuId) {
-        permissionData.push({
-          userId,
-          menuId: null,
-          submenuId: p.submenuId,
-          canView: p.canView || false,
-          canCreate: p.canCreate || false,
-          canUpdate: p.canUpdate || false,
-          canDelete: p.canDelete || false
-        });
-      }
-    });
+    // Handle menu permissions
+    if (permissions && Array.isArray(permissions)) {
+      permissions.forEach(p => {
+        if (p.menuId) {
+          permissionData.push({
+            userId,
+            menuId: p.menuId,
+            submenuId: null,
+            canView: p.canView || false,
+            canCreate: p.canCreate || false,
+            canUpdate: p.canUpdate || false,
+            canDelete: p.canDelete || false
+          });
+        }
+      });
+    }
+    
+    // Handle submenu permissions
+    if (submenuPermissions && Array.isArray(submenuPermissions)) {
+      submenuPermissions.forEach(p => {
+        if (p.submenuId) {
+          permissionData.push({
+            userId,
+            menuId: null,
+            submenuId: p.submenuId,
+            canView: p.canView || false,
+            canCreate: p.canCreate || false,
+            canUpdate: p.canUpdate || false,
+            canDelete: p.canDelete || false
+          });
+        }
+      });
+    }
 
     if (permissionData.length > 0) {
       return await prisma.userPermission.createMany({

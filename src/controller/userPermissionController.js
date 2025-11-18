@@ -39,9 +39,9 @@ export const getUserWithPermissions = asyncHandler(async (req, res) => {
 
 export const updateUserPermissions = asyncHandler(async (req, res) => {
   const { userId } = req.params;
-  const { permissions } = req.body;
+  const { permissions, submenuPermissions } = req.body;
   
-  const updatedPermissions = await userPermissionService.updateUserPermissions(parseInt(userId), permissions);
+  const updatedPermissions = await userPermissionService.updateUserPermissions(parseInt(userId), permissions, submenuPermissions);
   return res.status(200).json(
     new ApiResponse(200, updatedPermissions, 'User permissions updated successfully')
   );
