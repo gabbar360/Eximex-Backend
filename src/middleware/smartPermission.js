@@ -57,20 +57,21 @@ export const smartPermission = asyncHandler(async (req, res, next) => {
     return next();
   }
 
-  // Get menu item
-  const menuItem = await prisma.menuItem.findUnique({
+  // Get menu item from new Menu table
+  const menu = await prisma.menu.findUnique({
     where: { slug: menuSlug }
   });
 
-  if (!menuItem) {
+  if (!menu) {
     return next(); // Skip if menu not found
   }
 
-  // Get user permission
+  // Get user permission from new structure
   const userPermission = await prisma.userPermission.findFirst({
     where: {
       userId: userId,
-      menuItemId: menuItem.id
+      menuId: menu.id,
+      submenuId: null
     }
   });
 

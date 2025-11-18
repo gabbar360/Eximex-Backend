@@ -112,20 +112,21 @@ const autoCheckPermissions = async (req, res, next) => {
     return next();
   }
 
-  // Get menu item
-  const menuItem = await prisma.menuItem.findUnique({
+  // Get menu item from new Menu table
+  const menu = await prisma.menu.findUnique({
     where: { slug: menuSlug }
   });
 
-  if (!menuItem) {
+  if (!menu) {
     return next();
   }
 
-  // Get user permission
+  // Get user permission from new structure
   const userPermission = await prisma.userPermission.findFirst({
     where: {
       userId: userId,
-      menuItemId: menuItem.id
+      menuId: menu.id,
+      submenuId: null
     }
   });
 
@@ -191,19 +192,20 @@ export const checkPermissions = asyncHandler(async (req, res, next) => {
     return next();
   }
   
-  // Get menu item and check permission
-  const menuItem = await prisma.menuItem.findUnique({
+  // Get menu item and check permission from new Menu table
+  const menu = await prisma.menu.findUnique({
     where: { slug: menuSlug }
   });
   
-  if (!menuItem) {
+  if (!menu) {
     return next(); // Skip if menu item not found
   }
   
   const userPermission = await prisma.userPermission.findFirst({
     where: {
       userId: userId,
-      menuItemId: menuItem.id
+      menuId: menu.id,
+      submenuId: null
     }
   });
   

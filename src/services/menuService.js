@@ -10,46 +10,81 @@ const generateSlug = (name) => {
 };
 
 export const menuService = {
-  async getAllMenuItems() {
-    return await prisma.menuItem.findMany({
+  // Menu operations
+  async getAllMenus() {
+    return await prisma.menu.findMany({
       where: { isActive: true },
-      include: { children: true },
+      include: {
+        submenus: {
+          where: { isActive: true },
+          orderBy: { sortOrder: 'asc' }
+        }
+      },
       orderBy: { sortOrder: 'asc' }
     });
   },
 
-  async getMenuItemById(id) {
-    return await prisma.menuItem.findUnique({
+  async getMenuById(id) {
+    return await prisma.menu.findUnique({
       where: { id },
-      include: { children: true, parent: true }
+      include: {
+        submenus: {
+          where: { isActive: true },
+          orderBy: { sortOrder: 'asc' }
+        }
+      }
     });
   },
 
-  async createMenuItem(data) {
-    // Auto-generate slug if not provided
+  async createMenu(data) {
     if (!data.slug && data.name) {
       data.slug = generateSlug(data.name);
     }
-    
-    return await prisma.menuItem.create({ data });
+    return await prisma.menu.create({ data });
   },
 
-  async updateMenuItem(id, data) {
-    // Auto-generate slug if name is updated but slug is not provided
+  async updateMenu(id, data) {
     if (data.name && !data.slug) {
       data.slug = generateSlug(data.name);
     }
-    
-    return await prisma.menuItem.update({
+    return await prisma.menu.update({ where: { id }, data });
+  },
+
+  async deleteMenu(id) {
+    return await prisma.menu.update({
       where: { id },
-      data
+      data: { isActive: false }
     });
   },
 
-  async deleteMenuItem(id) {
-    return await prisma.menuItem.update({
+  // Submenu operations
+  async createSubmenu(menuId, data) {
+    if (!data.slug && data.name) {
+      data.slug = generateSlug(data.name);
+    }
+    return await prisma.submenu.create({
+      data: { ...data, menuId }
+    });
+  },
+
+  async updateSubmenu(id, data) {
+    if (data.name && !data.slug) {
+      data.slug = generateSlug(data.name);
+    }
+    return await prisma.submenu.update({ where: { id }, data });
+  },
+
+  async deleteSubmenu(id) {
+    return await prisma.submenu.update({
       where: { id },
       data: { isActive: false }
+    });
+  },
+
+  async getSubmenusByMenuId(menuId) {
+    return await prisma.submenu.findMany({
+      where: { menuId, isActive: true },
+      orderBy: { sortOrder: 'asc' }
     });
   }
 };
