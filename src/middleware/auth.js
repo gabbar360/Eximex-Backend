@@ -195,7 +195,6 @@ const autoCheckPermissions = async (req, res, next) => {
       userPermission = await prisma.userPermission.findFirst({
         where: {
           userId: userId,
-          menuId: menu.id,
           submenuId: submenu.id
         }
       });
@@ -344,7 +343,6 @@ export const checkPermissions = asyncHandler(async (req, res, next) => {
       userPermission = await prisma.userPermission.findFirst({
         where: {
           userId: userId,
-          menuId: menu.id,
           submenuId: submenu.id
         }
       });
