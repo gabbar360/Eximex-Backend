@@ -127,48 +127,29 @@ export const userPermissionService = {
   },
 
   async updateUserPermissions(userId, permissions, submenuPermissions) {
+    // First, delete all existing permissions for this user
+    await prisma.userPermission.deleteMany({
+      where: { userId }
+    });
+
     const results = [];
     
     // Handle menu permissions
     if (permissions && Array.isArray(permissions)) {
       for (const p of permissions) {
         if (p.menuId) {
-          // Find existing permission
-          const existing = await prisma.userPermission.findFirst({
-            where: {
+          const result = await prisma.userPermission.create({
+            data: {
               userId,
               menuId: p.menuId,
-              submenuId: null
+              submenuId: null,
+              canView: Boolean(p.canView),
+              canCreate: Boolean(p.canCreate),
+              canUpdate: Boolean(p.canUpdate),
+              canDelete: Boolean(p.canDelete)
             }
           });
-          
-          if (existing) {
-            // Update existing
-            const result = await prisma.userPermission.update({
-              where: { id: existing.id },
-              data: {
-                canView: p.canView || false,
-                canCreate: p.canCreate || false,
-                canUpdate: p.canUpdate || false,
-                canDelete: p.canDelete || false
-              }
-            });
-            results.push(result);
-          } else {
-            // Create new
-            const result = await prisma.userPermission.create({
-              data: {
-                userId,
-                menuId: p.menuId,
-                submenuId: null,
-                canView: p.canView || false,
-                canCreate: p.canCreate || false,
-                canUpdate: p.canUpdate || false,
-                canDelete: p.canDelete || false
-              }
-            });
-            results.push(result);
-          }
+          results.push(result);
         }
       }
     }
@@ -177,42 +158,18 @@ export const userPermissionService = {
     if (submenuPermissions && Array.isArray(submenuPermissions)) {
       for (const p of submenuPermissions) {
         if (p.submenuId) {
-          // Find existing permission
-          const existing = await prisma.userPermission.findFirst({
-            where: {
+          const result = await prisma.userPermission.create({
+            data: {
               userId,
               menuId: null,
-              submenuId: p.submenuId
+              submenuId: p.submenuId,
+              canView: Boolean(p.canView),
+              canCreate: Boolean(p.canCreate),
+              canUpdate: Boolean(p.canUpdate),
+              canDelete: Boolean(p.canDelete)
             }
           });
-          
-          if (existing) {
-            // Update existing
-            const result = await prisma.userPermission.update({
-              where: { id: existing.id },
-              data: {
-                canView: p.canView || false,
-                canCreate: p.canCreate || false,
-                canUpdate: p.canUpdate || false,
-                canDelete: p.canDelete || false
-              }
-            });
-            results.push(result);
-          } else {
-            // Create new
-            const result = await prisma.userPermission.create({
-              data: {
-                userId,
-                menuId: null,
-                submenuId: p.submenuId,
-                canView: p.canView || false,
-                canCreate: p.canCreate || false,
-                canUpdate: p.canUpdate || false,
-                canDelete: p.canDelete || false
-              }
-            });
-            results.push(result);
-          }
+          results.push(result);
         }
       }
     }
@@ -233,33 +190,88 @@ export const userPermissionService = {
   },
 
   async getUserSidebarMenu(userId) {
+    // Get all user permissions with view access
     const permissions = await prisma.userPermission.findMany({
       where: { 
         userId,
         canView: true
       },
       include: {
-        menuItem: {
-          include: { 
-            children: true
+        menu: true,
+        submenu: {
+          include: {
+            menu: true
           }
         }
       }
     });
 
-    // Filter active menu items and sort
-    const activePermissions = permissions.filter(p => p.menuItem.isActive);
+    const menuMap = new Map();
     
-    return activePermissions.map(p => ({
-      ...p.menuItem,
-      children: p.menuItem.children.filter(child => child.isActive).sort((a, b) => a.sortOrder - b.sortOrder),
-      permissions: {
-        canView: p.canView,
-        canCreate: p.canCreate,
-        canUpdate: p.canUpdate,
-        canDelete: p.canDelete
+    // Process menu permissions
+    permissions.forEach(permission => {
+      if (permission.menuId && permission.menu && permission.menu.isActive) {
+        const menuId = permission.menu.id;
+        if (!menuMap.has(menuId)) {
+          menuMap.set(menuId, {
+            id: permission.menu.id,
+            name: permission.menu.name,
+            slug: permission.menu.slug,
+            path: permission.menu.path,
+            icon: permission.menu.icon,
+            sortOrder: permission.menu.sortOrder,
+            isActive: permission.menu.isActive,
+            submenus: []
+          });
+        }
       }
-    })).sort((a, b) => a.sortOrder - b.sortOrder);
+      
+      // Process submenu permissions
+      if (permission.submenuId && permission.submenu && permission.submenu.isActive) {
+        const parentMenuId = permission.submenu.menuId;
+        
+        // Ensure parent menu exists in map
+        if (!menuMap.has(parentMenuId)) {
+          const parentMenu = permission.submenu.menu;
+          if (parentMenu && parentMenu.isActive) {
+            menuMap.set(parentMenuId, {
+              id: parentMenu.id,
+              name: parentMenu.name,
+              slug: parentMenu.slug,
+              path: parentMenu.path,
+              icon: parentMenu.icon,
+              sortOrder: parentMenu.sortOrder,
+              isActive: parentMenu.isActive,
+              submenus: []
+            });
+          }
+        }
+        
+        // Add submenu to parent
+        const parentMenu = menuMap.get(parentMenuId);
+        if (parentMenu && !parentMenu.submenus.find(s => s.id === permission.submenu.id)) {
+          parentMenu.submenus.push({
+            id: permission.submenu.id,
+            name: permission.submenu.name,
+            slug: permission.submenu.slug,
+            path: permission.submenu.path,
+            icon: permission.submenu.icon,
+            sortOrder: permission.submenu.sortOrder,
+            isActive: permission.submenu.isActive
+          });
+        }
+      }
+    });
+
+    // Convert to array and sort
+    const result = Array.from(menuMap.values())
+      .map(menu => ({
+        ...menu,
+        submenus: menu.submenus.sort((a, b) => a.sortOrder - b.sortOrder)
+      }))
+      .sort((a, b) => a.sortOrder - b.sortOrder);
+
+    return result;
   },
 
   async getUserWithPermissions(userId) {
