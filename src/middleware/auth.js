@@ -128,6 +128,10 @@ const autoCheckPermissions = async (req, res, next) => {
   // Submenu patterns
   const submenuPatterns = {
     'all-orders': { menu: 'orders', submenu: 'all-orders' },
+    'delete-order': { menu: 'orders', submenu: 'all-orders' },
+    'create-order': { menu: 'orders', submenu: 'all-orders' },
+    'update-order': { menu: 'orders', submenu: 'all-orders' },
+    'orders': { menu: 'orders', submenu: 'all-orders' },
     'shipments': { menu: 'orders', submenu: 'shipments' },
     'packing-lists': { menu: 'orders', submenu: 'packing-lists' },
     'vgm-documents': { menu: 'orders', submenu: 'vgm-documents' },
@@ -165,6 +169,8 @@ const autoCheckPermissions = async (req, res, next) => {
   }
   
   console.log(`✅ DEBUG: Found menu slug: ${menuSlug} for path: ${path}`);
+  console.log(`🔍 DEBUG: Submenu slug: ${submenuSlug || 'null'}`);
+  console.log(`🔍 DEBUG: Path segments: [${pathSegments.join(', ')}]`);
 
   const requiredPermission = methodToPermission[method];
   if (!requiredPermission) {
@@ -269,6 +275,10 @@ export const checkPermissions = asyncHandler(async (req, res, next) => {
   // Submenu patterns
   const submenuToMenuMap = {
     'all-orders': { menu: 'orders', submenu: 'all-orders' },
+    'delete-order': { menu: 'orders', submenu: 'all-orders' },
+    'create-order': { menu: 'orders', submenu: 'all-orders' },
+    'update-order': { menu: 'orders', submenu: 'all-orders' },
+    'orders': { menu: 'orders', submenu: 'all-orders' },
     'shipments': { menu: 'orders', submenu: 'shipments' },
     'packing-lists': { menu: 'orders', submenu: 'packing-lists' },
     'vgm-documents': { menu: 'orders', submenu: 'vgm-documents' },
