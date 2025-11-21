@@ -127,8 +127,8 @@ export const superAdminService = {
 
   // Send invitation email
   async sendInvitationEmail(email, userName, invitationToken, userRole, companyName) {
-    const invitationLink = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/set-password?token=${invitationToken}`;
-    
+    const invitationLink = `${process.env.FRONTEND_URL}/set-password?token=${invitationToken}`;
+    console.log("link", invitationLink)
     console.log('🔗 Invitation link generated:', invitationLink);
 
     const templatePath = path.join(
