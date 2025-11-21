@@ -97,7 +97,7 @@ export const superAdminService = {
     } else {
       // No password - send invitation
       const invitationToken = crypto.randomBytes(32).toString('hex');
-      const tokenExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+      const tokenExpiry = new Date(Date.now() + 30 * 60 * 1000); // 30 minutes
       
       userData.password = null;
       userData.status = 'INVITED';
