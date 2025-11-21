@@ -32,7 +32,7 @@ export const updateUser = asyncHandler(async (req, res) => {
   const user = await superAdminService.updateUser(id, req.body);
 
   return res.status(200).json(
-    new ApiResponse(200, user, 'User updated successfully')
+    new ApiResponse(200, user, 'User updated successfully...........')
   );
 });
 

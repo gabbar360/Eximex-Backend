@@ -26,7 +26,7 @@ export const getPiInvoices = asyncHandler(async (req, res) => {
   const result = await PiService.getPiInvoices(
     req.user.companyId,
     req.query,
-    req.dataFilters || {}
+    req.roleFilter || {}
   );
   return res
     .status(200)

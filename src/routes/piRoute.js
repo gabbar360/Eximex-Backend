@@ -16,12 +16,8 @@ import {
   emailInvoice,
 } from '../controller/piController.js';
 import { verifyJWT, requireCompany, filterByRole } from '../middleware/auth.js';
-import {
-  applyDataFilters,
-  checkEntityOwnership,
-  ensureEntityScoping,
-} from '../middleware/dataAccess.js';
-import { ActivityLogService } from '../services/activityLogService.js';
+
+
 
 const router = Router();
 
@@ -32,52 +28,38 @@ router.use(requireCompany);
 // PI Invoice routes
 router.post(
   '/create/pi-invoice',
-  ensureEntityScoping,
-  ActivityLogService.createActivityLogger('PiInvoice'),
   createPiInvoice
 );
 router.get(
   '/get-all/pi-invoices',
-  applyDataFilters('piInvoice'),
   filterByRole,
   getPiInvoices
 );
 router.get(
   '/get-pi-invoice/:id',
-  checkEntityOwnership('piInvoice'),
   getPiInvoiceById
 );
-router.get('/:id/download-pdf', downloadPiInvoicePdf);
+router.get('/download-pi-pdf/:id', downloadPiInvoicePdf);
 router.get('/:id/history', getPiInvoiceHistory);
 router.get('/confirmed-for-order', getConfirmedPisForOrder);
 router.put(
   '/update/pi-invoice/:id',
-  checkEntityOwnership('piInvoice'),
-  ActivityLogService.createActivityLogger('PiInvoice'),
   updatePiInvoice
 );
 router.delete(
   '/delete/pi-invoice/:id',
-  checkEntityOwnership('piInvoice'),
-  ActivityLogService.createActivityLogger('PiInvoice'),
   deletePiInvoice
 );
 router.put(
   '/:id/update-pi-status',
-  checkEntityOwnership('piInvoice'),
-  ActivityLogService.createActivityLogger('PiInvoice'),
   updatePiStatus
 );
 router.put(
   '/:id/update-amount',
-  checkEntityOwnership('piInvoice'),
-  ActivityLogService.createActivityLogger('PiInvoice'),
   updatePiAmount
 );
 router.post(
   '/:id/email',
-  checkEntityOwnership('piInvoice'),
-  ActivityLogService.createActivityLogger('PiInvoice'),
   emailInvoice
 );
 

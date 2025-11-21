@@ -1,19 +1,28 @@
 import { Router } from 'express';
-import { verifyJWT } from '../middleware/auth.js';
+import { verifyJWT, authorizeRoles } from '../middleware/auth.js';
 import {
-  getAllMenuItems,
-  getMenuItemById,
-  createMenuItem,
-  updateMenuItem,
-  deleteMenuItem
+  getAllMenus,
+  getMenuById,
+  createMenu,
+  updateMenu,
+  deleteMenu,
+  createSubmenu,
+  updateSubmenu,
+  deleteSubmenu
 } from '../controller/menuController.js';
 
 const router = Router();
 
-router.get('/get-menu-items', verifyJWT, getAllMenuItems);
-router.get('/get-menu-items/:id', verifyJWT, getMenuItemById);
-router.post('/add-menu-items', verifyJWT, createMenuItem);
-router.put('/update-items/:id', verifyJWT, updateMenuItem);
-router.delete('/delete-menu-items/:id', verifyJWT, deleteMenuItem);
+// Menu routes (Super Admin only)
+router.get('/menus', verifyJWT, authorizeRoles('SUPER_ADMIN'), getAllMenus);
+router.get('/menus/:id', verifyJWT, authorizeRoles('SUPER_ADMIN'), getMenuById);
+router.post('/menus', verifyJWT, authorizeRoles('SUPER_ADMIN'), createMenu);
+router.put('/menus/:id', verifyJWT, authorizeRoles('SUPER_ADMIN'), updateMenu);
+router.delete('/menus/:id', verifyJWT, authorizeRoles('SUPER_ADMIN'), deleteMenu);
+
+// Submenu routes (Super Admin only)
+router.post('/submenus', verifyJWT, authorizeRoles('SUPER_ADMIN'), createSubmenu);
+router.put('/submenus/:id', verifyJWT, authorizeRoles('SUPER_ADMIN'), updateSubmenu);
+router.delete('/submenus/:id', verifyJWT, authorizeRoles('SUPER_ADMIN'), deleteSubmenu);
 
 export default router;

@@ -6,7 +6,15 @@ export const superAdminService = {
   // Get all users
   async getAllUsers() {
     return await prisma.user.findMany({
-      include: {
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        roleId: true,
+        companyId: true,
+        status: true,
+        isBlocked: true,
+        createdAt: true,
         role: true,
         company: true
       },
@@ -18,7 +26,16 @@ export const superAdminService = {
   async getUserById(id) {
     const user = await prisma.user.findUnique({
       where: { id: parseInt(id) },
-      include: {
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        password: true,
+        roleId: true,
+        companyId: true,
+        status: true,
+        isBlocked: true,
+        createdAt: true,
         role: true,
         company: true,
         userPermissions: {
@@ -67,17 +84,33 @@ export const superAdminService = {
 
   // Update user
   async updateUser(id, data) {
-    const { name, email, roleId, companyId } = data;
+    const { name, email, password, roleId, companyId, status } = data;
+
+    const updateData = {
+      name,
+      email,
+      roleId: parseInt(roleId),
+      companyId: companyId ? parseInt(companyId) : null,
+      status
+    };
+
+    // Hash password if provided
+    if (password && password.trim() !== '') {
+      updateData.password = await bcrypt.hash(password, 10);
+    }
 
     return await prisma.user.update({
       where: { id: parseInt(id) },
-      data: {
-        name,
-        email,
-        roleId: parseInt(roleId),
-        companyId: companyId ? parseInt(companyId) : null
-      },
-      include: {
+      data: updateData,
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        roleId: true,
+        companyId: true,
+        status: true,
+        isBlocked: true,
+        createdAt: true,
         role: true,
         company: true
       }

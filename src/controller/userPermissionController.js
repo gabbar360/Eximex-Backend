@@ -39,9 +39,9 @@ export const getUserWithPermissions = asyncHandler(async (req, res) => {
 
 export const updateUserPermissions = asyncHandler(async (req, res) => {
   const { userId } = req.params;
-  const { permissions } = req.body;
+  const { permissions, submenuPermissions } = req.body;
   
-  const updatedPermissions = await userPermissionService.updateUserPermissions(parseInt(userId), permissions);
+  const updatedPermissions = await userPermissionService.updateUserPermissions(parseInt(userId), permissions, submenuPermissions);
   return res.status(200).json(
     new ApiResponse(200, updatedPermissions, 'User permissions updated successfully')
   );
@@ -54,5 +54,12 @@ export const deleteUserPermissions = asyncHandler(async (req, res) => {
   await userPermissionService.deleteUserPermissions(parseInt(userId), menuItemIds);
   return res.status(200).json(
     new ApiResponse(200, null, 'User permissions deleted successfully')
+  );
+});
+
+export const getAllUsersWithPermissions = asyncHandler(async (req, res) => {
+  const usersWithPermissions = await userPermissionService.getAllUsersWithPermissions();
+  return res.status(200).json(
+    new ApiResponse(200, usersWithPermissions, 'All users with permissions fetched successfully')
   );
 });

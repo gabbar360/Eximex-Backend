@@ -42,7 +42,7 @@ model User {
   updatedVgmDocuments   VgmDocument[]           @relation("VgmUpdater")
   createdPurchaseOrders PurchaseOrder[]         @relation("PoCreator")
   updatedPurchaseOrders PurchaseOrder[]         @relation("PoUpdater")
-  activityLogs          ActivityLog[]
+
   payments              Payment[]
 
   createdShipments      Shipment[]             @relation("ShipmentCreator")
@@ -82,7 +82,7 @@ model CompanyDetails {
   orders          Order[]
   vgmDocuments    VgmDocument[]
   purchaseOrders  PurchaseOrder[]
-  activityLogs    ActivityLog[]
+
   payments        Payment[]
 
   shipments       Shipment[]
@@ -286,26 +286,7 @@ model Role {
   @@map("roles")
 }
 
-model ActivityLog {
-  id          Int      @id @default(autoincrement())
-  companyId   Int      @map("company_id")
-  userId      Int      @map("user_id")
-  action      String   // CREATE, UPDATE, DELETE, VIEW
-  entityType  String   @map("entity_type") // Party, Product, PiInvoice, Order, etc.
-  entityId    Int?     @map("entity_id")
-  entityName  String?  @map("entity_name")
-  description String?
-  metadata    Json?    // Additional data about the action
-  ipAddress   String?  @map("ip_address")
-  userAgent   String?  @map("user_agent")
-  createdAt   DateTime @default(now()) @map("created_at")
 
-  // Relations
-  company CompanyDetails @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  user    User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@map("activity_logs")
-}
 
 enum PartyRole {
   Customer
@@ -852,30 +833,49 @@ model Payment {
   @@map("payments")
 }
 
-model MenuItem {
+model Menu {
   id          Int      @id @default(autoincrement())
   name        String   @db.VarChar(100)
   slug        String   @unique @db.VarChar(100)
   path        String?  @db.VarChar(255)
   icon        String?  @db.VarChar(100)
-  parentId    Int?     @map("parent_id")
   sortOrder   Int      @default(0) @map("sort_order")
   isActive    Boolean  @default(true) @map("is_active")
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
   // Relations
-  parent      MenuItem?        @relation("MenuItemHierarchy", fields: [parentId], references: [id])
-  children    MenuItem[]       @relation("MenuItemHierarchy")
+  submenus    Submenu[]
   permissions UserPermission[]
 
-  @@map("menu_items")
+  @@map("menus")
+}
+
+model Submenu {
+  id          Int      @id @default(autoincrement())
+  menuId      Int      @map("menu_id")
+  name        String   @db.VarChar(100)
+  slug        String   @db.VarChar(100)
+  path        String   @db.VarChar(255)
+  icon        String?  @db.VarChar(100)
+  sortOrder   Int      @default(0) @map("sort_order")
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  menu        Menu     @relation(fields: [menuId], references: [id], onDelete: Cascade)
+  permissions UserPermission[]
+
+  @@unique([menuId, slug])
+  @@map("submenus")
 }
 
 model UserPermission {
   id         Int      @id @default(autoincrement())
   userId     Int      @map("user_id")
-  menuItemId Int      @map("menu_item_id")
+  menuId     Int?     @map("menu_id")
+  submenuId  Int?     @map("submenu_id")
   canView    Boolean  @default(false) @map("can_view")
   canCreate  Boolean  @default(false) @map("can_create")
   canUpdate  Boolean  @default(false) @map("can_update")
@@ -885,9 +885,10 @@ model UserPermission {
 
   // Relations
   user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  menuItem MenuItem @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
+  menu     Menu?    @relation(fields: [menuId], references: [id], onDelete: Cascade)
+  submenu  Submenu? @relation(fields: [submenuId], references: [id], onDelete: Cascade)
 
-  @@unique([userId, menuItemId])
+  @@unique([userId, menuId, submenuId])
   @@map("user_permissions")
 }
 

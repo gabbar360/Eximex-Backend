@@ -19,7 +19,7 @@ export const getAllProducts = asyncHandler(async (req, res) => {
   const products = await ProductService.getAllProducts(
     req.user.companyId,
     req.query,
-    req.dataFilters || {}
+    req.roleFilter || {}
   );
 
   return res

@@ -12,12 +12,6 @@ import {
   downloadBLDraftPdf,
 } from '../controller/orderController.js';
 import { verifyJWT, requireCompany, filterByRole } from '../middleware/auth.js';
-import {
-  applyDataFilters,
-  checkEntityOwnership,
-  ensureEntityScoping,
-} from '../middleware/dataAccess.js';
-import { ActivityLogService } from '../services/activityLogService.js';
 
 import { validate } from '../middleware/validate.js';
 import { orderValidation } from '../validations/order.validation.js';
@@ -31,29 +25,22 @@ router.use(requireCompany);
 // Order CRUD routes
 router.post(
   '/create-order',
-  ensureEntityScoping,
   validate(orderValidation.createOrder),
-  ActivityLogService.createActivityLogger('Order'),
   createOrder
 );
 router.get(
   '/get/all-orders',
-  applyDataFilters('order'),
   filterByRole,
   getOrders
 );
-router.get('/get/order-by-id/:id', checkEntityOwnership('order'), getOrderById);
+router.get('/get/order-by-id/:id', getOrderById);
 router.put(
   '/update-order/:id',
-  checkEntityOwnership('order'),
   validate(orderValidation.updateOrder),
-  ActivityLogService.createActivityLogger('Order'),
   updateOrder
 );
 router.delete(
   '/delete-order/:id',
-  checkEntityOwnership('order'),
-  ActivityLogService.createActivityLogger('Order'),
   deleteOrder
 );
 

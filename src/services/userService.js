@@ -822,7 +822,7 @@ const getAllTables = async () => {
       { name: 'vgmDocuments', description: 'VGM Documents' },
       { name: 'categories', description: 'Item categories' },
       { name: 'packagingUnits', description: 'Packaging units' },
-      { name: 'activityLogs', description: 'System activity logs' }
+
     ]
   };
 };
@@ -877,20 +877,7 @@ const getTableData = async (tableName, options = {}) => {
         ]);
         break;
         
-      case 'activityLogs':
-        [data, count] = await Promise.all([
-          prisma.activityLog.findMany({
-            include: {
-              user: { select: { name: true, email: true } },
-              company: { select: { name: true } }
-            },
-            take: Number(limit),
-            skip: (Number(page) - 1) * Number(limit),
-            orderBy: { createdAt: 'desc' }
-          }),
-          prisma.activityLog.count()
-        ]);
-        break;
+
         
       default:
         throw new ApiError(400, 'Invalid table name');

@@ -1,47 +1,72 @@
 import { menuService } from '../services/menuService.js';
-import { ApiError } from '../utils/ApiError.js';
 import { ApiResponse } from '../utils/ApiResponse.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 
-export const getAllMenuItems = asyncHandler(async (req, res) => {
-  const menuItems = await menuService.getAllMenuItems();
+// Get all menus with submenus
+export const getAllMenus = asyncHandler(async (req, res) => {
+  const menus = await menuService.getAllMenus();
   return res.status(200).json(
-    new ApiResponse(200, menuItems, 'Menu items fetched successfully')
+    new ApiResponse(200, menus, 'Menus fetched successfully')
   );
 });
 
-export const getMenuItemById = asyncHandler(async (req, res) => {
+// Get menu by ID
+export const getMenuById = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const menuItem = await menuService.getMenuItemById(parseInt(id));
-  
-  if (!menuItem) {
-    throw new ApiError(404, 'Menu item not found');
-  }
-  
+  const menu = await menuService.getMenuById(parseInt(id));
   return res.status(200).json(
-    new ApiResponse(200, menuItem, 'Menu item fetched successfully')
+    new ApiResponse(200, menu, 'Menu fetched successfully')
   );
 });
 
-export const createMenuItem = asyncHandler(async (req, res) => {
-  const menuItem = await menuService.createMenuItem(req.body);
+// Create new menu
+export const createMenu = asyncHandler(async (req, res) => {
+  const menu = await menuService.createMenu(req.body);
   return res.status(201).json(
-    new ApiResponse(201, menuItem, 'Menu item created successfully')
+    new ApiResponse(201, menu, 'Menu created successfully')
   );
 });
 
-export const updateMenuItem = asyncHandler(async (req, res) => {
+// Update menu
+export const updateMenu = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const menuItem = await menuService.updateMenuItem(parseInt(id), req.body);
+  const menu = await menuService.updateMenu(parseInt(id), req.body);
   return res.status(200).json(
-    new ApiResponse(200, menuItem, 'Menu item updated successfully')
+    new ApiResponse(200, menu, 'Menu updated successfully')
   );
 });
 
-export const deleteMenuItem = asyncHandler(async (req, res) => {
+// Delete menu
+export const deleteMenu = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  await menuService.deleteMenuItem(parseInt(id));
+  await menuService.deleteMenu(parseInt(id));
   return res.status(200).json(
-    new ApiResponse(200, null, 'Menu item deleted successfully')
+    new ApiResponse(200, null, 'Menu deleted successfully')
+  );
+});
+
+// Create submenu
+export const createSubmenu = asyncHandler(async (req, res) => {
+  const submenu = await menuService.createSubmenu(req.body);
+  return res.status(201).json(
+    new ApiResponse(201, submenu, 'Submenu created successfully')
+  );
+});
+
+// Update submenu
+export const updateSubmenu = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const submenu = await menuService.updateSubmenu(parseInt(id), req.body);
+  return res.status(200).json(
+    new ApiResponse(200, submenu, 'Submenu updated successfully')
+  );
+});
+
+// Delete submenu
+export const deleteSubmenu = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  await menuService.deleteSubmenu(parseInt(id));
+  return res.status(200).json(
+    new ApiResponse(200, null, 'Submenu deleted successfully')
   );
 });

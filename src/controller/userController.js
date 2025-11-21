@@ -1,6 +1,5 @@
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { UserService } from '../services/userService.js';
-import { ActivityLogService } from '../services/activityLogService.js';
 import { ApiResponse } from '../utils/ApiResponse.js';
 
 export const getAllUsers = asyncHandler(async (req, res) => {
@@ -36,7 +35,7 @@ export const updateUser = asyncHandler(async (req, res) => {
 
   return res
     .status(200)
-    .json(new ApiResponse(200, updated, 'User updated successfully'));
+    .json(new ApiResponse(200, updated, 'User updated successfully........'));
 });
 
 export const deleteUser = asyncHandler(async (req, res) => {

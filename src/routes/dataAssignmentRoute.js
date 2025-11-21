@@ -8,7 +8,7 @@ import {
   authorizeRoles,
   requireCompany,
 } from '../middleware/auth.js';
-import { ActivityLogService } from '../services/activityLogService.js';
+
 
 const router = Router();
 
@@ -18,7 +18,7 @@ router.post(
   verifyJWT,
   requireCompany,
   authorizeRoles('ADMIN', 'SUPER_ADMIN'),
-  ActivityLogService.createActivityLogger('DataAssignment'),
+
   assignData
 );
 
