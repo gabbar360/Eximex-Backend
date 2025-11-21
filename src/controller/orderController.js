@@ -23,7 +23,7 @@ export const getOrders = asyncHandler(async (req, res) => {
   const result = await OrderService.getOrders(
     req.user.companyId,
     req.query,
-    req.dataFilters || {}
+    req.roleFilter || {}
   );
   return res
     .status(200)

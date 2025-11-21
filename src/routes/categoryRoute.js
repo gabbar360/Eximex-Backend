@@ -28,6 +28,7 @@ router.get(
   '/get-all/categories',
   verifyJWT,
   requireCompany,
+  filterByRole,
   getAllCategories
 );
 

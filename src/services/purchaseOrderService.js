@@ -130,8 +130,8 @@ class PurchaseOrderService {
     const skip = (page - 1) * limit;
 
     const where = {
-      companyId,
-      ...dataFilters, // Apply role-based filters
+      companyId, // ✅ Always filter by company first
+      ...dataFilters, // Then apply role-based filters (createdBy for staff)
       ...(status && { status }),
       ...(vendorId && { vendorId }),
       ...(search && {

@@ -38,7 +38,8 @@ const getAllParties = async (companyId, options = {}, dataFilters = {}) => {
   } = options;
 
   const where = {
-    ...dataFilters, // This includes companyId and createdBy for staff
+    companyId: Number(companyId), // ✅ Always filter by company first
+    ...dataFilters, // Then apply role-based filters (createdBy for staff)
   };
 
   if (search) {
