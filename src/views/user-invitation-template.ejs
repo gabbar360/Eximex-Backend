@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to EximEx</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f4f4f4;">
+    <div style="max-width: 600px; margin: 0 auto; background-color: white; padding: 40px 30px;">
+        <!-- Header -->
+        <div style="text-align: center; margin-bottom: 30px;">
+            <h1 style="color: #2563eb; margin: 0; font-size: 28px;">Welcome to EximEx</h1>
+            <p style="color: #666; margin: 10px 0 0 0;">Your account has been created</p>
+        </div>
+
+        <!-- Main Content -->
+        <div style="background-color: #f8fafc; padding: 25px; border-radius: 8px; margin-bottom: 30px;">
+            <h2 style="color: #1e293b; margin: 0 0 15px 0; font-size: 20px;">Hello <%= userName %>!</h2>
+            <p style="color: #475569; margin: 0 0 15px 0; line-height: 1.6;">
+                A super admin has created an account for you on EximEx platform. To get started, please set your password by clicking the button below:
+            </p>
+            <div style="margin: 15px 0;">
+                <p style="color: #475569; margin: 0; font-size: 14px;"><strong>Email:</strong> <%= userEmail %></p>
+                <% if (userRole) { %>
+                <p style="color: #475569; margin: 5px 0 0 0; font-size: 14px;"><strong>Role:</strong> <%= userRole %></p>
+                <% } %>
+            </div>
+        </div>
+
+        <!-- CTA Button -->
+        <div style="text-align: center; margin: 30px 0;">
+            <a href="<%= invitationLink %>" 
+               style="display: inline-block; padding: 15px 30px; background-color: #2563eb; color: white; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 16px;"
+               target="_blank" rel="noopener noreferrer">
+                Set Your Password
+            </a>
+        </div>
+
+        <!-- Security Notice -->
+        <div style="background-color: #fef3c7; border: 1px solid #f59e0b; padding: 15px; border-radius: 6px; margin-bottom: 25px;">
+            <p style="color: #92400e; margin: 0; font-size: 14px;">
+                <strong>⚠️ Security Notice:</strong> This invitation link will expire in 24 hours. Please set your password as soon as possible.
+            </p>
+        </div>
+
+        <!-- Footer -->
+        <div style="text-align: center; border-top: 1px solid #e2e8f0; padding-top: 20px;">
+            <p style="color: #94a3b8; font-size: 12px; margin: 0 0 10px 0;">
+                If the button doesn't work, copy and paste this link:
+            </p>
+            <p style="word-break: break-all; font-size: 12px; margin: 0 0 15px 0;">
+                <a href="<%= invitationLink %>" style="color: #2563eb;"><%= invitationLink %></a>
+            </p>
+            <p style="color: #1e293b; margin: 0; font-weight: bold;">Best regards, EximEx Team</p>
+        </div>
+    </div>
+</body>
+</html>

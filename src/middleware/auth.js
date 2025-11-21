@@ -234,7 +234,7 @@ export const checkPermissions = asyncHandler(async (req, res, next) => {
   }
   
   // Skip permission check for certain routes
-  const skipRoutes = ['/auth/', '/super-admin/', '/getroles', '/my-sidebar-menu'];
+  const skipRoutes = ['/auth/', '/super-admin/', '/getroles', '/my-sidebar-menu', '/invitation/'];
   const shouldSkip = skipRoutes.some(route => req.path.includes(route));
   
   if (shouldSkip) {

@@ -126,10 +126,14 @@ const startServer = async () => {
     await prisma.$connect();
     logger.info('✅ Database connected successfully');
 
-    // Add global permission check BEFORE loading routes
+    // Add public invitation routes BEFORE global middleware
+    const { default: invitationRoute } = await import('./routes/invitationRoute.js');
+    app.use('/api/v1/invitation', invitationRoute);
+    
+    // Add global permission check AFTER invitation routes
     app.use('/api/v1', checkPermissions);
     
-    await loadRoutes(); // ← Load dynamic routes here
+    await loadRoutes(); // ← Load all other routes here
 
     app.use(notFound);
     app.use(errorHandler);
