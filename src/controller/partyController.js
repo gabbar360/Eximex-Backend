@@ -17,7 +17,7 @@ export const getParties = asyncHandler(async (req, res) => {
   const parties = await PartyService.getAllParties(
     req.user.companyId,
     req.query,
-    req.dataFilters || {} // Role-based filters from middleware
+    req.roleFilter || {} // Role-based filters from middleware
   );
   return res
     .status(200)

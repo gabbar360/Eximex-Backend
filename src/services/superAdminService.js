@@ -195,13 +195,14 @@ export const superAdminService = {
   async updateUser(id, data) {
     const { name, email, password, roleId, companyId, status } = data;
 
-    const updateData = {
-      name,
-      email,
-      roleId: parseInt(roleId),
-      companyId: companyId ? parseInt(companyId) : null,
-      status
-    };
+    const updateData = {};
+    
+    // Only update fields that are provided
+    if (name !== undefined) updateData.name = name;
+    if (email !== undefined) updateData.email = email;
+    if (roleId !== undefined) updateData.roleId = parseInt(roleId);
+    if (companyId !== undefined) updateData.companyId = companyId ? parseInt(companyId) : null;
+    if (status !== undefined) updateData.status = status;
 
     // Hash password if provided
     if (password && password.trim() !== '') {

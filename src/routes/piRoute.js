@@ -39,7 +39,7 @@ router.get(
   '/get-pi-invoice/:id',
   getPiInvoiceById
 );
-router.get('/download-pdf/:id', downloadPiInvoicePdf);
+router.get('/download-pi-pdf/:id', downloadPiInvoicePdf);
 router.get('/:id/history', getPiInvoiceHistory);
 router.get('/confirmed-for-order', getConfirmedPisForOrder);
 router.put(

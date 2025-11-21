@@ -506,23 +506,38 @@ export const checkDataOwnership = (entityType) => {
   });
 };
 
-// Middleware to filter data based on user role
+// Dynamic permission-based data filtering
 export const filterByRole = asyncHandler(async (req, res, next) => {
   const { user } = req;
 
-  // Check if user exists
+  console.log('🔍 FILTER_BY_ROLE MIDDLEWARE CALLED');
+  console.log('User:', user?.name, 'ID:', user?.id, 'Company:', user?.companyId);
+
   if (!user || !user.id) {
     req.roleFilter = {};
+    console.log('❌ No user found, setting empty filter');
     return next();
   }
 
-  // Add role-based filters
-  if (user.role?.name === 'STAFF') {
-    req.roleFilter = { createdBy: user.id };
+  // Get user's role permissions
+  const userRole = await prisma.role.findUnique({
+    where: { id: user.roleId },
+    select: { permissions: true, name: true }
+  });
+
+  const permissions = userRole?.permissions || {};
+  console.log('Role:', userRole?.name, 'Permissions:', permissions);
+  
+  // Check if user has company-wide data access permission
+  if (permissions.canViewAllCompanyData === true) {
+    req.roleFilter = {}; // Can see all company data
+    console.log('✅ Admin access: Can see all company data');
   } else {
-    req.roleFilter = {}; // Admins see all company data
+    req.roleFilter = { createdBy: user.id }; // Only own data
+    console.log('🔒 Staff access: Only own data (createdBy:', user.id, ')');
   }
 
+  console.log('Final roleFilter:', req.roleFilter);
   next();
 });
 

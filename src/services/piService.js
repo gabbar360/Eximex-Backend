@@ -328,7 +328,8 @@ const getPiInvoices = async (companyId, filters = {}, dataFilters = {}) => {
   const skip = (pageNum - 1) * limitNum;
 
   const where = {
-    ...dataFilters, // This includes companyId and createdBy for staff
+    companyId, // ✅ Always filter by company first
+    ...dataFilters, // Then apply role-based filters (createdBy for staff)
     ...(status && { status }),
     ...(search && {
       OR: [

@@ -30,7 +30,7 @@ export const getAllCategories = asyncHandler(async (req, res) => {
   const categories = await CategoryService.getAllCategories(
     req.user.companyId,
     req.query,
-    req.dataFilters || {}
+    req.roleFilter || {}
   );
 
   return res

@@ -19,6 +19,7 @@ router.get(
   '/get-all/products',
   verifyJWT,
   requireCompany,
+  filterByRole,
   getAllProducts
 );
 
