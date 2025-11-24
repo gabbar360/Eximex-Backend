@@ -7,17 +7,17 @@ import { UserService } from './userService.js';
 // Utility function to transform product with packaging preview
 const transformProductWithPackagingPreview = (product) => {
   const transformed = { ...product };
-  
+
   if (product.packagingHierarchyData?.dynamicFields) {
     const dynamicFields = product.packagingHierarchyData.dynamicFields;
     transformed.packagingPreview = {
       hierarchy: [],
       weights: {},
-      totals: {}
+      totals: {},
     };
 
     // Extract hierarchy information - handle various field name patterns
-    Object.keys(dynamicFields).forEach(key => {
+    Object.keys(dynamicFields).forEach((key) => {
       if (key.includes('Per') && !key.startsWith('weight')) {
         // Handle patterns like "Square MeterPerBox", "BoxPerPallet", "PiecesPerPackage"
         let from, to;
@@ -34,26 +34,27 @@ const transformProductWithPackagingPreview = (product) => {
             to = match[2];
           }
         }
-        
+
         if (from && to) {
           transformed.packagingPreview.hierarchy.push({
             from: from,
             to: to,
             quantity: dynamicFields[key],
-            field: key
+            field: key,
           });
         }
       }
     });
 
     // Extract weight information - handle various patterns
-    Object.keys(dynamicFields).forEach(key => {
+    Object.keys(dynamicFields).forEach((key) => {
       if (key.startsWith('weightPer')) {
         // Handle patterns like "weightPerSquare Meter", "weightPerPieces", "weightPerBox"
         let unit = key.replace('weightPer', '').replace('Unit', '');
-        
+
         if (key.endsWith('Unit')) {
-          transformed.packagingPreview.weights[unit + 'Unit'] = dynamicFields[key];
+          transformed.packagingPreview.weights[unit + 'Unit'] =
+            dynamicFields[key];
         } else {
           transformed.packagingPreview.weights[unit] = dynamicFields[key];
         }
@@ -67,7 +68,7 @@ const transformProductWithPackagingPreview = (product) => {
       totalGrossWeightUnit: product.totalGrossWeightUnit,
       totalBoxes: product.totalBoxes,
       grossWeightPerBox: product.grossWeightPerBox,
-      packagingMaterialWeight: product.packagingMaterialWeight
+      packagingMaterialWeight: product.packagingMaterialWeight,
     };
   }
 
@@ -146,7 +147,9 @@ const getAllProducts = async (companyId, options = {}, dataFilters = {}) => {
   ]);
 
   // Transform products to include structured packaging preview
-  const transformedProducts = products.map(transformProductWithPackagingPreview);
+  const transformedProducts = products.map(
+    transformProductWithPackagingPreview
+  );
 
   return {
     data: transformedProducts,
@@ -561,8 +564,3 @@ export const ProductService = {
 };
 
 // Product Variant Service Functions
-
-
-
-
-

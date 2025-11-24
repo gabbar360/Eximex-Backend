@@ -6,14 +6,14 @@ export const roleService = {
   async getAllRoles() {
     return await prisma.role.findMany({
       where: { isActive: true },
-      orderBy: { name: 'asc' }
+      orderBy: { name: 'asc' },
     });
   },
 
   // Get role by ID
   async getRoleById(id) {
     const role = await prisma.role.findUnique({
-      where: { id: parseInt(id) }
+      where: { id: parseInt(id) },
     });
 
     if (!role) {
@@ -32,7 +32,7 @@ export const roleService = {
 
     // Check if role exists
     const existingRole = await prisma.role.findUnique({
-      where: { name: formattedName }
+      where: { name: formattedName },
     });
 
     if (existingRole) {
@@ -44,8 +44,8 @@ export const roleService = {
         name: formattedName,
         displayName,
         description,
-        isSystem: false
-      }
+        isSystem: false,
+      },
     });
   },
 
@@ -66,7 +66,7 @@ export const roleService = {
       const formattedName = name.trim().replace(/\s+/g, '_').toUpperCase();
 
       const existingRole = await prisma.role.findUnique({
-        where: { name: formattedName }
+        where: { name: formattedName },
       });
 
       if (existingRole && existingRole.id !== parseInt(id)) {
@@ -78,7 +78,7 @@ export const roleService = {
 
     return await prisma.role.update({
       where: { id: parseInt(id) },
-      data: updateData
+      data: updateData,
     });
   },
 
@@ -86,7 +86,7 @@ export const roleService = {
   async deleteRole(id) {
     const role = await prisma.role.findUnique({
       where: { id: parseInt(id) },
-      include: { users: true }
+      include: { users: true },
     });
 
     if (!role) {
@@ -102,9 +102,9 @@ export const roleService = {
     }
 
     await prisma.role.delete({
-      where: { id: parseInt(id) }
+      where: { id: parseInt(id) },
     });
 
     return true;
-  }
+  },
 };

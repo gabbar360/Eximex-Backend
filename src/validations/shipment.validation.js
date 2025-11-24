@@ -7,7 +7,7 @@ const createShipmentSchema = Joi.object({
   vesselVoyageInfo: Joi.string().trim().allow('', null),
   wayBillNumber: Joi.string().trim().allow('', null),
   truckNumber: Joi.string().trim().allow('', null),
-  blNumber: Joi.string().trim().allow('', null)
+  blNumber: Joi.string().trim().allow('', null),
 });
 
 const updateShipmentSchema = Joi.object({
@@ -16,10 +16,7 @@ const updateShipmentSchema = Joi.object({
   vesselVoyageInfo: Joi.string().trim().allow('', null),
   wayBillNumber: Joi.string().trim().allow('', null),
   truckNumber: Joi.string().trim().allow('', null),
-  blNumber: Joi.string().trim().allow('', null)
+  blNumber: Joi.string().trim().allow('', null),
 });
 
-export {
-  createShipmentSchema,
-  updateShipmentSchema
-};
+export { createShipmentSchema, updateShipmentSchema };

@@ -19,7 +19,6 @@ import {
   updatePurchaseOrderSchema,
 } from '../validations/purchaseOrder.validation.js';
 
-
 const router = express.Router();
 
 // All routes require authentication and company
@@ -35,27 +34,14 @@ router.post(
   validateRequest(createPurchaseOrderSchema),
   createPurchaseOrder
 );
-router.get(
-  '/purchase-order',
-  filterByRole,
-  getPurchaseOrders
-);
-router.get(
-  '/purchase-order/:id/pdf',
-  generatePurchaseOrderPDF
-);
-router.get(
-  '/purchase-order/:id',
-  getPurchaseOrderById
-);
+router.get('/purchase-order', filterByRole, getPurchaseOrders);
+router.get('/purchase-order/:id/pdf', generatePurchaseOrderPDF);
+router.get('/purchase-order/:id', getPurchaseOrderById);
 router.put(
   '/purchase-order/:id',
   validateRequest(updatePurchaseOrderSchema),
   updatePurchaseOrder
 );
-router.delete(
-  '/purchase-order/:id',
-  deletePurchaseOrder
-);
+router.delete('/purchase-order/:id', deletePurchaseOrder);
 
 export default router;

@@ -11,17 +11,19 @@ const __dirname = dirname(__filename);
 const getAllPackingLists = async (req, res) => {
   try {
     const { search, page = 1, limit = 10, status } = req.query;
-    
+
     const filters = { search, status };
     const pagination = { page, limit };
-    
+
     const result = await PackagingStepsService.getPackingListsWithPagination(
       req.user.companyId,
       filters,
       pagination
     );
-    
-    const packingLists = PackagingStepsService.transformPackingLists(result.piInvoices);
+
+    const packingLists = PackagingStepsService.transformPackingLists(
+      result.piInvoices
+    );
 
     res.json({
       success: true,
@@ -44,16 +46,22 @@ const getPackingListById = async (req, res) => {
   try {
     const { id } = req.params;
     let piInvoice = null;
-    
+
     // Try to find by packaging step ID first
     const packagingStep = await PackagingStepsService.findPackagingStepById(id);
-    
-    if (packagingStep && packagingStep.piInvoice.companyId === req.user.companyId) {
+
+    if (
+      packagingStep &&
+      packagingStep.piInvoice.companyId === req.user.companyId
+    ) {
       piInvoice = packagingStep.piInvoice;
     } else {
       // If not found by packaging step, try by PI ID
-      piInvoice = await PackagingStepsService.findPiInvoiceById(id, req.user.companyId);
-      
+      piInvoice = await PackagingStepsService.findPiInvoiceById(
+        id,
+        req.user.companyId
+      );
+
       if (piInvoice) {
         console.log('Found PI by PI ID:', piInvoice.piNumber);
       }
@@ -66,7 +74,8 @@ const getPackingListById = async (req, res) => {
       });
     }
 
-    const packingList = PackagingStepsService.buildPackingListResponse(piInvoice);
+    const packingList =
+      PackagingStepsService.buildPackingListResponse(piInvoice);
 
     res.json({
       success: true,
@@ -96,7 +105,10 @@ const createPackingList = async (req, res) => {
       });
     }
 
-    const existingPI = await PackagingStepsService.findPiInvoiceById(piId, req.user.companyId);
+    const existingPI = await PackagingStepsService.findPiInvoiceById(
+      piId,
+      req.user.companyId
+    );
     if (!existingPI) {
       return res.status(404).json({
         success: false,
@@ -105,7 +117,8 @@ const createPackingList = async (req, res) => {
     }
 
     // Check if packing list already exists
-    const existingPackingList = await PackagingStepsService.checkExistingPackingList(piId);
+    const existingPackingList =
+      await PackagingStepsService.checkExistingPackingList(piId);
     if (existingPackingList) {
       return res.status(409).json({
         success: false,
@@ -115,16 +128,25 @@ const createPackingList = async (req, res) => {
     }
 
     const piWithProducts = await PackagingStepsService.getPiWithProducts(piId);
-    const packingListData = PackagingStepsService.buildPackingListData(req.body, existingPI);
-    
+    const packingListData = PackagingStepsService.buildPackingListData(
+      req.body,
+      existingPI
+    );
+
     // Extract container and product info
-    const containerInfo = PackagingStepsService.extractContainerInfo(req.body.containers);
-    
+    const containerInfo = PackagingStepsService.extractContainerInfo(
+      req.body.containers
+    );
+
     let productId = req.body.productId ? parseInt(req.body.productId) : null;
     let categoryId = req.body.categoryId ? parseInt(req.body.categoryId) : null;
     let material = containerInfo.material;
-    
-    if (!productId && piWithProducts.products && piWithProducts.products.length > 0) {
+
+    if (
+      !productId &&
+      piWithProducts.products &&
+      piWithProducts.products.length > 0
+    ) {
       const firstPiProduct = piWithProducts.products[0];
       productId = firstPiProduct.productId;
       categoryId = categoryId || firstPiProduct.categoryId;
@@ -138,9 +160,12 @@ const createPackingList = async (req, res) => {
       piNumber: existingPI.piNumber,
       productId,
       categoryId,
-      packagingUnitId: req.body.packagingUnitId ? parseInt(req.body.packagingUnitId) : null,
+      packagingUnitId: req.body.packagingUnitId
+        ? parseInt(req.body.packagingUnitId)
+        : null,
       quantity: containerInfo.quantity || parseInt(req.body.totalBoxes) || 0,
-      weight: containerInfo.weight || parseFloat(req.body.totalGrossWeight) || 0,
+      weight:
+        containerInfo.weight || parseFloat(req.body.totalGrossWeight) || 0,
       material,
       containerNumber: containerInfo.containerNumber,
       sealNumber: containerInfo.sealNumber,
@@ -155,7 +180,10 @@ const createPackingList = async (req, res) => {
       shipmentType: req.body.shipmentType,
     };
 
-    const result = await PackagingStepsService.createPackingListTransaction(transactionData, req.user.id);
+    const result = await PackagingStepsService.createPackingListTransaction(
+      transactionData,
+      req.user.id
+    );
     const { packingListEntry, updatedPI } = result;
 
     // Create response
@@ -203,8 +231,12 @@ const updatePackingList = async (req, res) => {
     const { id } = req.params;
     const updateData = { ...req.body };
 
-    const packingListEntry = await PackagingStepsService.findPackingListForUpdate(id, req.user.companyId);
-    
+    const packingListEntry =
+      await PackagingStepsService.findPackingListForUpdate(
+        id,
+        req.user.companyId
+      );
+
     if (!packingListEntry) {
       return res.status(404).json({
         success: false,
@@ -216,24 +248,30 @@ const updatePackingList = async (req, res) => {
     let existingPackingData = {};
     if (packingListEntry.notes) {
       try {
-        existingPackingData = typeof packingListEntry.notes === 'string' 
-          ? JSON.parse(packingListEntry.notes) 
-          : packingListEntry.notes;
+        existingPackingData =
+          typeof packingListEntry.notes === 'string'
+            ? JSON.parse(packingListEntry.notes)
+            : packingListEntry.notes;
       } catch (error) {
         console.error('Error parsing existing packing list data:', error);
       }
     }
 
     // Merge with update data
-    const updatedPackingData = PackagingStepsService.mergePackingListData(existingPackingData, updateData);
+    const updatedPackingData = PackagingStepsService.mergePackingListData(
+      existingPackingData,
+      updateData
+    );
 
     // Extract productId and categoryId for update if not already set
     let updateProductId = packingListEntry.productId;
     let updateCategoryId = packingListEntry.categoryId;
 
     if (!updateProductId || !updateCategoryId) {
-      const piWithProducts = await PackagingStepsService.getPiWithProducts(packingListEntry.piInvoiceId);
-      
+      const piWithProducts = await PackagingStepsService.getPiWithProducts(
+        packingListEntry.piInvoiceId
+      );
+
       if (piWithProducts.products && piWithProducts.products.length > 0) {
         const firstPiProduct = piWithProducts.products[0];
         updateProductId = updateProductId || firstPiProduct.productId;
@@ -242,26 +280,38 @@ const updatePackingList = async (req, res) => {
     }
 
     // Update the packing list entry
-    const updatedPackingListEntry = await PackagingStepsService.updatePackingListEntry(
-      packingListEntry.id,
-      {
-        productId: updateProductId,
-        categoryId: updateCategoryId,
-        updatedPackingData,
-      },
-      req.user.id
-    );
+    const updatedPackingListEntry =
+      await PackagingStepsService.updatePackingListEntry(
+        packingListEntry.id,
+        {
+          productId: updateProductId,
+          categoryId: updateCategoryId,
+          updatedPackingData,
+        },
+        req.user.id
+      );
 
     // Update PI invoice with relevant data
     const updatedPI = await PackagingStepsService.updatePiInvoice(
       packingListEntry.piInvoiceId,
       {
-        methodOfDispatch: updateData.methodOfDispatch || packingListEntry.piInvoice.deliveryTerm,
-        shipmentType: updateData.shipmentType || packingListEntry.piInvoice.containerType,
-        totalBoxes: parseInt(updateData.totalBoxes) || packingListEntry.piInvoice.totalBoxes,
-        totalGrossWeight: parseFloat(updateData.totalGrossWeight) || packingListEntry.piInvoice.totalWeight,
-        totalVolume: parseFloat(updateData.totalVolume) || packingListEntry.piInvoice.totalVolume,
-        totalContainers: parseInt(updateData.totalContainers) || packingListEntry.piInvoice.requiredContainers,
+        methodOfDispatch:
+          updateData.methodOfDispatch ||
+          packingListEntry.piInvoice.deliveryTerm,
+        shipmentType:
+          updateData.shipmentType || packingListEntry.piInvoice.containerType,
+        totalBoxes:
+          parseInt(updateData.totalBoxes) ||
+          packingListEntry.piInvoice.totalBoxes,
+        totalGrossWeight:
+          parseFloat(updateData.totalGrossWeight) ||
+          packingListEntry.piInvoice.totalWeight,
+        totalVolume:
+          parseFloat(updateData.totalVolume) ||
+          packingListEntry.piInvoice.totalVolume,
+        totalContainers:
+          parseInt(updateData.totalContainers) ||
+          packingListEntry.piInvoice.requiredContainers,
       },
       req.user.id
     );
@@ -301,8 +351,12 @@ const deletePackingList = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const packingRecord = await PackagingStepsService.findPackingRecordForDelete(id, req.user.companyId);
-    
+    const packingRecord =
+      await PackagingStepsService.findPackingRecordForDelete(
+        id,
+        req.user.companyId
+      );
+
     if (!packingRecord) {
       return res.status(404).json({
         success: false,
@@ -396,8 +450,11 @@ const downloadPackingListPDF = async (req, res) => {
   try {
     const { id } = req.params;
 
-    let packingListEntry = await PackagingStepsService.getPackingListForPDF(id, req.user.companyId);
-    
+    let packingListEntry = await PackagingStepsService.getPackingListForPDF(
+      id,
+      req.user.companyId
+    );
+
     if (!packingListEntry) {
       return res.status(404).json({
         success: false,
@@ -449,7 +506,10 @@ const downloadPackingListPDF = async (req, res) => {
 
     // Get shipment data if available
     let shipment = null;
-    if (packingListEntry.piInvoice.orders && packingListEntry.piInvoice.orders.length > 0) {
+    if (
+      packingListEntry.piInvoice.orders &&
+      packingListEntry.piInvoice.orders.length > 0
+    ) {
       const order = packingListEntry.piInvoice.orders[0];
       if (order.shipment) {
         shipment = order.shipment;
@@ -501,8 +561,11 @@ const downloadPackingingListPortDetailsPDF = async (req, res) => {
   try {
     const { id } = req.params;
 
-    let packingListEntry = await PackagingStepsService.getPackingListForPortPDF(id, req.user.companyId);
-    
+    let packingListEntry = await PackagingStepsService.getPackingListForPortPDF(
+      id,
+      req.user.companyId
+    );
+
     if (!packingListEntry) {
       return res.status(404).json({
         success: false,
@@ -554,7 +617,10 @@ const downloadPackingingListPortDetailsPDF = async (req, res) => {
 
     // Get shipment data if available
     let shipment = null;
-    if (packingListEntry.piInvoice.orders && packingListEntry.piInvoice.orders.length > 0) {
+    if (
+      packingListEntry.piInvoice.orders &&
+      packingListEntry.piInvoice.orders.length > 0
+    ) {
       const order = packingListEntry.piInvoice.orders[0];
       if (order.shipment) {
         shipment = order.shipment;
@@ -609,5 +675,5 @@ export {
   deletePackingList,
   getPackingListsByPI,
   downloadPackingListPDF,
-  downloadPackingingListPortDetailsPDF
+  downloadPackingingListPortDetailsPDF,
 };

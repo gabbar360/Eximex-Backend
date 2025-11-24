@@ -34,9 +34,9 @@ export const superAdminService = {
         isBlocked: true,
         createdAt: true,
         role: true,
-        company: true
+        company: true,
       },
-      orderBy: { createdAt: 'desc' }
+      orderBy: { createdAt: 'desc' },
     });
   },
 
@@ -58,10 +58,10 @@ export const superAdminService = {
         company: true,
         userPermissions: {
           include: {
-            menuItem: true
-          }
-        }
-      }
+            menuItem: true,
+          },
+        },
+      },
     });
 
     if (!user) {
@@ -73,10 +73,17 @@ export const superAdminService = {
 
   // Create user with invitation
   async createUser(data) {
-    const { name, email, password, roleId, companyId, sendInvitation = true } = data;
+    const {
+      name,
+      email,
+      password,
+      roleId,
+      companyId,
+      sendInvitation = true,
+    } = data;
 
     const existingUser = await prisma.user.findUnique({
-      where: { email }
+      where: { email },
     });
 
     if (existingUser) {
@@ -87,7 +94,7 @@ export const superAdminService = {
       name,
       email,
       roleId: parseInt(roleId),
-      companyId: companyId ? parseInt(companyId) : null
+      companyId: companyId ? parseInt(companyId) : null,
     };
 
     // If password provided, hash it and set user as active
@@ -98,7 +105,7 @@ export const superAdminService = {
       // No password - send invitation
       const invitationToken = crypto.randomBytes(32).toString('hex');
       const tokenExpiry = new Date(Date.now() + 30 * 60 * 1000); // 30 minutes
-      
+
       userData.password = null;
       userData.status = 'INVITED';
       userData.resetPasswordToken = invitationToken;
@@ -109,14 +116,20 @@ export const superAdminService = {
       data: userData,
       include: {
         role: true,
-        company: true
-      }
+        company: true,
+      },
     });
 
     // Send invitation email if no password was provided
     if (!password || password.trim() === '') {
       try {
-        await this.sendInvitationEmail(user.email, user.name, userData.resetPasswordToken, user.role?.displayName, user.company?.name);
+        await this.sendInvitationEmail(
+          user.email,
+          user.name,
+          userData.resetPasswordToken,
+          user.role?.displayName,
+          user.company?.name
+        );
       } catch (emailError) {
         console.error('Failed to send invitation email:', emailError);
       }
@@ -126,16 +139,22 @@ export const superAdminService = {
   },
 
   // Send invitation email
-  async sendInvitationEmail(email, userName, invitationToken, userRole, companyName) {
+  async sendInvitationEmail(
+    email,
+    userName,
+    invitationToken,
+    userRole,
+    companyName
+  ) {
     const invitationLink = `${process.env.FRONTEND_URL}/set-password?token=${invitationToken}`;
-    console.log("link", invitationLink)
+    console.log('link', invitationLink);
     console.log('🔗 Invitation link generated:', invitationLink);
 
     const templatePath = path.join(
       __dirname,
       '../views/user-invitation-template.ejs'
     );
-    
+
     const htmlContent = await ejs.renderFile(templatePath, {
       userName,
       userEmail: email,
@@ -163,8 +182,8 @@ export const superAdminService = {
         resetPasswordTokenExpiry: {
           gt: new Date(),
         },
-        status: 'INVITED'
-      }
+        status: 'INVITED',
+      },
     });
 
     if (!user) {
@@ -180,14 +199,14 @@ export const superAdminService = {
         status: 'ACTIVE',
         resetPasswordToken: null,
         resetPasswordTokenExpiry: null,
-        isEmailVerified: true
+        isEmailVerified: true,
       },
       select: {
         id: true,
         name: true,
         email: true,
-        status: true
-      }
+        status: true,
+      },
     });
   },
 
@@ -196,12 +215,13 @@ export const superAdminService = {
     const { name, email, password, roleId, companyId, status } = data;
 
     const updateData = {};
-    
+
     // Only update fields that are provided
     if (name !== undefined) updateData.name = name;
     if (email !== undefined) updateData.email = email;
     if (roleId !== undefined) updateData.roleId = parseInt(roleId);
-    if (companyId !== undefined) updateData.companyId = companyId ? parseInt(companyId) : null;
+    if (companyId !== undefined)
+      updateData.companyId = companyId ? parseInt(companyId) : null;
     if (status !== undefined) updateData.status = status;
 
     // Hash password if provided
@@ -222,17 +242,17 @@ export const superAdminService = {
         isBlocked: true,
         createdAt: true,
         role: true,
-        company: true
-      }
+        company: true,
+      },
     });
   },
 
   // Delete user
   async deleteUser(id) {
     await prisma.user.delete({
-      where: { id: parseInt(id) }
+      where: { id: parseInt(id) },
     });
 
     return true;
-  }
+  },
 };

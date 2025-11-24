@@ -127,12 +127,14 @@ const startServer = async () => {
     logger.info('✅ Database connected successfully');
 
     // Add public invitation routes BEFORE global middleware
-    const { default: invitationRoute } = await import('./routes/invitationRoute.js');
+    const { default: invitationRoute } = await import(
+      './routes/invitationRoute.js'
+    );
     app.use('/api/v1/invitation', invitationRoute);
-    
+
     // Add global permission check AFTER invitation routes
     app.use('/api/v1', checkPermissions);
-    
+
     await loadRoutes(); // ← Load all other routes here
 
     app.use(notFound);
@@ -141,16 +143,16 @@ const startServer = async () => {
     // Create HTTP server
     const server = createServer(app);
     httpServer = server; // Store reference for graceful shutdown
-    
+
     // Start server first
     server.listen(PORT, () => {
       logger.info(`🚀 Server running on port ${PORT}`);
-      
+
       // Initialize Socket.io after server starts
       socketManager.initialize(server);
       logger.info('🔌 Socket.io ready');
     });
-    
+
     // Handle server errors
     server.on('error', (err) => {
       if (err.code === 'EADDRINUSE') {
@@ -174,13 +176,13 @@ let httpServer = null;
 // Graceful shutdown
 const gracefulShutdown = async (signal) => {
   logger.info(`${signal} received, shutting down gracefully`);
-  
+
   if (httpServer) {
     httpServer.close(() => {
       logger.info('HTTP server closed');
     });
   }
-  
+
   await prisma.$disconnect();
   logger.info('Database disconnected');
   process.exit(0);

@@ -15,7 +15,6 @@ import { authValidation } from '../validations/auth.validation.js';
 // import { authLimiter, apiLimiter } from '../middleware/rateLimiter.js';
 import { verifyJWT, verifyRefreshToken } from '../middleware/auth.js';
 
-
 const router = Router();
 
 // Auth routes with rate limiting and validation
