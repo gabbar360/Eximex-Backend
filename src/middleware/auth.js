@@ -69,6 +69,11 @@ export const verifyJWT = asyncHandler(async (req, res, next) => {
 
 // Auto permission check function
 const autoCheckPermissions = async (req, res, next) => {
+  // Check if user exists
+  if (!req.user || !req.user.id) {
+    return next();
+  }
+  
   const userId = req.user.id;
   const method = req.method;
   const path = req.path;
@@ -87,32 +92,92 @@ const autoCheckPermissions = async (req, res, next) => {
     'DELETE': 'canDelete'
   };
 
-  // Map route paths to menu slugs
-  const pathToMenuMap = {
-    '/categories': 'categories',
-    '/category': 'categories'
-  };
-
-  // Find menu slug from path
+  // Dynamic menu slug detection from path
   let menuSlug = null;
-  for (const [pathPattern, slug] of Object.entries(pathToMenuMap)) {
-    if (path.includes(pathPattern)) {
-      menuSlug = slug;
+  const pathSegments = path.split('/').filter(Boolean);
+  
+  // Smart pattern matching function
+  const getMenuSlugFromSegment = (segment) => {
+    // Direct matches
+    const directMatches = {
+      'dashboard': 'dashboard',
+      'cprospect': 'customer-prospect',
+      'categories': 'categories',
+      'products': 'products',
+      'orders': 'orders',
+      'purchase-orders': 'purchase-orders',
+      'staff-management': 'staff-management',
+      'profile': 'user-profile'
+    };
+    
+    if (directMatches[segment]) return directMatches[segment];
+    
+    // Pattern-based matches
+    if (segment.includes('category') || segment.includes('categories')) return 'categories';
+    if (segment.includes('product') || segment.includes('products')) return 'products';
+    if (segment.includes('proforma') || segment.includes('pi')) return 'proforma-invoices';
+    if (segment.includes('customer') || segment.includes('prospect') || segment.includes('cprospect') || segment.includes('parties') || segment.includes('party')) return 'customer-prospect';
+    if (segment.includes('order') && !segment.includes('purchase')) return 'orders';
+    if (segment.includes('purchase')) return 'purchase-orders';
+    if (segment.includes('staff')) return 'staff-management';
+    if (segment.includes('profile')) return 'user-profile';
+    
+    return null;
+  };
+  
+  // Submenu patterns
+  const submenuPatterns = {
+    'all-orders': { menu: 'orders', submenu: 'all-orders' },
+    'delete-order': { menu: 'orders', submenu: 'all-orders' },
+    'create-order': { menu: 'orders', submenu: 'all-orders' },
+    'update-order': { menu: 'orders', submenu: 'all-orders' },
+    'orders': { menu: 'orders', submenu: 'all-orders' },
+    'shipments': { menu: 'orders', submenu: 'shipments' },
+    'packing-lists': { menu: 'orders', submenu: 'packing-lists' },
+    'vgm-documents': { menu: 'orders', submenu: 'vgm-documents' },
+    'vgm': { menu: 'orders', submenu: 'vgm-documents' },
+    'reports': { menu: 'orders', submenu: 'reports' }
+  };
+  
+  let submenuSlug = null;
+  
+  // First check for submenu patterns
+  for (const segment of pathSegments) {
+    if (submenuPatterns[segment]) {
+      menuSlug = submenuPatterns[segment].menu;
+      submenuSlug = submenuPatterns[segment].submenu;
       break;
+    }
+  }
+  
+  // If no submenu found, check for menu patterns
+  if (!menuSlug) {
+    for (const segment of pathSegments) {
+      const foundSlug = getMenuSlugFromSegment(segment);
+      if (foundSlug) {
+        menuSlug = foundSlug;
+        break;
+      }
     }
   }
 
   // Skip if no menu mapping found
   if (!menuSlug) {
+    console.log(`🔍 DEBUG: No menu mapping found for path: ${path}`);
+    console.log(`🔍 DEBUG: Path segments: [${pathSegments.join(', ')}]`);
     return next();
   }
+  
+  console.log(`✅ DEBUG: Found menu slug: ${menuSlug} for path: ${path}`);
+  console.log(`🔍 DEBUG: Submenu slug: ${submenuSlug || 'null'}`);
+  console.log(`🔍 DEBUG: Path segments: [${pathSegments.join(', ')}]`);
 
   const requiredPermission = methodToPermission[method];
   if (!requiredPermission) {
     return next();
   }
 
-  // Get menu item from new Menu table
+  // Get menu item from Menu table
   const menu = await prisma.menu.findUnique({
     where: { slug: menuSlug }
   });
@@ -121,19 +186,41 @@ const autoCheckPermissions = async (req, res, next) => {
     return next();
   }
 
-  // Get user permission from new structure
-  const userPermission = await prisma.userPermission.findFirst({
-    where: {
-      userId: userId,
-      menuId: menu.id,
-      submenuId: null
+  let userPermission;
+  
+  if (submenuSlug) {
+    // Check submenu permission
+    const submenu = await prisma.submenu.findFirst({
+      where: { 
+        slug: submenuSlug,
+        menuId: menu.id 
+      }
+    });
+    
+    if (submenu) {
+      userPermission = await prisma.userPermission.findFirst({
+        where: {
+          userId: userId,
+          submenuId: submenu.id
+        }
+      });
     }
-  });
+  } else {
+    // Check menu permission
+    userPermission = await prisma.userPermission.findFirst({
+      where: {
+        userId: userId,
+        menuId: menu.id,
+        submenuId: null
+      }
+    });
+  }
 
   // Check permission
   if (!userPermission || !userPermission[requiredPermission]) {
     const actionName = requiredPermission.replace('can', '').toLowerCase();
-    throw new ApiError(403, `You don't have ${actionName} permission for this resource`);
+    const resourceName = submenuSlug ? `${menuSlug}/${submenuSlug}` : menuSlug;
+    throw new ApiError(403, `You don't have ${actionName} permission for ${resourceName}`);
   }
 
   next();
@@ -141,8 +228,13 @@ const autoCheckPermissions = async (req, res, next) => {
 
 // Global permission check middleware
 export const checkPermissions = asyncHandler(async (req, res, next) => {
+  // Check if user exists
+  if (!req.user || !req.user.id) {
+    return next();
+  }
+  
   // Skip permission check for certain routes
-  const skipRoutes = ['/auth/', '/super-admin/', '/getroles', '/my-sidebar-menu'];
+  const skipRoutes = ['/auth/', '/super-admin/', '/getroles', '/my-sidebar-menu', '/invitation/'];
   const shouldSkip = skipRoutes.some(route => req.path.includes(route));
   
   if (shouldSkip) {
@@ -153,21 +245,66 @@ export const checkPermissions = asyncHandler(async (req, res, next) => {
   const pathSegments = req.path.split('/').filter(Boolean);
   let menuSlug = null;
   
-  // Map route patterns to menu slugs
-  const routeToMenuMap = {
-    'categories': 'categories',
-    'products': 'products', 
-    'users': 'users',
-    'companies': 'companies',
-    'orders': 'orders',
-    'parties': 'parties'
+  // Smart pattern matching for checkPermissions
+  const getMenuSlugFromSegment = (segment) => {
+    const directMatches = {
+      'dashboard': 'dashboard',
+      'cprospect': 'customer-prospect',
+      'categories': 'categories',
+      'products': 'products',
+      'orders': 'orders',
+      'purchase-orders': 'purchase-orders',
+      'staff-management': 'staff-management',
+      'profile': 'user-profile'
+    };
+    
+    if (directMatches[segment]) return directMatches[segment];
+    
+    if (segment.includes('category') || segment.includes('categories')) return 'categories';
+    if (segment.includes('product') || segment.includes('products')) return 'products';
+    if (segment.includes('proforma') || segment.includes('pi')) return 'proforma-invoices';
+    if (segment.includes('customer') || segment.includes('prospect') || segment.includes('cprospect') || segment.includes('parties') || segment.includes('party')) return 'customer-prospect';
+    if (segment.includes('order') && !segment.includes('purchase')) return 'orders';
+    if (segment.includes('purchase')) return 'purchase-orders';
+    if (segment.includes('staff')) return 'staff-management';
+    if (segment.includes('profile')) return 'user-profile';
+    
+    return null;
   };
   
-  // Find matching menu slug
+  // Submenu patterns
+  const submenuToMenuMap = {
+    'all-orders': { menu: 'orders', submenu: 'all-orders' },
+    'delete-order': { menu: 'orders', submenu: 'all-orders' },
+    'create-order': { menu: 'orders', submenu: 'all-orders' },
+    'update-order': { menu: 'orders', submenu: 'all-orders' },
+    'orders': { menu: 'orders', submenu: 'all-orders' },
+    'shipments': { menu: 'orders', submenu: 'shipments' },
+    'packing-lists': { menu: 'orders', submenu: 'packing-lists' },
+    'vgm-documents': { menu: 'orders', submenu: 'vgm-documents' },
+    'vgm': { menu: 'orders', submenu: 'vgm-documents' },
+    'reports': { menu: 'orders', submenu: 'reports' }
+  };
+  
+  let submenuSlug = null;
+  
+  // First check for submenu patterns
   for (const segment of pathSegments) {
-    if (routeToMenuMap[segment]) {
-      menuSlug = routeToMenuMap[segment];
+    if (submenuToMenuMap[segment]) {
+      menuSlug = submenuToMenuMap[segment].menu;
+      submenuSlug = submenuToMenuMap[segment].submenu;
       break;
+    }
+  }
+  
+  // If no submenu found, check for menu patterns
+  if (!menuSlug) {
+    for (const segment of pathSegments) {
+      const foundSlug = getMenuSlugFromSegment(segment);
+      if (foundSlug) {
+        menuSlug = foundSlug;
+        break;
+      }
     }
   }
   
@@ -192,7 +329,7 @@ export const checkPermissions = asyncHandler(async (req, res, next) => {
     return next();
   }
   
-  // Get menu item and check permission from new Menu table
+  // Get menu item and check permission
   const menu = await prisma.menu.findUnique({
     where: { slug: menuSlug }
   });
@@ -201,17 +338,40 @@ export const checkPermissions = asyncHandler(async (req, res, next) => {
     return next(); // Skip if menu item not found
   }
   
-  const userPermission = await prisma.userPermission.findFirst({
-    where: {
-      userId: userId,
-      menuId: menu.id,
-      submenuId: null
+  let userPermission;
+  
+  if (submenuSlug) {
+    // Check submenu permission
+    const submenu = await prisma.submenu.findFirst({
+      where: { 
+        slug: submenuSlug,
+        menuId: menu.id 
+      }
+    });
+    
+    if (submenu) {
+      userPermission = await prisma.userPermission.findFirst({
+        where: {
+          userId: userId,
+          submenuId: submenu.id
+        }
+      });
     }
-  });
+  } else {
+    // Check menu permission
+    userPermission = await prisma.userPermission.findFirst({
+      where: {
+        userId: userId,
+        menuId: menu.id,
+        submenuId: null
+      }
+    });
+  }
   
   if (!userPermission || !userPermission[requiredPermission]) {
     const actionName = requiredPermission.replace('can', '').toLowerCase();
-    throw new ApiError(403, `You don't have ${actionName} permission for this resource`);
+    const resourceName = submenuSlug ? `${menuSlug}/${submenuSlug}` : menuSlug;
+    throw new ApiError(403, `You don't have ${actionName} permission for ${resourceName}`);
   }
   
   next();
@@ -346,17 +506,38 @@ export const checkDataOwnership = (entityType) => {
   });
 };
 
-// Middleware to filter data based on user role
+// Dynamic permission-based data filtering
 export const filterByRole = asyncHandler(async (req, res, next) => {
   const { user } = req;
 
-  // Add role-based filters
-  if (user.role?.name === 'STAFF') {
-    req.roleFilter = { createdBy: user.id };
-  } else {
-    req.roleFilter = {}; // Admins see all company data
+  console.log('🔍 FILTER_BY_ROLE MIDDLEWARE CALLED');
+  console.log('User:', user?.name, 'ID:', user?.id, 'Company:', user?.companyId);
+
+  if (!user || !user.id) {
+    req.roleFilter = {};
+    console.log('❌ No user found, setting empty filter');
+    return next();
   }
 
+  // Get user's role permissions
+  const userRole = await prisma.role.findUnique({
+    where: { id: user.roleId },
+    select: { permissions: true, name: true }
+  });
+
+  const permissions = userRole?.permissions || {};
+  console.log('Role:', userRole?.name, 'Permissions:', permissions);
+  
+  // Check if user has company-wide data access permission
+  if (permissions.canViewAllCompanyData === true) {
+    req.roleFilter = {}; // Can see all company data
+    console.log('✅ Admin access: Can see all company data');
+  } else {
+    req.roleFilter = { createdBy: user.id }; // Only own data
+    console.log('🔒 Staff access: Only own data (createdBy:', user.id, ')');
+  }
+
+  console.log('Final roleFilter:', req.roleFilter);
   next();
 });
 

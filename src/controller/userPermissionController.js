@@ -56,3 +56,10 @@ export const deleteUserPermissions = asyncHandler(async (req, res) => {
     new ApiResponse(200, null, 'User permissions deleted successfully')
   );
 });
+
+export const getAllUsersWithPermissions = asyncHandler(async (req, res) => {
+  const usersWithPermissions = await userPermissionService.getAllUsersWithPermissions();
+  return res.status(200).json(
+    new ApiResponse(200, usersWithPermissions, 'All users with permissions fetched successfully')
+  );
+});

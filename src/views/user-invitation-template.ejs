@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Account Invitation - EximEx</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #ffffff; color: #333333;">
+    <div style="max-width: 600px; margin: 0 auto; padding: 40px 20px;">
+        
+        <!-- Header -->
+        <div style="margin-bottom: 40px;">
+            <h1 style="color: #333333; margin: 0; font-size: 24px; font-weight: 600; letter-spacing: -0.5px;">EximEx</h1>
+            <div style="width: 50px; height: 2px; background-color: #333333; margin-top: 8px;"></div>
+        </div>
+
+        <!-- Main Content -->
+        <div style="margin-bottom: 40px;">
+            <h2 style="color: #333333; margin: 0 0 20px 0; font-size: 20px; font-weight: 500;">Account Invitation</h2>
+            
+            <p style="color: #555555; margin: 0 0 20px 0; line-height: 1.6; font-size: 16px;">
+                Dear <%= userName %>,
+            </p>
+            
+            <p style="color: #555555; margin: 0 0 20px 0; line-height: 1.6; font-size: 16px;">
+                You have been invited to join EximEx platform. An administrator has created an account for you with the following details:
+            </p>
+            
+            <div style="background-color: #f8f9fa; padding: 20px; border-left: 3px solid #333333; margin: 20px 0;">
+                <p style="color: #333333; margin: 0 0 8px 0; font-size: 14px;"><strong>Email:</strong> <%= userEmail %></p>
+                <% if (userRole) { %>
+                <p style="color: #333333; margin: 0; font-size: 14px;"><strong>Role:</strong> <%= userRole %></p>
+                <% } %>
+            </div>
+            
+            <p style="color: #555555; margin: 0 0 30px 0; line-height: 1.6; font-size: 16px;">
+                To complete your account setup, please click the button below to set your password:
+            </p>
+        </div>
+
+        <!-- CTA Button -->
+        <div style="text-align: center; margin: 40px 0;">
+            <a href="<%= invitationLink %>" 
+               style="display: inline-block; padding: 14px 28px; background-color: #333333; color: #ffffff; text-decoration: none; font-size: 16px; font-weight: 500; border-radius: 4px;"
+               target="_blank" rel="noopener noreferrer">
+                Set Password
+            </a>
+        </div>
+
+        <!-- Security Notice -->
+        <div style="background-color: #f8f9fa; padding: 20px; border: 1px solid #e9ecef; margin: 30px 0;">
+            <p style="color: #666666; margin: 0; font-size: 14px; line-height: 1.5;">
+                <strong>Important:</strong> This invitation link will expire in 30 minutes for security purposes. Please complete your account setup promptly.
+            </p>
+        </div>
+
+        <!-- Alternative Link -->
+        <div style="margin: 30px 0;">
+            <p style="color: #666666; font-size: 14px; margin: 0 0 10px 0;">
+                If the button above doesn't work, copy and paste this link into your browser:
+            </p>
+            <p style="word-break: break-all; font-size: 12px; margin: 0; color: #333333; background-color: #f8f9fa; padding: 10px; border-radius: 4px;">
+                <%= invitationLink %>
+            </p>
+        </div>
+
+        <!-- Footer -->
+        <div style="border-top: 1px solid #e9ecef; padding-top: 30px; margin-top: 40px;">
+            <p style="color: #666666; font-size: 14px; margin: 0 0 10px 0;">
+                If you have any questions or need assistance, please contact your administrator.
+            </p>
+            <p style="color: #333333; margin: 0; font-size: 14px; font-weight: 500;">
+                Best regards,<br>
+                EximEx Team
+            </p>
+        </div>
+        
+        <!-- Disclaimer -->
+        <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #f0f0f0;">
+            <p style="color: #999999; font-size: 12px; margin: 0; line-height: 1.4;">
+                This is an automated message. Please do not reply to this email. If you received this email in error, please ignore it.
+            </p>
+        </div>
+    </div>
+</body>
+</html>

@@ -29,6 +29,7 @@ const updateUser = {
       role: Joi.string()
         .optional()
         .valid('SUPER_ADMIN', 'ADMINISTRATOR', 'ADMIN', 'STAFF'),
+      roleId: Joi.number().optional(),
       status: Joi.string()
         .optional()
         .valid(

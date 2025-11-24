@@ -29,7 +29,7 @@ const getPurchaseOrders = asyncHandler(async (req, res) => {
   const result = await purchaseOrderService.getPurchaseOrders(
     req.user.companyId,
     req.query,
-    req.dataFilters || {}
+    req.roleFilter || {}
   );
 
   res

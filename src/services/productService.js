@@ -105,6 +105,7 @@ const getAllProducts = async (companyId, options = {}, dataFilters = {}) => {
     sortBy = 'createdAt',
     sortOrder = 'desc',
     categoryId = null,
+    subCategoryId = null,
   } = options;
 
   // Convert to integers to avoid Prisma type errors
@@ -112,10 +113,10 @@ const getAllProducts = async (companyId, options = {}, dataFilters = {}) => {
   const limitNum = parseInt(limit) || 50;
 
   const where = {
-    companyId: Number(companyId),
+    companyId: Number(companyId), // ✅ Always filter by company first
     deletedAt: null,
     isActive: true,
-    ...dataFilters,
+    ...dataFilters, // Then apply role-based filters (createdBy for staff)
   };
 
   if (search) {
@@ -124,6 +125,10 @@ const getAllProducts = async (companyId, options = {}, dataFilters = {}) => {
 
   if (categoryId) {
     where.categoryId = parseInt(categoryId);
+  }
+
+  if (subCategoryId) {
+    where.subCategoryId = parseInt(subCategoryId);
   }
 
   const orderBy = { [sortBy]: sortOrder };
