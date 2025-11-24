@@ -190,12 +190,9 @@ export const userPermissionService = {
   },
 
   async getUserSidebarMenu(userId) {
-    // Get all user permissions with view access
+    // Get all user permissions
     const permissions = await prisma.userPermission.findMany({
-      where: { 
-        userId,
-        canView: true
-      },
+      where: { userId },
       include: {
         menu: true,
         submenu: {
@@ -207,10 +204,18 @@ export const userPermissionService = {
     });
 
     const menuMap = new Map();
+    const menuPermissions = new Map();
     
-    // Process menu permissions
+    // First, collect all menu permissions
     permissions.forEach(permission => {
-      if (permission.menuId && permission.menu && permission.menu.isActive) {
+      if (permission.menuId) {
+        menuPermissions.set(permission.menuId, permission.canView);
+      }
+    });
+    
+    // Process menu permissions - only show menus with canView: true
+    permissions.forEach(permission => {
+      if (permission.menuId && permission.menu && permission.menu.isActive && permission.canView) {
         const menuId = permission.menu.id;
         if (!menuMap.has(menuId)) {
           menuMap.set(menuId, {
@@ -225,10 +230,18 @@ export const userPermissionService = {
           });
         }
       }
+    });
       
-      // Process submenu permissions
-      if (permission.submenuId && permission.submenu && permission.submenu.isActive) {
+    // Process submenu permissions - only add if parent menu has canView: true
+    permissions.forEach(permission => {
+      if (permission.submenuId && permission.submenu && permission.submenu.isActive && permission.canView) {
         const parentMenuId = permission.submenu.menuId;
+        
+        // Only add submenu if parent menu has canView: true
+        const parentMenuCanView = menuPermissions.get(parentMenuId);
+        if (!parentMenuCanView) {
+          return;
+        }
         
         // Ensure parent menu exists in map
         if (!menuMap.has(parentMenuId)) {
