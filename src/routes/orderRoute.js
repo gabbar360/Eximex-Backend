@@ -28,21 +28,14 @@ router.post(
   validate(orderValidation.createOrder),
   createOrder
 );
-router.get(
-  '/get/all-orders',
-  filterByRole,
-  getOrders
-);
+router.get('/get/all-orders', filterByRole, getOrders);
 router.get('/get/order-by-id/:id', getOrderById);
 router.put(
   '/update-order/:id',
   validate(orderValidation.updateOrder),
   updateOrder
 );
-router.delete(
-  '/delete-order/:id',
-  deleteOrder
-);
+router.delete('/delete-order/:id', deleteOrder);
 
 // Status update routes
 router.patch(
@@ -60,7 +53,6 @@ router.patch(
 
 // Download order invoice PDF
 router.get('/orders/:id/download-invoice-pdf', downloadOrderInvoicePdf);
-
 
 // Download BL draft PDF
 router.get('/orders/:id/bl-draft-pdf', downloadBLDraftPdf);

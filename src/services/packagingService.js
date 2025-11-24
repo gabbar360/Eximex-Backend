@@ -178,7 +178,9 @@ export class PackagingService {
     }
 
     if (!found) {
-      throw new Error(`Cannot convert from ${fromUnit} to ${toUnit}. No conversion path found.`);
+      throw new Error(
+        `Cannot convert from ${fromUnit} to ${toUnit}. No conversion path found.`
+      );
     }
 
     return {
@@ -213,11 +215,27 @@ export class PackagingService {
   static async createDefaultPackagingUnits() {
     const defaultUnits = [
       { name: 'Pieces', abbreviation: 'PCS', description: 'Individual pieces' },
-      { name: 'Square Meter', abbreviation: 'SQMT', description: 'Square meter measurement' },
-      { name: 'Square Feet', abbreviation: 'SQFT', description: 'Square feet measurement' },
-      { name: 'Kilogram', abbreviation: 'KG', description: 'Weight in kilograms' },
+      {
+        name: 'Square Meter',
+        abbreviation: 'SQMT',
+        description: 'Square meter measurement',
+      },
+      {
+        name: 'Square Feet',
+        abbreviation: 'SQFT',
+        description: 'Square feet measurement',
+      },
+      {
+        name: 'Kilogram',
+        abbreviation: 'KG',
+        description: 'Weight in kilograms',
+      },
       { name: 'Gram', abbreviation: 'GM', description: 'Weight in grams' },
-      { name: 'Metric Ton', abbreviation: 'MT', description: 'Weight in metric tons' },
+      {
+        name: 'Metric Ton',
+        abbreviation: 'MT',
+        description: 'Weight in metric tons',
+      },
       { name: 'Liter', abbreviation: 'LTR', description: 'Volume in liters' },
       { name: 'Box', abbreviation: 'BOX', description: 'Packaging box' },
       { name: 'Package', abbreviation: 'PKG', description: 'Package unit' },
@@ -252,15 +270,23 @@ export class PackagingService {
 
     for (let i = 0; i < packagingLevels.length; i++) {
       const level = packagingLevels[i];
-      if (!level.parentUnitId || !level.childUnitId || !level.conversionQuantity) {
-        throw new Error(`Invalid packaging level at index ${i}. parentUnitId, childUnitId, and conversionQuantity are required.`);
+      if (
+        !level.parentUnitId ||
+        !level.childUnitId ||
+        !level.conversionQuantity
+      ) {
+        throw new Error(
+          `Invalid packaging level at index ${i}. parentUnitId, childUnitId, and conversionQuantity are required.`
+        );
       }
     }
   }
 
   static validateConversionInput(categoryId, fromUnit, toUnit, quantity) {
     if (!categoryId || !fromUnit || !toUnit || quantity === undefined) {
-      throw new Error('Category ID, fromUnit, toUnit, and quantity are required');
+      throw new Error(
+        'Category ID, fromUnit, toUnit, and quantity are required'
+      );
     }
 
     if (isNaN(quantity) || quantity < 0) {

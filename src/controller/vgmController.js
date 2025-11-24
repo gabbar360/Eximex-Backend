@@ -102,7 +102,11 @@ const getVgmDocuments = async (req, res) => {
     if (piInvoiceId) where.piInvoiceId = parseInt(piInvoiceId);
     if (status) where.status = status;
 
-    const { vgmDocuments, total } = await VgmService.getVgmDocuments(where, page, limit);
+    const { vgmDocuments, total } = await VgmService.getVgmDocuments(
+      where,
+      page,
+      limit
+    );
 
     res.json({
       success: true,
@@ -199,7 +203,11 @@ const updateVgmDocument = async (req, res) => {
       updateData.verificationDate = new Date(updateData.verificationDate);
     }
 
-    const vgmDocument = await VgmService.updateVgmDocument(id, companyId, updateData);
+    const vgmDocument = await VgmService.updateVgmDocument(
+      id,
+      companyId,
+      updateData
+    );
 
     res.json({
       success: true,

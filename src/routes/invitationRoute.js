@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import {
   setInvitedUserPassword,
-  validateInvitationToken
+  validateInvitationToken,
 } from '../controller/superAdminController.js';
 
 const router = Router();

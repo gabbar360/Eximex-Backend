@@ -1,13 +1,18 @@
 import shipmentService from '../services/shipmentService.js';
 import { ApiResponse } from '../utils/ApiResponse.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
-import { createShipmentSchema, updateShipmentSchema } from '../validations/shipment.validation.js';
+import {
+  createShipmentSchema,
+  updateShipmentSchema,
+} from '../validations/shipment.validation.js';
 
 // Create shipment
 const createShipment = asyncHandler(async (req, res) => {
   const { error, value } = createShipmentSchema.validate(req.body);
   if (error) {
-    return res.status(400).json(new ApiResponse(400, null, error.details[0].message));
+    return res
+      .status(400)
+      .json(new ApiResponse(400, null, error.details[0].message));
   }
 
   const shipment = await shipmentService.createShipment(
@@ -16,9 +21,9 @@ const createShipment = asyncHandler(async (req, res) => {
     req.user.companyId
   );
 
-  res.status(201).json(
-    new ApiResponse(201, shipment, 'Shipment created successfully')
-  );
+  res
+    .status(201)
+    .json(new ApiResponse(201, shipment, 'Shipment created successfully'));
 });
 
 // Get shipment by ID
@@ -29,9 +34,9 @@ const getShipmentById = asyncHandler(async (req, res) => {
     req.user.companyId
   );
 
-  res.status(200).json(
-    new ApiResponse(200, shipment, 'Shipment fetched successfully')
-  );
+  res
+    .status(200)
+    .json(new ApiResponse(200, shipment, 'Shipment fetched successfully'));
 });
 
 // Get shipment by order ID
@@ -42,16 +47,18 @@ const getShipmentByOrderId = asyncHandler(async (req, res) => {
     req.user.companyId
   );
 
-  res.status(200).json(
-    new ApiResponse(200, shipment, 'Shipment fetched successfully')
-  );
+  res
+    .status(200)
+    .json(new ApiResponse(200, shipment, 'Shipment fetched successfully'));
 });
 
 // Update shipment
 const updateShipment = asyncHandler(async (req, res) => {
   const { error, value } = updateShipmentSchema.validate(req.body);
   if (error) {
-    return res.status(400).json(new ApiResponse(400, null, error.details[0].message));
+    return res
+      .status(400)
+      .json(new ApiResponse(400, null, error.details[0].message));
   }
 
   const { id } = req.params;
@@ -62,15 +69,15 @@ const updateShipment = asyncHandler(async (req, res) => {
     req.user.companyId
   );
 
-  res.status(200).json(
-    new ApiResponse(200, shipment, 'Shipment updated successfully')
-  );
+  res
+    .status(200)
+    .json(new ApiResponse(200, shipment, 'Shipment updated successfully'));
 });
 
 // Get all shipments
 const getShipments = asyncHandler(async (req, res) => {
   const { page = 1, limit = 10, status, orderId } = req.query;
-  
+
   const filters = {};
   if (status) filters.status = status;
   if (orderId) filters.orderId = parseInt(orderId);
@@ -82,9 +89,9 @@ const getShipments = asyncHandler(async (req, res) => {
     filters
   );
 
-  res.status(200).json(
-    new ApiResponse(200, result, 'Shipments fetched successfully')
-  );
+  res
+    .status(200)
+    .json(new ApiResponse(200, result, 'Shipments fetched successfully'));
 });
 
 // Delete shipment
@@ -95,9 +102,9 @@ const deleteShipment = asyncHandler(async (req, res) => {
     req.user.companyId
   );
 
-  res.status(200).json(
-    new ApiResponse(200, result, 'Shipment deleted successfully')
-  );
+  res
+    .status(200)
+    .json(new ApiResponse(200, result, 'Shipment deleted successfully'));
 });
 
 export {
@@ -106,5 +113,5 @@ export {
   getShipmentByOrderId,
   updateShipment,
   getShipments,
-  deleteShipment
+  deleteShipment,
 };

@@ -5,7 +5,7 @@ import {
   getShipmentByOrderId,
   updateShipment,
   getShipments,
-  deleteShipment
+  deleteShipment,
 } from '../controller/shipmentController.js';
 import { verifyJWT } from '../middleware/auth.js';
 

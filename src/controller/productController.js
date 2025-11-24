@@ -2,7 +2,6 @@ import { asyncHandler } from '../utils/asyncHandler.js';
 import { ProductService } from '../services/productService.js';
 import { ApiResponse } from '../utils/ApiResponse.js';
 
-
 export const createProduct = asyncHandler(async (req, res) => {
   const product = await ProductService.createProduct(
     req.body,
@@ -65,7 +64,3 @@ export const getProductStats = asyncHandler(async (req, res) => {
 });
 
 // Product Variant CRUD
-
-
-
-

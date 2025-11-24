@@ -7,7 +7,7 @@ import {
   getUserWithPermissions,
   updateUserPermissions,
   deleteUserPermissions,
-  getAllUsersWithPermissions
+  getAllUsersWithPermissions,
 } from '../controller/userPermissionController.js';
 
 const router = Router();

@@ -12,7 +12,6 @@ import { validate } from '../middleware/validate.js';
 import { categoryValidation } from '../validations/category.validation.js';
 import { verifyJWT, requireCompany, filterByRole } from '../middleware/auth.js';
 
-
 const router = Router();
 
 router.post(

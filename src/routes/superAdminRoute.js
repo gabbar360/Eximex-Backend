@@ -7,7 +7,7 @@ import {
   updateUser,
   deleteUser,
   setInvitedUserPassword,
-  validateInvitationToken
+  validateInvitationToken,
 } from '../controller/superAdminController.js';
 
 const router = Router();

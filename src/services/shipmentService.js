@@ -9,28 +9,28 @@ class ShipmentService {
     const year = today.getFullYear();
     const month = String(today.getMonth() + 1).padStart(2, '0');
     const day = String(today.getDate()).padStart(2, '0');
-    
+
     const prefix = `SH${year}${month}${day}`;
-    
+
     // Find the last shipment number for today
     const lastShipment = await prisma.shipment.findFirst({
       where: {
         companyId,
         shipmentNumber: {
-          startsWith: prefix
-        }
+          startsWith: prefix,
+        },
       },
       orderBy: {
-        shipmentNumber: 'desc'
-      }
+        shipmentNumber: 'desc',
+      },
     });
-    
+
     let sequence = 1;
     if (lastShipment) {
       const lastSequence = parseInt(lastShipment.shipmentNumber.slice(-3));
       sequence = lastSequence + 1;
     }
-    
+
     return `${prefix}${String(sequence).padStart(3, '0')}`;
   }
 
@@ -41,8 +41,8 @@ class ShipmentService {
       const order = await prisma.order.findFirst({
         where: {
           id: shipmentData.orderId,
-          companyId
-        }
+          companyId,
+        },
       });
 
       if (!order) {
@@ -52,8 +52,8 @@ class ShipmentService {
       // Check if shipment already exists for this order
       const existingShipment = await prisma.shipment.findUnique({
         where: {
-          orderId: shipmentData.orderId
-        }
+          orderId: shipmentData.orderId,
+        },
       });
 
       if (existingShipment) {
@@ -69,16 +69,16 @@ class ShipmentService {
           ...shipmentData,
           shipmentNumber,
           companyId,
-          createdBy: userId
+          createdBy: userId,
         },
         include: {
           order: {
             select: {
               orderNumber: true,
-              piNumber: true
-            }
-          }
-        }
+              piNumber: true,
+            },
+          },
+        },
       });
 
       return shipment;
@@ -96,7 +96,7 @@ class ShipmentService {
       const shipment = await prisma.shipment.findFirst({
         where: {
           id: shipmentId,
-          companyId
+          companyId,
         },
         include: {
           order: {
@@ -105,22 +105,22 @@ class ShipmentService {
               piNumber: true,
               totalAmount: true,
               orderStatus: true,
-              paymentStatus: true
-            }
+              paymentStatus: true,
+            },
           },
           creator: {
             select: {
               name: true,
-              email: true
-            }
+              email: true,
+            },
           },
           updater: {
             select: {
               name: true,
-              email: true
-            }
-          }
-        }
+              email: true,
+            },
+          },
+        },
       });
 
       if (!shipment) {
@@ -142,7 +142,7 @@ class ShipmentService {
       const shipment = await prisma.shipment.findFirst({
         where: {
           orderId,
-          companyId
+          companyId,
         },
         include: {
           order: {
@@ -151,10 +151,10 @@ class ShipmentService {
               piNumber: true,
               totalAmount: true,
               orderStatus: true,
-              paymentStatus: true
-            }
-          }
-        }
+              paymentStatus: true,
+            },
+          },
+        },
       });
 
       return shipment;
@@ -170,8 +170,8 @@ class ShipmentService {
       const existingShipment = await prisma.shipment.findFirst({
         where: {
           id: shipmentId,
-          companyId
-        }
+          companyId,
+        },
       });
 
       if (!existingShipment) {
@@ -181,20 +181,20 @@ class ShipmentService {
       // Update shipment
       const shipment = await prisma.shipment.update({
         where: {
-          id: shipmentId
+          id: shipmentId,
         },
         data: {
           ...updateData,
-          updatedBy: userId
+          updatedBy: userId,
         },
         include: {
           order: {
             select: {
               orderNumber: true,
-              piNumber: true
-            }
-          }
-        }
+              piNumber: true,
+            },
+          },
+        },
       });
 
       return shipment;
@@ -210,10 +210,10 @@ class ShipmentService {
   async getShipments(companyId, page = 1, limit = 10, filters = {}) {
     try {
       const skip = (page - 1) * limit;
-      
+
       const where = {
         companyId,
-        ...filters
+        ...filters,
       };
 
       const [shipments, total] = await Promise.all([
@@ -226,17 +226,17 @@ class ShipmentService {
                 piNumber: true,
                 totalAmount: true,
                 orderStatus: true,
-                paymentStatus: true
-              }
-            }
+                paymentStatus: true,
+              },
+            },
           },
           orderBy: {
-            createdAt: 'desc'
+            createdAt: 'desc',
           },
           skip,
-          take: limit
+          take: limit,
         }),
-        prisma.shipment.count({ where })
+        prisma.shipment.count({ where }),
       ]);
 
       return {
@@ -245,8 +245,8 @@ class ShipmentService {
           total,
           page,
           limit,
-          totalPages: Math.ceil(total / limit)
-        }
+          totalPages: Math.ceil(total / limit),
+        },
       };
     } catch (error) {
       throw new ApiError(500, `Failed to fetch shipments: ${error.message}`);
@@ -260,8 +260,8 @@ class ShipmentService {
       const existingShipment = await prisma.shipment.findFirst({
         where: {
           id: shipmentId,
-          companyId
-        }
+          companyId,
+        },
       });
 
       if (!existingShipment) {
@@ -270,8 +270,8 @@ class ShipmentService {
 
       await prisma.shipment.delete({
         where: {
-          id: shipmentId
-        }
+          id: shipmentId,
+        },
       });
 
       return { message: 'Shipment deleted successfully' };

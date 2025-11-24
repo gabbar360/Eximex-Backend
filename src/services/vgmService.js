@@ -22,17 +22,17 @@ export class VgmService {
     const vgmDocuments = await prisma.vgmDocument.findMany({
       where,
       include: {
-        piInvoice: { 
-          select: { 
-            piNumber: true, 
+        piInvoice: {
+          select: {
+            piNumber: true,
             partyName: true,
             orderNumber: true,
             party: {
               select: {
-                companyName: true
-              }
-            }
-          } 
+                companyName: true,
+              },
+            },
+          },
         },
         packingList: {
           select: {

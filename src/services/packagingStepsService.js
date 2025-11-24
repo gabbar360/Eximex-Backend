@@ -287,7 +287,14 @@ export class PackagingStepsService {
       }
     }
 
-    return { containerNumber, sealNumber, sealType, material, quantity, weight };
+    return {
+      containerNumber,
+      sealNumber,
+      sealType,
+      material,
+      quantity,
+      weight,
+    };
   }
 
   static async createPackingListTransaction(data, userId) {
@@ -495,9 +502,7 @@ export class PackagingStepsService {
           ? updateData.containers
           : existingData.containers,
       notes:
-        updateData.notes !== undefined
-          ? updateData.notes
-          : existingData.notes,
+        updateData.notes !== undefined ? updateData.notes : existingData.notes,
       totalBoxes:
         updateData.totalBoxes !== undefined
           ? parseInt(updateData.totalBoxes) || 0
@@ -671,7 +676,7 @@ export class PackagingStepsService {
     return packingListEntry;
   }
 
-    static async getPackingListForPortPDF(id, companyId) {
+  static async getPackingListForPortPDF(id, companyId) {
     let packingListEntry = await prisma.packingList.findFirst({
       where: {
         id: parseInt(id),

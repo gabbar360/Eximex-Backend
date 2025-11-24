@@ -11,7 +11,6 @@ import { validate } from '../middleware/validate.js';
 import { productValidation } from '../validations/product.validation.js';
 import { verifyJWT, requireCompany, filterByRole } from '../middleware/auth.js';
 
-
 const router = Router();
 
 // Product routes

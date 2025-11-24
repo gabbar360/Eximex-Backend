@@ -119,7 +119,7 @@ const getAllCategories = async (companyId, options = {}, dataFilters = {}) => {
     sortOrder = 'desc',
     parentId = null,
   } = options;
-  
+
   // Convert to integers
   const pageNum = parseInt(page) || 1;
   const limitNum = parseInt(limit) || 10;

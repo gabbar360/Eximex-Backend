@@ -9,7 +9,6 @@ import {
   requireCompany,
 } from '../middleware/auth.js';
 
-
 const router = Router();
 
 // Assign data from one staff to another

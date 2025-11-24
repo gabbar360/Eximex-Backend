@@ -101,25 +101,25 @@
 #             rm -rf /var/www/eximex-backend/* 2>/dev/null || true
 #             mkdir -p /var/www/eximex-backend
 #             cp -r /tmp/backend-deploy/* /var/www/eximex-backend/
-            
+
 #             # Install dependencies
 #             cd /var/www/eximex-backend
 #             npm install --only=production
-            
+
 #             # Setup environment
 #             echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" > .env
 #             echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env
 #             echo "NODE_ENV=production" >> .env
 #             echo "PORT=8000" >> .env
-            
+
 #             # Generate Prisma client and run migrations
 #             npm run db:generate
 #             npm run db:push
-            
+
 #             # Restart with PM2
 #             pm2 restart eximex-backend || pm2 start src/index.js --name eximex-backend
 #             pm2 save
-            
+
 #             # Cleanup
 #             rm -rf /tmp/backend-deploy
 
