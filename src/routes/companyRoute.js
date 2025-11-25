@@ -35,9 +35,10 @@ import {
   updateCompany,
   deleteCompany,
   restoreCompany,
+  uploadSignature as uploadSignatureController,
 } from '../controller/companyController.js';
 import { companyValidation } from '../validations/company.validation.js';
-import { uploadLogo, handleMulterError } from '../config/multer.js';
+import { uploadLogo, uploadSignature, handleMulterError } from '../config/multer.js';
 
 const router = Router();
 
@@ -60,5 +61,7 @@ router.put(
   validate(companyValidation.update),
   updateCompany
 );
+
+router.put('/upload-signature/:id', verifyJWT, uploadSignature, handleMulterError, uploadSignatureController);
 
 export default router;

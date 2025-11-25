@@ -9,6 +9,7 @@ const __dirname = path.dirname(__filename);
 // Ensure upload directories exist
 const uploadDir = path.join(__dirname, '../../uploads');
 const logoDir = path.join(uploadDir, 'logos');
+const signatureDir = path.join(uploadDir, 'signatures');
 
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
@@ -16,9 +17,12 @@ if (!fs.existsSync(uploadDir)) {
 if (!fs.existsSync(logoDir)) {
   fs.mkdirSync(logoDir, { recursive: true });
 }
+if (!fs.existsSync(signatureDir)) {
+  fs.mkdirSync(signatureDir, { recursive: true });
+}
 
-// Storage configuration
-const storage = multer.diskStorage({
+// Storage configuration for logos
+const logoStorage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, logoDir);
   },
@@ -26,6 +30,18 @@ const storage = multer.diskStorage({
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
     const ext = path.extname(file.originalname);
     cb(null, `logo-${uniqueSuffix}${ext}`);
+  },
+});
+
+// Storage configuration for signatures
+const signatureStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, signatureDir);
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+    const ext = path.extname(file.originalname);
+    cb(null, `signature-${uniqueSuffix}${ext}`);
   },
 });
 
@@ -40,15 +56,25 @@ const fileFilter = (req, file, cb) => {
   }
 };
 
-// Multer configuration
+// Multer configuration for logo
 export const uploadLogo = multer({
-  storage,
+  storage: logoStorage,
   fileFilter,
   limits: {
     fileSize: 5 * 1024 * 1024, // 5MB limit
     files: 1,
   },
 }).single('logo');
+
+// Multer configuration for signature
+export const uploadSignature = multer({
+  storage: signatureStorage,
+  fileFilter,
+  limits: {
+    fileSize: 2 * 1024 * 1024, // 2MB limit for signatures
+    files: 1,
+  },
+}).single('signature');
 
 // Error handler for multer
 export const handleMulterError = (error, req, res, next) => {

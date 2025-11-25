@@ -93,6 +93,7 @@ const getAllCompanies = async (options = {}) => {
 const createCompany = async (
   companyData,
   logoFile = null,
+  signatureFile = null,
   userEmail = null
 ) => {
   // Transform snake_case to camelCase for Prisma
@@ -151,6 +152,11 @@ const createCompany = async (
     transformedData.logo = `/uploads/logos/${logoFile.filename}`;
   }
 
+  // Set signature URL if file is uploaded
+  if (signatureFile) {
+    transformedData.signature = `/uploads/signatures/${signatureFile.filename}`;
+  }
+
   // Create company
   const company = await DatabaseUtils.create('CompanyDetails', transformedData);
 
@@ -174,7 +180,7 @@ const createCompany = async (
   return company;
 };
 
-const updateCompany = async (companyId, updateData, logoFile = null) => {
+const updateCompany = async (companyId, updateData, logoFile = null, signatureFile = null) => {
   companyId = Number(companyId);
   const existingCompany = await getCompanyById(companyId);
   if (!existingCompany) {
@@ -250,6 +256,18 @@ const updateCompany = async (companyId, updateData, logoFile = null) => {
     if (existingCompany.logo) {
       const filename = FileUtils.extractFilename(existingCompany.logo);
       const filePath = FileUtils.getFilePath(filename);
+      FileUtils.deleteFile(filePath);
+    }
+  }
+
+  // Handle signature update and delete old signature
+  if (signatureFile) {
+    transformedData.signature = `/uploads/signatures/${signatureFile.filename}`;
+
+    // Delete old signature if it exists
+    if (existingCompany.signature) {
+      const filename = FileUtils.extractFilename(existingCompany.signature);
+      const filePath = FileUtils.getFilePath(filename, 'signatures');
       FileUtils.deleteFile(filePath);
     }
   }
