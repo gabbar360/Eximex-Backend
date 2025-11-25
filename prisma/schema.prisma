@@ -55,6 +55,7 @@ model CompanyDetails {
   id              Int            @id @default(autoincrement())
   name            String
   logo            String?
+  signature       String?
   address         String?
   phoneNo         String?        @map("phone_no")
   email           String?
