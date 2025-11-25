@@ -615,7 +615,19 @@
                 </div>
                 <div class="cell"
                   style="display:flex; flex-direction:column; align-items:center; justify-content:center;">
-                  <div style="margin-top:8px; font-weight:bold;">Authorized Signatory</div>
+                  <div style="height: 80px; display: flex; align-items: center; justify-content: center;">
+                    <% const signatureUrl = order?.company?.signature; %>
+                    <% const fullSignatureUrl = signatureUrl ? (signatureUrl.startsWith('http') ? signatureUrl : `http://localhost:8000${signatureUrl}`) : null; %>
+                    <% if (typeof signatureBase64 !== 'undefined' && signatureBase64) { %>
+                      <img src="data:image/*;base64,<%= signatureBase64 %>" alt="Signature" style="max-height: 60px; max-width: 120px; object-fit: contain;">
+                    <% } else if (fullSignatureUrl) { %>
+                      <img src="<%= fullSignatureUrl %>" alt="Signature" style="max-height: 60px; max-width: 120px; object-fit: contain;">
+                    <% } %>
+                  </div>
+                  <div style="margin-top: 10px;">
+                    <div style="border-bottom: 1px solid #000; width: 120px; margin: 0 auto;"></div>
+                    <div style="font-size: 9px; margin-top: 2px;">Authorised Signatory</div>
+                  </div>
                 </div>
               </div>
 
