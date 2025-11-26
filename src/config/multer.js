@@ -76,6 +76,30 @@ export const uploadSignature = multer({
   },
 }).single('signature');
 
+// Excel file filter for bulk upload
+const excelFileFilter = (req, file, cb) => {
+  const allowedTypes = [
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'application/vnd.ms-excel'
+  ];
+
+  if (allowedTypes.includes(file.mimetype)) {
+    cb(null, true);
+  } else {
+    cb(new Error('Only Excel files (.xlsx, .xls) are allowed'), false);
+  }
+};
+
+// Multer configuration for Excel upload (memory storage)
+export const uploadExcel = multer({
+  storage: multer.memoryStorage(),
+  fileFilter: excelFileFilter,
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5MB limit
+    files: 1,
+  },
+}).single('file');
+
 // Error handler for multer
 export const handleMulterError = (error, req, res, next) => {
   if (error instanceof multer.MulterError) {
@@ -94,6 +118,13 @@ export const handleMulterError = (error, req, res, next) => {
   }
 
   if (error.message === 'Only JPEG, PNG, and WebP images are allowed') {
+    return res.status(400).json({
+      success: false,
+      message: error.message,
+    });
+  }
+
+  if (error.message === 'Only Excel files (.xlsx, .xls) are allowed') {
     return res.status(400).json({
       success: false,
       message: error.message,
