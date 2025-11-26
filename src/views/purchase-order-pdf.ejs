@@ -12,44 +12,77 @@
       font-size: 12px;
     }
 
-    .header {
+    .main-header {
+      border: 2px solid #000;
+      margin-bottom: 0;
+    }
+
+    .header-top {
       display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      margin-bottom: 20px;
+      align-items: center;
+      padding: 15px;
+      border-bottom: 1px solid #000;
+    }
+
+    .company-logo {
+      flex: 0 0 150px;
+      margin-right: 20px;
+    }
+
+    .company-logo img {
+      max-width: 120px;
+      max-height: 80px;
+      object-fit: contain;
     }
 
     .company-info {
       flex: 1;
+      text-align: center;
     }
 
-    .company-logo {
+    .company-name {
       font-size: 24px;
       font-weight: bold;
-      margin-bottom: 10px;
+      margin-bottom: 5px;
+    }
+
+    .company-address {
+      font-size: 12px;
+      line-height: 1.3;
+      margin-bottom: 5px;
     }
 
     .po-title {
+      flex: 0 0 200px;
       text-align: center;
-      font-size: 28px;
+      font-size: 32px;
       font-weight: bold;
-      color: #2563eb;
+      letter-spacing: 2px;
     }
 
     .info-section {
       display: flex;
-      margin-bottom: 20px;
+      border-left: 2px solid #000;
+      border-right: 2px solid #000;
     }
 
     .info-left,
     .info-right {
       flex: 1;
+      border-bottom: 2px solid #000;
+    }
+
+    .info-left {
+      border-right: 1px solid #000;
     }
 
     .info-box {
-      border: 1px solid #ccc;
       padding: 10px;
-      margin: 5px 0;
+      border-bottom: 1px solid #000;
+    }
+
+    .info-box:last-child {
+      border-bottom: none;
     }
 
     .info-label {
@@ -60,19 +93,46 @@
     .items-table {
       width: 100%;
       border-collapse: collapse;
-      margin: 20px 0;
+      margin: 0;
+      border: 2px solid #000;
     }
 
     .items-table th,
     .items-table td {
-      border: 1px solid #ccc;
+      border: 1px solid #000;
       padding: 8px;
       text-align: left;
+      font-size: 11px;
     }
 
     .items-table th {
-      background-color: #f5f5f5;
+      background-color: #e5e5e5;
       font-weight: bold;
+      text-align: center;
+    }
+
+    .items-table .item-desc {
+      width: 40%;
+    }
+
+    .items-table .hsn-col {
+      width: 12%;
+      text-align: center;
+    }
+
+    .items-table .qty-col {
+      width: 12%;
+      text-align: right;
+    }
+
+    .items-table .rate-col {
+      width: 12%;
+      text-align: right;
+    }
+
+    .items-table .amount-col {
+      width: 15%;
+      text-align: right;
     }
 
     .text-right {
@@ -145,93 +205,58 @@
       };
       const currencySymbol = getCurrencySymbol(purchaseOrder.currency || 'INR');
     %>
-    <!-- Title Header -->
-    <div class="logo-header">
-      <div class="po-title">PURCHASE ORDER</div>
-    </div>
-    <div class="header">
-      <div class="company-info">
-        <!-- <div class="company-logo">
-          <%= purchaseOrder.companyName || company?.name || 'Vegnar Global LLP' %>
-        </div> -->
-        <div><%- purchaseOrder.companyAddress || company?.address
-            || 'B-623, RK Iconic<br>150 Feet Ring Road, Ayodhya Chowk<br>Rajkot Gujarat 360007<br>India' %></div>
-        <div>GSTIN <%= purchaseOrder.deliverToGstin || purchaseOrder.companyGstin || company?.gstNumber
-            || '24AABFV3901A1ZV' %>
+    <div class="main-header">
+      <div class="header-top">
+        <div class="company-logo">
+          <% const logoUrl = company?.logo; %>
+          <% const fullLogoUrl = logoUrl ? (logoUrl.startsWith('http') ? logoUrl : `http://localhost:8000${logoUrl}`) : null; %>
+          <% if (typeof logoBase64 !== 'undefined' && logoBase64) { %>
+            <img src="data:image/*;base64,<%= logoBase64 %>" alt="Company Logo">
+          <% } else if (fullLogoUrl) { %>
+            <img src="<%= fullLogoUrl %>" alt="Company Logo">
+          <% } else { %>
+            <div style="font-size: 18px; font-weight: bold; color: #666;">vegnar<br><span style="font-size: 12px;">Global LLP</span></div>
+          <% } %>
         </div>
-        <div>
-          <%= company?.email || 'sales@vegnar.com' %> | <%= company?.phoneNo || company?.phone || '+91 9998040482' %>
+        <div class="company-info">
+          <div class="company-name"><%= purchaseOrder.companyName || company?.name  %></div>
+          <div class="company-address"><%- (purchaseOrder.companyAddress || company?.address) %></div>
+          <div>GSTIN <%= purchaseOrder.deliverToGstin || purchaseOrder.companyGstin || company?.gstNumber  %></div>
+          <div><%= company?.email  %> | <%= company?.phoneNo || company?.phone  %></div>
+          <% if (company?.website) { %><div><%= company?.website %></div><% } %>
         </div>
-        <div>
-          <%= company?.website || 'www.vegnar.com' %>
-        </div>
-      </div>
-      <div class="po-logo">
-        <% const logoUrl = company?.logo; %>
-        <% const fullLogoUrl = logoUrl ? (logoUrl.startsWith('http') ? logoUrl : `http://localhost:8000${logoUrl}`) : null; %>
-        <% if (typeof logoBase64 !== 'undefined' && logoBase64) { %>
-          <img src="data:image/*;base64,<%= logoBase64 %>" alt="Company Logo">
-        <% } else if (fullLogoUrl) { %>
-          <img src="<%= fullLogoUrl %>" alt="Company Logo">
-        <% } %>
+        <div class="po-title">PURCHASE<br>ORDER</div>
       </div>
     </div>
 
     <div class="info-section">
       <div class="info-left">
         <div class="info-box">
-          <div><span class="info-label">Purchase Order#:</span>
-            <%= purchaseOrder.poNumber %>
-          </div>
-          <div><span class="info-label">Date:</span>
-            <%= new Date(purchaseOrder.poDate).toLocaleDateString() %>
-          </div>
-          <div><span class="info-label">Delivery Date:</span>
-            <%= purchaseOrder.deliveryDate ? new Date(purchaseOrder.deliveryDate).toLocaleDateString() : 'N/A' %>
-          </div>
-          <div><span class="info-label">Ref#:</span>
-            <%= purchaseOrder.refNumber || 'VGL001' %>
-          </div>
+          <div><span class="info-label">Purchase Order#</span> : <%= purchaseOrder.poNumber %></div>
+          <div><span class="info-label">Date</span> : <%= new Date(purchaseOrder.poDate).toLocaleDateString('en-GB') %></div>
+          <div><span class="info-label">Delivery Date</span> : <%= purchaseOrder.deliveryDate ? new Date(purchaseOrder.deliveryDate).toLocaleDateString('en-GB') : 'N/A' %></div>
+          <div><span class="info-label">Ref#</span> : <%= purchaseOrder.refNumber || '' %></div>
         </div>
 
         <div class="info-box">
           <div style="font-weight: bold; margin-bottom: 10px;">Vendor Address</div>
-          <div><strong>
-              <%= purchaseOrder.vendorName || vendor?.companyName || 'FOMEX GROUP INC' %>
-            </strong></div>
-          <div><%- purchaseOrder.vendorAddress || vendor?.address
-              || 'Survey No 249, Fomex Road,<br>8-A National highway, Vill Jalida,<br>Tal Wankaner<br>Morbi<br>363621 Gujarat<br>India'
-              %></div>
-          <div>GSTIN <%= purchaseOrder.vendorGstin || vendor?.gstNumber || '24AAEFF7243A1ZY' %>
-          </div>
+          <div><strong><%= purchaseOrder.vendorName || vendor?.companyName  %></strong></div>
+          <div><%- purchaseOrder.vendorAddress || vendor?.address  %></div>
+          <div>GSTIN <%= purchaseOrder.vendorGstin || vendor?.gstNumber %></div>
         </div>
       </div>
-
       <div class="info-right">
         <div class="info-box">
-          <div><span class="info-label">Place Of Supply:</span>
-            <%= purchaseOrder.placeOfSupply || 'Gujarat (24)' %>
-          </div>
-
+          <div><span class="info-label">Place Of Supply</span> : <%= purchaseOrder.placeOfSupply %></div>
         </div>
 
         <div class="info-box">
           <div style="font-weight: bold; margin-bottom: 10px;">Deliver To</div>
-          <div>
-            <%= purchaseOrder.deliverToName || purchaseOrder.companyName || company?.name || 'B-623, RK Iconic' %>
-          </div>
-          <div><%- purchaseOrder.deliverToAddress || purchaseOrder.companyAddress || company?.address
-              || '150 Feet Ring Road, Ayodhya Chowk<br>Rajkot Gujarat 360007<br>India' %></div>
-          <div>GSTIN <%= purchaseOrder.deliverToGstin || purchaseOrder.companyGstin || company?.gstNumber
-              || '24AABFV3901A1ZV' %>
-          </div>
-          <div>
-            <%= purchaseOrder.deliverToContact || company?.email || 'sales@vegnar.com' %> | <%= company?.phoneNo ||
-                company?.phone || '+91 9998040482' %>
-          </div>
-          <div>
-            <%= company?.website || 'www.vegnar.com' %>
-          </div>
+          
+          <div><%- (purchaseOrder.deliverToAddress || '').replace(/\n/g, '<br>') %></div>
+          <div>GSTIN <%= purchaseOrder.deliverToGstin || purchaseOrder.companyGstin || company?.gstNumber  %></div>
+          <div><%= purchaseOrder.deliverToContact || company?.email %> | <%= company?.phoneNo || company?.phone  %></div>
+          <div><%= company?.website %></div>
         </div>
       </div>
     </div>
@@ -239,111 +264,86 @@
     <table class="items-table">
       <thead>
         <tr>
-          <th>#</th>
-          <th>Item & Description</th>
-          <th>HSN/SAC</th>
-          <th>Qty</th>
-          <th>Rate</th>
-          <th>Amount</th>
+          <th style="width: 5%;">#</th>
+          <th class="item-desc">Item & Description</th>
+          <th class="hsn-col">HSN/SAC</th>
+          <th class="qty-col">Qty</th>
+          <th class="rate-col">Rate</th>
+          <th class="amount-col">Amount</th>
         </tr>
       </thead>
       <tbody>
         <% if (items && items.length > 0) { %>
           <% items.forEach((item, index) => { %>
             <tr>
-              <td class="text-center">
-                <%= index + 1 %>
-              </td>
-              <td>
-                <%= item.itemDescription || item.productName || item.description || '' %><br><span
-                    style="color: #666; font-size: 11px;">
-                    <%= item.description || '' %>
-                  </span>
-              </td>
-              <td class="text-center">
-                <%= item.hsnSac || item.hsnCode || '48237010' %>
-              </td>
-              <td class="text-center">
-                <%= item.quantity || 0 %><br><span style="color: #666; font-size: 11px;">
-                    <%= item.unit || 'Nos' %>
-                  </span>
-              </td>
-              <td class="text-right">
-                <%= currencySymbol %> <%= (item.rate || 0).toFixed(2) %>
-              </td>
-              <td class="text-right">
-                <%= currencySymbol %> <%= (item.amount || 0).toFixed(2) %>
-              </td>
+              <td class="text-center"><%= index + 1 %></td>
+              <td><%= item.itemDescription || item.productName || item.description || '' %><br><span style="color: #666; font-size: 10px;"><%= item.additionalDescription || '' %></span></td>
+              <td class="hsn-col"><%= item.hsnSac || item.hsnCode || '' %></td>
+              <td class="qty-col"><%= (item.quantity || 0).toLocaleString('en-IN', {minimumFractionDigits: 2}) %><br><span style="color: #666; font-size: 10px;"><%= item.unit || item.unitOfMeasure  %></span></td>
+              <td class="rate-col"><%= (item.rate || 0).toFixed(2) %></td>
+              <td class="amount-col"><%= (item.amount || 0).toLocaleString('en-IN', {minimumFractionDigits: 2}) %></td>
             </tr>
           <% }) %>
-        <% } else { %>
-                <tr>
-                  <td class="text-center">1</td>
-                  <td>Classic Oval Tray (230 ML)<br><span style="color: #666; font-size: 11px;">White Bleached Sugarcane
-                      Bagasse</span></td>
-                  <td class="text-center">48237010</td>
-                  <td class="text-center">50,000.00<br><span style="color: #666; font-size: 11px;">Nos</span></td>
-                  <td class="text-right">
-                    <%= currencySymbol %> 1.29
-                  </td>
-                  <td class="text-right">
-                    <%= currencySymbol %> 64,500.00
-                  </td>
-                </tr>
         <% } %>
       </tbody>
     </table>
 
-    <div style="display: flex; justify-content: space-between;">
-      <div style="flex: 1; margin-right: 20px;">
-        <div class="notes-section">
-          <div style="font-weight: bold; margin-bottom: 10px;">Notes</div>
-          <div>
-            <%- (purchaseOrder.notes || 'Packaging must be sturdy to ship it safely without damage.'
-              ).replace(/\n/g, '<br>' ) %>
-          </div>
-        </div>
-
-        <div style="margin-top: 20px;">
-          <div style="font-weight: bold; margin-bottom: 10px;">Terms & Conditions</div>
-          <div style="font-size: 11px; line-height: 1.4;">
-            <%- (purchaseOrder.termsConditions
-              || '1. Goods/Services that must be meet agreed Quality / Specifications, will be replace, reject & return to supplier at their expenses.<br>2. Any liabilities arises due to GST Act due to mismatch of GST credit related<br>to you will be charged on with Interest and Penalty.<br>3. We will execute the particular work, process, inspection or testing followed by our suppliers and service providers at our premises as per decided terms &<br>conditions regarding quality, environment & health safety.<br>4. Before proceeding for production, supplier has to provide the samples and get the clearance to proceed for further production.<br>5. Payment terms will be against the delivery of the consignment to shipping address.<br>6. Subject to Rajkot Jurisdiction E&OE').replace(/\n/g, '<br>') %>
-          </div>
+    <div style="display: flex; border: 2px solid #000; border-top: none;">
+      <div style="flex: 1; padding: 15px; border-right: 2px solid #000;">
+        <div style="font-weight: bold; margin-bottom: 10px;">Terms & Conditions</div>
+        <div style="font-size: 11px; line-height: 1.4;">
+          1. Goods/Services that must be meet agreed Quality / Specifications, will be replace, reject & return to supplier at their expenses.<br>
+          2. Any liabilities arises due to GST Act due to mismatch of GST credit related to you will be charged on with Interest and Penalty.<br>
+          3. We'll execute the particular work, process, inspection or testing followed by our service providers at our premises as per decided terms & conditions regarding quality, environment & health safety.<br>
+          4. Supplier has to make sure the all material must have the branding of "Vegnar". Any other branding on product or on packing details will not be accepted.<br>
+          5. Payment terms will be against the delivery of the consignment to shipping address.<br>
+          6. Subject to Rajkot Jurisdiction "E&OE"
         </div>
       </div>
 
-      <div style="width: 300px;">
-        <div class="total-section">
-          <div class="total-row">
+      <div style="width: 300px; padding: 15px;">
+        <div style="text-align: right; margin-bottom: 20px;">
+          <div style="margin: 5px 0; display: flex; justify-content: space-between;">
             <span>Sub Total</span>
-            <span><%= currencySymbol %> <%= purchaseOrder.subTotal?.toFixed(2) || '0.00' %></span>
+            <span><%= (purchaseOrder.subTotal || 0).toLocaleString('en-IN', {minimumFractionDigits: 2}) %></span>
           </div>
-          <div class="total-row">
-            <span>CGST (<%= purchaseOrder.cgstRate || 6 %>%)</span>
-            <span><%= currencySymbol %> <%= purchaseOrder.cgstAmount?.toFixed(2) || '0.00' %></span>
+          <% if (purchaseOrder.cgst && purchaseOrder.cgst > 0) { %>
+          <div style="margin: 5px 0; display: flex; justify-content: space-between;">
+            <span>CGST (<%= purchaseOrder.cgstRate || 0 %>%)</span>
+            <span><%= (purchaseOrder.cgst || 0).toLocaleString('en-IN', {minimumFractionDigits: 2}) %></span>
           </div>
-          <div class="total-row">
-            <span>SGST (<%= purchaseOrder.sgstRate || 6 %>%)</span>
-            <span><%= currencySymbol %> <%= purchaseOrder.sgstAmount?.toFixed(2) || '0.00' %></span>
+          <% } %>
+          <% if (purchaseOrder.sgst && purchaseOrder.sgst > 0) { %>
+          <div style="margin: 5px 0; display: flex; justify-content: space-between;">
+            <span>SGST (<%= purchaseOrder.sgstRate || 0 %>%)</span>
+            <span><%= (purchaseOrder.sgst || 0).toLocaleString('en-IN', {minimumFractionDigits: 2}) %></span>
           </div>
-          <div class="total-row"
-            style="border-top: 1px solid #ccc; padding-top: 5px; font-weight: bold; font-size: 14px;">
+          <% } %>
+          <% if (purchaseOrder.igst && purchaseOrder.igst > 0) { %>
+          <div style="margin: 5px 0; display: flex; justify-content: space-between;">
+            <span>IGST (<%= purchaseOrder.igstRate || 0 %>%)</span>
+            <span><%= (purchaseOrder.igst || 0).toLocaleString('en-IN', {minimumFractionDigits: 2}) %></span>
+          </div>
+          <% } %>
+          <div style="margin: 10px 0; display: flex; justify-content: space-between; font-weight: bold; border-top: 1px solid #000; padding-top: 5px;">
             <span>Total</span>
-            <span><%= currencySymbol %> <%= purchaseOrder.totalAmount?.toFixed(2) || '0.00' %></span>
+            <span>₹<%= (purchaseOrder.totalAmount || 0).toLocaleString('en-IN', {minimumFractionDigits: 2}) %></span>
           </div>
         </div>
 
-        <div class="signature-section">
-          <div style="font-size: 18px; font-weight: bold; color: #2563eb; margin-bottom: 20px;">For, <%=
-              purchaseOrder.signatureCompany || purchaseOrder.companyName || company?.name || 'Vegnar Global LLP' %>
+        <div style="border: 2px solid #000; padding: 15px; text-align: center;">
+          <% 
+            const signatureUrl = company?.signature;
+            const fullSignatureUrl = signatureUrl ? (signatureUrl.startsWith('http') ? signatureUrl : `http://localhost:8000${signatureUrl}`) : null;
+          %>
+          <% if (fullSignatureUrl) { %>
+          <div style="margin: 30px 0;">
+            <img src="<%= fullSignatureUrl %>" style="max-width: 200px; max-height: 120px; object-fit: contain;" alt="Company Signature">
           </div>
-          <div style="margin-bottom: 40px;">
-            <!-- Signature space -->
-          </div>
-          <div style="border-top: 1px solid #000; padding-top: 5px; font-weight: bold;">
-            <%= purchaseOrder.authorizedBy || purchaseOrder.signatureTitle || 'Designated Partner' %>
-          </div>
+          <% } else { %>
+          <div style="margin: 30px 0; height: 60px;"></div>
+          <% } %>
+        
           <div style="font-size: 11px; margin-top: 5px;">Authorized Signature</div>
         </div>
       </div>
