@@ -103,6 +103,7 @@ model PartyList {
   address       String?
   city          String?
   companyName   String         @map("company_name")
+  contactPersonTitle String?  @map("contact_person_title")
   contactPerson String?        @map("contact_person")
   country       String?
   currency      String         @default("USD")
@@ -111,7 +112,6 @@ model PartyList {
   partyType     String         @map("party_type")
   pincode       String?
   state         String?
-  tags          String?
   status        Boolean        @default(true)
   company       CompanyDetails @relation(fields: [companyId], references: [id], onDelete: Cascade)
   user          User?          @relation("UserToParty", fields: [userId], references: [id])
