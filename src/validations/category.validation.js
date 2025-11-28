@@ -4,8 +4,8 @@ import Joi from 'joi';
 const createCategory = {
   body: Joi.object().keys({
     name: Joi.string().required().trim(),
-    description: Joi.string().optional().trim(),
-    desc: Joi.string().optional().trim(),
+    description: Joi.string().optional().trim().allow(''),
+    desc: Joi.string().optional().trim().allow(''),
     hsn_code: Joi.string().allow('', null).optional().trim(),
     useParentHsnCode: Joi.boolean().optional(),
     primary_unit: Joi.string()
@@ -92,8 +92,8 @@ const createCategory = {
       .items(
         Joi.object({
           name: Joi.string().required().trim(),
-          description: Joi.string().optional().trim(),
-          desc: Joi.string().optional().trim(),
+          description: Joi.string().optional().trim().allow(''),
+          desc: Joi.string().optional().trim().allow(''),
           hsn_code: Joi.string().allow('', null).optional().trim(),
           useParentHsnCode: Joi.boolean().optional(),
           primary_unit: Joi.string()
@@ -193,8 +193,8 @@ const updateCategory = {
   }),
   body: Joi.object().keys({
     name: Joi.string().optional().trim(),
-    description: Joi.string().optional().trim(),
-    desc: Joi.string().optional().trim(),
+    description: Joi.string().optional().trim().allow(''),
+    desc: Joi.string().optional().trim().allow(''),
     hsn_code: Joi.string().allow('', null).optional().trim(),
     useParentHsnCode: Joi.boolean().optional(),
     primary_unit: Joi.string()
@@ -281,8 +281,8 @@ const updateCategory = {
         Joi.object({
           id: Joi.number().integer().positive().optional(),
           name: Joi.string().required().trim(),
-          description: Joi.string().optional().trim(),
-          desc: Joi.string().optional().trim(),
+          description: Joi.string().optional().trim().allow(''),
+          desc: Joi.string().optional().trim().allow(''),
           hsn_code: Joi.string().allow('', null).optional().trim(),
           useParentHsnCode: Joi.boolean().optional(),
           primary_unit: Joi.string()
