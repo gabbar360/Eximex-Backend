@@ -147,6 +147,7 @@ export const getCurrentUser = asyncHandler(async (req, res) => {
           id: true,
           name: true,
           logo: true,
+          signature: true,
           address: true,
           phoneNo: true,
           email: true,
@@ -174,6 +175,16 @@ export const getCurrentUser = asyncHandler(async (req, res) => {
       !user.company.logo.startsWith('/uploads')
     ) {
       user.company.logo = `/uploads/logos/${user.company.logo}`;
+    }
+  }
+
+  // Format signature URL if company exists and has signature
+  if (user.company?.signature) {
+    if (
+      !user.company.signature.startsWith('http') &&
+      !user.company.signature.startsWith('/uploads')
+    ) {
+      user.company.signature = `/uploads/signatures/${user.company.signature}`;
     }
   }
 
