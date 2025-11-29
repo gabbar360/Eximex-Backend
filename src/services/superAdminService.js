@@ -255,4 +255,149 @@ export const superAdminService = {
 
     return true;
   },
+
+  // Assign company to user
+  async assignCompanyToUser(userId, companyId) {
+    const user = await prisma.user.findUnique({
+      where: { id: parseInt(userId) },
+    });
+
+    if (!user) {
+      throw new ApiError(404, 'User not found');
+    }
+
+    const company = await prisma.companyDetails.findUnique({
+      where: { id: parseInt(companyId) },
+    });
+
+    if (!company) {
+      throw new ApiError(404, 'Company not found');
+    }
+
+    return await prisma.user.update({
+      where: { id: parseInt(userId) },
+      data: { companyId: parseInt(companyId) },
+      include: {
+        role: true,
+        company: true,
+      },
+    });
+  },
+
+  // Get all companies for assignment
+  async getAllCompanies() {
+    return await prisma.companyDetails.findMany({
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        address: true,
+        phoneNo: true,
+        gstNumber: true,
+        iecNumber: true,
+        defaultCurrency: true,
+        bankName: true,
+        accountNumber: true,
+        ifscCode: true,
+        bankAddress: true,
+        swiftCode: true,
+        logo: true,
+        signature: true,
+        isActive: true,
+        createdAt: true,
+        _count: {
+          select: {
+            users: true,
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  },
+
+  // Create company by SuperAdmin
+  async createCompany(data) {
+    const {
+      name,
+      email,
+      address,
+      phoneNo,
+      gstNumber,
+      iecNumber,
+      defaultCurrency = 'USD',
+      bankName,
+      accountNumber,
+      ifscCode,
+      bankAddress,
+      swiftCode,
+    } = data;
+
+    const existingCompany = await prisma.companyDetails.findFirst({
+      where: {
+        OR: [
+          { name: { equals: name, mode: 'insensitive' } },
+          { email: email },
+          { gstNumber: gstNumber },
+          { iecNumber: iecNumber },
+        ],
+      },
+    });
+
+    if (existingCompany) {
+      throw new ApiError(400, 'Company with this name, email, GST, or IEC already exists');
+    }
+
+    return await prisma.companyDetails.create({
+      data: {
+        name,
+        email,
+        address,
+        phoneNo,
+        gstNumber,
+        iecNumber,
+        currencies: [defaultCurrency],
+        defaultCurrency,
+        allowedUnits: ['sqm', 'kg', 'pcs', 'box'],
+        bankName,
+        accountNumber,
+        ifscCode,
+        bankAddress,
+        swiftCode,
+        planId: 'trial',
+      },
+    });
+  },
+
+  // Update company
+  async updateCompany(id, data) {
+    const company = await prisma.companyDetails.findUnique({
+      where: { id: parseInt(id) },
+    });
+
+    if (!company) {
+      throw new ApiError(404, 'Company not found');
+    }
+
+    return await prisma.companyDetails.update({
+      where: { id: parseInt(id) },
+      data,
+    });
+  },
+
+  // Delete company
+  async deleteCompany(id) {
+    const company = await prisma.companyDetails.findUnique({
+      where: { id: parseInt(id) },
+    });
+
+    if (!company) {
+      throw new ApiError(404, 'Company not found');
+    }
+
+    await prisma.companyDetails.delete({
+      where: { id: parseInt(id) },
+    });
+
+    return true;
+  },
 };
