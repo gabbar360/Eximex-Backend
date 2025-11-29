@@ -95,3 +95,46 @@ export const validateInvitationToken = asyncHandler(async (req, res) => {
     .status(200)
     .json(new ApiResponse(200, user, 'Valid invitation token'));
 });
+
+export const assignCompanyToUser = asyncHandler(async (req, res) => {
+  const { userId, companyId } = req.body;
+  const user = await superAdminService.assignCompanyToUser(userId, companyId);
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, user, 'Company assigned successfully'));
+});
+
+export const getAllCompanies = asyncHandler(async (req, res) => {
+  const companies = await superAdminService.getAllCompanies();
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, companies, 'Companies fetched successfully'));
+});
+
+export const createCompany = asyncHandler(async (req, res) => {
+  const company = await superAdminService.createCompany(req.body);
+
+  return res
+    .status(201)
+    .json(new ApiResponse(201, company, 'Company created successfully'));
+});
+
+export const updateCompany = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const company = await superAdminService.updateCompany(id, req.body);
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, company, 'Company updated successfully'));
+});
+
+export const deleteCompany = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  await superAdminService.deleteCompany(id);
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, null, 'Company deleted successfully'));
+});
