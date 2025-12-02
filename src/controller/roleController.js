@@ -4,7 +4,7 @@ import { roleService } from '../services/roleService.js';
 
 // Get all roles
 export const getAllRoles = asyncHandler(async (req, res) => {
-  const roles = await roleService.getAllRoles();
+  const roles = await roleService.getAllRoles(req.query);
 
   return res
     .status(200)

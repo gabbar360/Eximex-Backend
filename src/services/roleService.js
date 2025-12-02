@@ -2,12 +2,49 @@ import { prisma } from '../config/dbConfig.js';
 import { ApiError } from '../utils/ApiError.js';
 
 export const roleService = {
-  // Get all roles
-  async getAllRoles() {
-    return await prisma.role.findMany({
-      where: { isActive: true },
-      orderBy: { name: 'asc' },
-    });
+  // Get all roles with pagination
+  async getAllRoles(options = {}) {
+    const {
+      page = 1,
+      limit = 10,
+      search = '',
+    } = options;
+
+    const pageNum = parseInt(page) || 1;
+    const limitNum = parseInt(limit) || 10;
+    const skip = (pageNum - 1) * limitNum;
+
+    const where = { isActive: true };
+
+    if (search) {
+      where.OR = [
+        { name: { contains: search, mode: 'insensitive' } },
+        { displayName: { contains: search, mode: 'insensitive' } },
+        { description: { contains: search, mode: 'insensitive' } },
+      ];
+    }
+
+    const [roles, total] = await Promise.all([
+      prisma.role.findMany({
+        where,
+        orderBy: { name: 'asc' },
+        skip,
+        take: limitNum,
+      }),
+      prisma.role.count({ where }),
+    ]);
+
+    return {
+      data: roles,
+      pagination: {
+        page: pageNum,
+        limit: limitNum,
+        total,
+        totalPages: Math.ceil(total / limitNum),
+        hasNext: pageNum * limitNum < total,
+        hasPrev: pageNum > 1,
+      },
+    };
   },
 
   // Get role by ID

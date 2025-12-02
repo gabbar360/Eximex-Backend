@@ -353,20 +353,46 @@ export const userPermissionService = {
     };
   },
 
-  async getAllUsersWithPermissions() {
-    const users = await prisma.user.findMany({
-      include: {
-        role: true,
-        userPermissions: {
-          include: {
-            menu: true,
-            submenu: true,
+  async getAllUsersWithPermissions(options = {}) {
+    const {
+      page = 1,
+      limit = 10,
+      search = '',
+    } = options;
+
+    const pageNum = parseInt(page) || 1;
+    const limitNum = parseInt(limit) || 10;
+    const skip = (pageNum - 1) * limitNum;
+
+    const where = {};
+
+    if (search) {
+      where.OR = [
+        { name: { contains: search, mode: 'insensitive' } },
+        { email: { contains: search, mode: 'insensitive' } },
+      ];
+    }
+
+    const [users, total] = await Promise.all([
+      prisma.user.findMany({
+        where,
+        include: {
+          role: true,
+          userPermissions: {
+            include: {
+              menu: true,
+              submenu: true,
+            },
           },
         },
-      },
-    });
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limitNum,
+      }),
+      prisma.user.count({ where }),
+    ]);
 
-    return users.map((user) => ({
+    const formattedUsers = users.map((user) => ({
       id: user.id,
       name: user.name,
       email: user.email,
@@ -382,5 +408,17 @@ export const userPermissionService = {
         canDelete: p.canDelete,
       })),
     }));
+
+    return {
+      data: formattedUsers,
+      pagination: {
+        page: pageNum,
+        limit: limitNum,
+        total,
+        totalPages: Math.ceil(total / limitNum),
+        hasNext: pageNum * limitNum < total,
+        hasPrev: pageNum > 1,
+      },
+    };
   },
 };

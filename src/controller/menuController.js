@@ -4,7 +4,7 @@ import { asyncHandler } from '../utils/asyncHandler.js';
 
 // Get all menus with submenus
 export const getAllMenus = asyncHandler(async (req, res) => {
-  const menus = await menuService.getAllMenus();
+  const menus = await menuService.getAllMenus(req.query);
   return res
     .status(200)
     .json(new ApiResponse(200, menus, 'Menus fetched successfully'));

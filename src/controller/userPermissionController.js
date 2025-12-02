@@ -83,7 +83,7 @@ export const deleteUserPermissions = asyncHandler(async (req, res) => {
 
 export const getAllUsersWithPermissions = asyncHandler(async (req, res) => {
   const usersWithPermissions =
-    await userPermissionService.getAllUsersWithPermissions();
+    await userPermissionService.getAllUsersWithPermissions(req.query);
   return res
     .status(200)
     .json(

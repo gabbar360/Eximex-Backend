@@ -21,23 +21,65 @@ const transporter = nodemailer.createTransport({
 });
 
 export const superAdminService = {
-  // Get all users
-  async getAllUsers() {
-    return await prisma.user.findMany({
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        roleId: true,
-        companyId: true,
-        status: true,
-        isBlocked: true,
-        createdAt: true,
-        role: true,
-        company: true,
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+  // Get all users with pagination
+  async getAllUsers(options = {}) {
+    try {
+      const {
+        page = 1,
+        limit = 10,
+        search = '',
+      } = options;
+
+      const pageNum = Math.max(1, parseInt(page) || 1);
+      const limitNum = Math.min(100, Math.max(1, parseInt(limit) || 10));
+      const skip = (pageNum - 1) * limitNum;
+
+      const where = {};
+
+      if (search && search.trim()) {
+        where.OR = [
+          { name: { contains: search.trim(), mode: 'insensitive' } },
+          { email: { contains: search.trim(), mode: 'insensitive' } },
+        ];
+      }
+
+      const [users, total] = await Promise.all([
+        prisma.user.findMany({
+          where,
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            roleId: true,
+            companyId: true,
+            status: true,
+            isBlocked: true,
+            createdAt: true,
+            role: true,
+            company: true,
+          },
+          orderBy: { createdAt: 'desc' },
+          skip,
+          take: limitNum,
+        }),
+        prisma.user.count({ where }),
+      ]);
+
+      return {
+        data: users,
+        pagination: {
+          page: pageNum,
+          limit: limitNum,
+          total,
+          totalPages: Math.ceil(total / limitNum),
+          hasNext: pageNum * limitNum < total,
+          hasPrev: pageNum > 1,
+        },
+      };
+    } catch (error) {
+      console.error('Error in getAllUsers:', error);
+      throw new ApiError(500, 'Database error while fetching users');
+    }
   },
 
   // Get user by ID
@@ -284,35 +326,72 @@ export const superAdminService = {
     });
   },
 
-  // Get all companies for assignment
-  async getAllCompanies() {
-    return await prisma.companyDetails.findMany({
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        address: true,
-        phoneNo: true,
-        gstNumber: true,
-        iecNumber: true,
-        defaultCurrency: true,
-        bankName: true,
-        accountNumber: true,
-        ifscCode: true,
-        bankAddress: true,
-        swiftCode: true,
-        logo: true,
-        signature: true,
-        isActive: true,
-        createdAt: true,
-        _count: {
-          select: {
-            users: true,
+  // Get all companies with pagination
+  async getAllCompanies(options = {}) {
+    const {
+      page = 1,
+      limit = 10,
+      search = '',
+    } = options;
+
+    const pageNum = parseInt(page) || 1;
+    const limitNum = parseInt(limit) || 10;
+    const skip = (pageNum - 1) * limitNum;
+
+    const where = {};
+
+    if (search) {
+      where.OR = [
+        { name: { contains: search, mode: 'insensitive' } },
+        { email: { contains: search, mode: 'insensitive' } },
+      ];
+    }
+
+    const [companies, total] = await Promise.all([
+      prisma.companyDetails.findMany({
+        where,
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          address: true,
+          phoneNo: true,
+          gstNumber: true,
+          iecNumber: true,
+          defaultCurrency: true,
+          bankName: true,
+          accountNumber: true,
+          ifscCode: true,
+          bankAddress: true,
+          swiftCode: true,
+          logo: true,
+          signature: true,
+          isActive: true,
+          createdAt: true,
+          _count: {
+            select: {
+              users: true,
+            },
           },
         },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limitNum,
+      }),
+      prisma.companyDetails.count({ where }),
+    ]);
+
+    return {
+      data: companies,
+      pagination: {
+        page: pageNum,
+        limit: limitNum,
+        total,
+        totalPages: Math.ceil(total / limitNum),
+        hasNext: pageNum * limitNum < total,
+        hasPrev: pageNum > 1,
       },
-      orderBy: { createdAt: 'desc' },
-    });
+    };
   },
 
   // Create company by SuperAdmin

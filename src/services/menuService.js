@@ -2,17 +2,55 @@ import { prisma } from '../config/dbConfig.js';
 import { ApiError } from '../utils/ApiError.js';
 
 export const menuService = {
-  // Get all menus with submenus
-  async getAllMenus() {
-    return await prisma.menu.findMany({
-      include: {
-        submenus: {
-          where: { isActive: true },
-          orderBy: { sortOrder: 'asc' },
+  // Get all menus with submenus and pagination
+  async getAllMenus(options = {}) {
+    const {
+      page = 1,
+      limit = 10,
+      search = '',
+    } = options;
+
+    const pageNum = parseInt(page) || 1;
+    const limitNum = parseInt(limit) || 10;
+    const skip = (pageNum - 1) * limitNum;
+
+    const where = {};
+
+    if (search) {
+      where.OR = [
+        { name: { contains: search, mode: 'insensitive' } },
+        { slug: { contains: search, mode: 'insensitive' } },
+        { path: { contains: search, mode: 'insensitive' } },
+      ];
+    }
+
+    const [menus, total] = await Promise.all([
+      prisma.menu.findMany({
+        where,
+        include: {
+          submenus: {
+            where: { isActive: true },
+            orderBy: { sortOrder: 'asc' },
+          },
         },
+        orderBy: { sortOrder: 'asc' },
+        skip,
+        take: limitNum,
+      }),
+      prisma.menu.count({ where }),
+    ]);
+
+    return {
+      data: menus,
+      pagination: {
+        page: pageNum,
+        limit: limitNum,
+        total,
+        totalPages: Math.ceil(total / limitNum),
+        hasNext: pageNum * limitNum < total,
+        hasPrev: pageNum > 1,
       },
-      orderBy: { sortOrder: 'asc' },
-    });
+    };
   },
 
   // Get menu by ID
