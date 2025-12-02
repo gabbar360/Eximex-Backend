@@ -5,7 +5,7 @@ import { prisma } from '../config/dbConfig.js';
 import { ApiError } from '../utils/ApiError.js';
 
 export const getAllUsers = asyncHandler(async (req, res) => {
-  const users = await superAdminService.getAllUsers();
+  const users = await superAdminService.getAllUsers(req.query);
 
   return res
     .status(200)
@@ -106,7 +106,7 @@ export const assignCompanyToUser = asyncHandler(async (req, res) => {
 });
 
 export const getAllCompanies = asyncHandler(async (req, res) => {
-  const companies = await superAdminService.getAllCompanies();
+  const companies = await superAdminService.getAllCompanies(req.query);
 
   return res
     .status(200)
