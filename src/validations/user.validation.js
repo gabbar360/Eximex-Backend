@@ -30,6 +30,7 @@ const updateUser = {
         .optional()
         .valid('SUPER_ADMIN', 'ADMINISTRATOR', 'ADMIN', 'STAFF'),
       roleId: Joi.number().optional(),
+      companyId: Joi.number().optional(),
       status: Joi.string()
         .optional()
         .valid(

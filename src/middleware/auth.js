@@ -598,6 +598,11 @@ export const validateStaffManagement = asyncHandler(async (req, res, next) => {
     throw new ApiError(403, 'Only admins can manage staff accounts');
   }
 
+  // Super admins can update users from any company
+  if (user.role?.name === 'SUPER_ADMIN') {
+    return next();
+  }
+
   // If updating/deleting a user, ensure they belong to the same company
   if (targetUserId) {
     const targetUser = await prisma.user.findFirst({
@@ -608,7 +613,7 @@ export const validateStaffManagement = asyncHandler(async (req, res, next) => {
     });
 
     if (!targetUser) {
-      throw new ApiError(404, 'User not found in your company');
+      throw new ApiError(403, 'Cannot update user from different company');
     }
 
     // Prevent admins from modifying super admins

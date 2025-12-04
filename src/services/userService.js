@@ -166,7 +166,7 @@ const updateUser = async (userId, updateData, updatingUser = null) => {
   if (!existingUser) throw new ApiError(404, 'User not found');
 
   // Ensure user belongs to same company (for non-super-admins)
-  if (updatingUser && updatingUser.role !== 'SUPER_ADMIN') {
+  if (updatingUser && updatingUser.role?.name !== 'SUPER_ADMIN') {
     if (existingUser.companyId !== updatingUser.companyId) {
       throw new ApiError(403, 'Cannot update user from different company');
     }
