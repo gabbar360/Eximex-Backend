@@ -283,12 +283,15 @@ const createPiInvoice = async (data, userId, req = {}) => {
 
       if (productsWithTotals.length > 0) {
         await tx.piProduct.createMany({
-          data: productsWithTotals.map((product, index) => ({
-            ...product,
-            piInvoiceId: pi.id,
-            companyId: companyId,
-            lineNumber: index + 1,
-          })),
+          data: productsWithTotals.map((product, index) => {
+            const { packagingCalculation, ...productData } = product;
+            return {
+              ...productData,
+              piInvoiceId: pi.id,
+              companyId: companyId,
+              lineNumber: index + 1,
+            };
+          }),
         });
       }
 
@@ -470,7 +473,10 @@ const updatePiInvoice = async (id, data, userId, companyId, req = {}) => {
         });
 
         await tx.piProduct.createMany({
-          data: productsWithTotals,
+          data: productsWithTotals.map((product) => {
+            const { packagingCalculation, ...productData } = product;
+            return productData;
+          }),
         });
 
         // Use new products for calculation
