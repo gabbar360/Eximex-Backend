@@ -24,11 +24,7 @@ export const superAdminService = {
   // Get all users with pagination
   async getAllUsers(options = {}) {
     try {
-      const {
-        page = 1,
-        limit = 10,
-        search = '',
-      } = options;
+      const { page = 1, limit = 10, search = '' } = options;
 
       const pageNum = Math.max(1, parseInt(page) || 1);
       const limitNum = Math.min(100, Math.max(1, parseInt(limit) || 10));
@@ -328,11 +324,7 @@ export const superAdminService = {
 
   // Get all companies with pagination
   async getAllCompanies(options = {}) {
-    const {
-      page = 1,
-      limit = 10,
-      search = '',
-    } = options;
+    const { page = 1, limit = 10, search = '' } = options;
 
     const pageNum = parseInt(page) || 1;
     const limitNum = parseInt(limit) || 10;
@@ -423,7 +415,10 @@ export const superAdminService = {
     });
 
     if (existingCompany) {
-      throw new ApiError(400, 'Company with this name, email, GST, or IEC already exists');
+      throw new ApiError(
+        400,
+        'Company with this name, email, GST, or IEC already exists'
+      );
     }
 
     return await prisma.companyDetails.create({

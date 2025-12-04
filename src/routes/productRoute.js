@@ -69,11 +69,6 @@ router.post(
   bulkUploadProducts
 );
 
-router.get(
-  '/download/template',
-  verifyJWT,
-  requireCompany,
-  downloadTemplate
-);
+router.get('/download/template', verifyJWT, requireCompany, downloadTemplate);
 
 export default router;

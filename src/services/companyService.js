@@ -180,7 +180,12 @@ const createCompany = async (
   return company;
 };
 
-const updateCompany = async (companyId, updateData, logoFile = null, signatureFile = null) => {
+const updateCompany = async (
+  companyId,
+  updateData,
+  logoFile = null,
+  signatureFile = null
+) => {
   companyId = Number(companyId);
   const existingCompany = await getCompanyById(companyId);
   if (!existingCompany) {

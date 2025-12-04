@@ -354,11 +354,7 @@ export const userPermissionService = {
   },
 
   async getAllUsersWithPermissions(options = {}) {
-    const {
-      page = 1,
-      limit = 10,
-      search = '',
-    } = options;
+    const { page = 1, limit = 10, search = '' } = options;
 
     const pageNum = parseInt(page) || 1;
     const limitNum = parseInt(limit) || 10;

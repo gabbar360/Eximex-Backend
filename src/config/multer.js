@@ -80,7 +80,7 @@ export const uploadSignature = multer({
 const excelFileFilter = (req, file, cb) => {
   const allowedTypes = [
     'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    'application/vnd.ms-excel'
+    'application/vnd.ms-excel',
   ];
 
   if (allowedTypes.includes(file.mimetype)) {
