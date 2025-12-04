@@ -234,7 +234,7 @@
                                 <br><%= product.productDescription %>
                             <% } %>
                         </td>
-                        <td class="center"><%= product.hsCode || product.hsnCode || product.category?.hsnCode || product.product?.category?.hsnCode || '' %></td>
+                        <td class="center"><%= (product.hsCode && product.hsCode !== 'N/A') ? product.hsCode : (product.hsnCode && product.hsnCode !== 'N/A') ? product.hsnCode : product.category?.hsnCode || product.product?.category?.hsnCode || product.product?.hsCode || product.product?.hsnCode || 'N/A' %></td>
                         <td class="right"><%= product.quantity || 0 %></td>
                         <td class="center"><%= product.unit || 'PCS' %></td>
                         <td class="right"><%= (product.rate || 0) %></td>
