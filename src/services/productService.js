@@ -225,18 +225,28 @@ const createProduct = async (productData, userId, companyId) => {
   }
 
   // Calculate totals before creating product
-  const totalBoxes = productData.totalBoxes ? parseInt(productData.totalBoxes) : null;
-  const piecePerBox = productData.piecePerBox ? parseInt(productData.piecePerBox) : null;
-  const grossWeightPerBox = productData.grossWeightPerBox ? parseFloat(productData.grossWeightPerBox) : null;
-  
-  let calculatedTotalPieces = productData.totalPieces ? parseInt(productData.totalPieces) : null;
-  let calculatedTotalGrossWeight = productData.totalGrossWeight ? parseFloat(productData.totalGrossWeight) : null;
-  
+  const totalBoxes = productData.totalBoxes
+    ? parseInt(productData.totalBoxes)
+    : null;
+  const piecePerBox = productData.piecePerBox
+    ? parseInt(productData.piecePerBox)
+    : null;
+  const grossWeightPerBox = productData.grossWeightPerBox
+    ? parseFloat(productData.grossWeightPerBox)
+    : null;
+
+  let calculatedTotalPieces = productData.totalPieces
+    ? parseInt(productData.totalPieces)
+    : null;
+  let calculatedTotalGrossWeight = productData.totalGrossWeight
+    ? parseFloat(productData.totalGrossWeight)
+    : null;
+
   // Auto-calculate if not provided
   if (!calculatedTotalPieces && totalBoxes && piecePerBox) {
     calculatedTotalPieces = totalBoxes * piecePerBox;
   }
-  
+
   if (!calculatedTotalGrossWeight && totalBoxes && grossWeightPerBox) {
     calculatedTotalGrossWeight = totalBoxes * grossWeightPerBox;
   }
@@ -288,7 +298,8 @@ const createProduct = async (productData, userId, companyId) => {
     // Calculated fields
     totalPieces: calculatedTotalPieces,
     totalGrossWeight: calculatedTotalGrossWeight,
-    totalGrossWeightUnit: productData.totalGrossWeightUnit || productData.grossWeightUnit || 'kg',
+    totalGrossWeightUnit:
+      productData.totalGrossWeightUnit || productData.grossWeightUnit || 'kg',
 
     // Volume fields
     volumeLength: productData.volumeLength
@@ -580,7 +591,7 @@ const processProductExcel = async (file, userId, companyId) => {
       success: 0,
       failed: 0,
       errors: [],
-      successProducts: []
+      successProducts: [],
     };
 
     // Process each row
@@ -591,62 +602,96 @@ const processProductExcel = async (file, userId, companyId) => {
       try {
         // Comprehensive field validation
         const validationErrors = [];
-        
+
         // Required field validations
-        if (!row['Product Name'] || row['Product Name'].toString().trim() === '') {
+        if (
+          !row['Product Name'] ||
+          row['Product Name'].toString().trim() === ''
+        ) {
           validationErrors.push('Product Name is required');
         }
-        
+
         if (!row['Category'] || row['Category'].toString().trim() === '') {
           validationErrors.push('Category is required');
         }
-        
+
         // Data type and format validations
-        if (row['Price'] && (isNaN(parseFloat(row['Price'])) || parseFloat(row['Price']) < 0)) {
+        if (
+          row['Price'] &&
+          (isNaN(parseFloat(row['Price'])) || parseFloat(row['Price']) < 0)
+        ) {
           validationErrors.push('Price must be a valid positive number');
         }
-        
-        if (row['Weight'] && (isNaN(parseFloat(row['Weight'])) || parseFloat(row['Weight']) <= 0)) {
+
+        if (
+          row['Weight'] &&
+          (isNaN(parseFloat(row['Weight'])) || parseFloat(row['Weight']) <= 0)
+        ) {
           validationErrors.push('Weight must be a valid positive number');
         }
-        
-        if (row['Total Boxes'] && (isNaN(parseInt(row['Total Boxes'])) || parseInt(row['Total Boxes']) <= 0)) {
+
+        if (
+          row['Total Boxes'] &&
+          (isNaN(parseInt(row['Total Boxes'])) ||
+            parseInt(row['Total Boxes']) <= 0)
+        ) {
           validationErrors.push('Total Boxes must be a valid positive integer');
         }
-        
-        if (row['Pieces Per Box'] && (isNaN(parseInt(row['Pieces Per Box'])) || parseInt(row['Pieces Per Box']) <= 0)) {
-          validationErrors.push('Pieces Per Box must be a valid positive integer');
+
+        if (
+          row['Pieces Per Box'] &&
+          (isNaN(parseInt(row['Pieces Per Box'])) ||
+            parseInt(row['Pieces Per Box']) <= 0)
+        ) {
+          validationErrors.push(
+            'Pieces Per Box must be a valid positive integer'
+          );
         }
-        
-        if (row['Gross Weight Per Box'] && (isNaN(parseFloat(row['Gross Weight Per Box'])) || parseFloat(row['Gross Weight Per Box']) <= 0)) {
-          validationErrors.push('Gross Weight Per Box must be a valid positive number');
+
+        if (
+          row['Gross Weight Per Box'] &&
+          (isNaN(parseFloat(row['Gross Weight Per Box'])) ||
+            parseFloat(row['Gross Weight Per Box']) <= 0)
+        ) {
+          validationErrors.push(
+            'Gross Weight Per Box must be a valid positive number'
+          );
         }
-        
+
         // SKU validation
         if (row['SKU'] && row['SKU'].toString().trim().length > 50) {
           validationErrors.push('SKU cannot exceed 50 characters');
         }
-        
+
         // Currency validation
-        if (row['Currency'] && !['USD', 'INR', 'EUR', 'GBP'].includes(row['Currency'])) {
+        if (
+          row['Currency'] &&
+          !['USD', 'INR', 'EUR', 'GBP'].includes(row['Currency'])
+        ) {
           validationErrors.push('Currency must be one of: USD, INR, EUR, GBP');
         }
-        
+
         // Weight unit validation
-        if (row['Weight Unit'] && !['kg', 'g', 'lb', 'oz'].includes(row['Weight Unit'])) {
+        if (
+          row['Weight Unit'] &&
+          !['kg', 'g', 'lb', 'oz'].includes(row['Weight Unit'])
+        ) {
           validationErrors.push('Weight Unit must be one of: kg, g, lb, oz');
         }
-        
+
         // Product name length validation
-        if (row['Product Name'] && row['Product Name'].toString().trim().length > 255) {
+        if (
+          row['Product Name'] &&
+          row['Product Name'].toString().trim().length > 255
+        ) {
           validationErrors.push('Product Name cannot exceed 255 characters');
         }
-        
+
         // Description length validation
         if (row['Description'] && row['Description'].toString().length > 1000) {
           validationErrors.push('Description cannot exceed 1000 characters');
         }
-        
+
         // If there are validation errors, throw them
         if (validationErrors.length > 0) {
           throw new Error(validationErrors.join('; '));
@@ -656,19 +701,24 @@ const processProductExcel = async (file, userId, companyId) => {
         let categoryId = null;
         let packagingHierarchy = [];
         if (row['Category'] && row['Category'].trim()) {
-          const category = await findOrCreateCategory(row['Category'], companyId, userId);
+          const category = await findOrCreateCategory(
+            row['Category'],
+            companyId,
+            userId
+          );
           categoryId = category.id;
-          
+
           // Get packaging hierarchy for this category
-          packagingHierarchy = await getCategoryWithPackagingHierarchy(categoryId);
+          packagingHierarchy =
+            await getCategoryWithPackagingHierarchy(categoryId);
         }
 
         // Find or create subcategory (only if category exists)
         let subCategoryId = null;
         if (row['Subcategory'] && row['Subcategory'].trim() && categoryId) {
           const subcategory = await findOrCreateSubcategory(
-            row['Subcategory'], 
-            categoryId, 
+            row['Subcategory'],
+            categoryId,
             companyId,
             userId
           );
@@ -687,16 +737,20 @@ const processProductExcel = async (file, userId, companyId) => {
           weight: row['Weight'] ? parseFloat(row['Weight']) : null,
           weightUnit: row['Weight Unit'] || 'kg',
           totalBoxes: row['Total Boxes'] ? parseInt(row['Total Boxes']) : null,
-          piecePerBox: row['Pieces Per Box'] ? parseInt(row['Pieces Per Box']) : null,
-          grossWeightPerBox: row['Gross Weight Per Box'] ? parseFloat(row['Gross Weight Per Box']) : null,
+          piecePerBox: row['Pieces Per Box']
+            ? parseInt(row['Pieces Per Box'])
+            : null,
+          grossWeightPerBox: row['Gross Weight Per Box']
+            ? parseFloat(row['Gross Weight Per Box'])
+            : null,
           companyId: Number(companyId),
           createdBy: Number(userId),
-          isActive: true
+          isActive: true,
         };
 
         // Handle packaging hierarchy dynamic fields - only first 2 levels as per PackagingDetails component
         const dynamicFields = {};
-        
+
         // Validate and process only first 2 packaging hierarchy levels from Excel
         packagingHierarchy.slice(0, 2).forEach((level) => {
           const quantityField = `${level.from}Per${level.to}`;
@@ -705,36 +759,55 @@ const processProductExcel = async (file, userId, companyId) => {
           if (row[quantityField]) {
             const quantity = parseFloat(row[quantityField]);
             if (isNaN(quantity) || quantity <= 0) {
-              throw new Error(`${quantityField} must be a valid positive number`);
+              throw new Error(
+                `${quantityField} must be a valid positive number`
+              );
             }
             dynamicFields[quantityField] = quantity;
           }
         });
 
         // Process packaging material weight and dimensions
-        const lastLevel = packagingHierarchy.length > 0 ? packagingHierarchy[packagingHierarchy.length - 1] : null;
+        const lastLevel =
+          packagingHierarchy.length > 0
+            ? packagingHierarchy[packagingHierarchy.length - 1]
+            : null;
         const containerName = lastLevel ? lastLevel.to : 'Box';
-        
+
         // Validate and process packaging dimensions and material weight
         if (row[`${containerName} Material Weight`]) {
-          const materialWeight = parseFloat(row[`${containerName} Material Weight`]);
+          const materialWeight = parseFloat(
+            row[`${containerName} Material Weight`]
+          );
           if (isNaN(materialWeight) || materialWeight <= 0) {
-            throw new Error(`${containerName} Material Weight must be a valid positive number`);
+            throw new Error(
+              `${containerName} Material Weight must be a valid positive number`
+            );
           }
           dynamicFields.packagingMaterialWeight = materialWeight;
           productData.packagingMaterialWeight = materialWeight; // Store in main table
         }
         if (row[`${containerName} Material Weight Unit`]) {
-          if (!['kg', 'g', 'lb', 'oz'].includes(row[`${containerName} Material Weight Unit`])) {
-            throw new Error(`${containerName} Material Weight Unit must be one of: kg, g, lb, oz`);
+          if (
+            !['kg', 'g', 'lb', 'oz'].includes(
+              row[`${containerName} Material Weight Unit`]
+            )
+          ) {
+            throw new Error(
+              `${containerName} Material Weight Unit must be one of: kg, g, lb, oz`
+            );
           }
-          dynamicFields.packagingMaterialWeightUnit = row[`${containerName} Material Weight Unit`];
-          productData.packagingMaterialWeightUnit = row[`${containerName} Material Weight Unit`]; // Store in main table
+          dynamicFields.packagingMaterialWeightUnit =
+            row[`${containerName} Material Weight Unit`];
+          productData.packagingMaterialWeightUnit =
+            row[`${containerName} Material Weight Unit`]; // Store in main table
         }
         if (row[`${containerName} Length (m)`]) {
           const length = parseFloat(row[`${containerName} Length (m)`]);
           if (isNaN(length) || length <= 0) {
-            throw new Error(`${containerName} Length (m) must be a valid positive number`);
+            throw new Error(
+              `${containerName} Length (m) must be a valid positive number`
+            );
           }
           dynamicFields.packagingLength = length;
           productData.packagingLength = length; // Store in main table
@@ -742,7 +815,9 @@ const processProductExcel = async (file, userId, companyId) => {
         if (row[`${containerName} Width (m)`]) {
           const width = parseFloat(row[`${containerName} Width (m)`]);
           if (isNaN(width) || width <= 0) {
-            throw new Error(`${containerName} Width (m) must be a valid positive number`);
+            throw new Error(
+              `${containerName} Width (m) must be a valid positive number`
+            );
           }
           dynamicFields.packagingWidth = width;
           productData.packagingWidth = width; // Store in main table
@@ -750,12 +825,14 @@ const processProductExcel = async (file, userId, companyId) => {
         if (row[`${containerName} Height (m)`]) {
           const height = parseFloat(row[`${containerName} Height (m)`]);
           if (isNaN(height) || height <= 0) {
-            throw new Error(`${containerName} Height (m) must be a valid positive number`);
+            throw new Error(
+              `${containerName} Height (m) must be a valid positive number`
+            );
           }
           dynamicFields.packagingHeight = height;
           productData.packagingHeight = height; // Store in main table
         }
-        
+
         // Process unit weight fields and store in main table
         if (row['Unit Weight']) {
           const unitWeight = parseFloat(row['Unit Weight']);
@@ -788,8 +865,8 @@ const processProductExcel = async (file, userId, companyId) => {
             where: {
               sku: productData.sku,
               companyId: Number(companyId),
-              deletedAt: null
-            }
+              deletedAt: null,
+            },
           });
           if (existingSku) {
             throw new Error(`SKU '${productData.sku}' already exists`);
@@ -799,22 +876,21 @@ const processProductExcel = async (file, userId, companyId) => {
         // Create product
         const product = await prisma.product.create({
           data: productData,
-          include: { category: true, subCategory: true }
+          include: { category: true, subCategory: true },
         });
 
         results.success++;
         results.successProducts.push({
           row: rowNumber,
           product: product.name,
-          sku: product.sku
+          sku: product.sku,
         });
-
       } catch (error) {
         results.failed++;
         results.errors.push({
           row: rowNumber,
           product: row['Product Name'] || 'Unknown',
-          error: error.message
+          error: error.message,
         });
       }
     }
@@ -830,10 +906,9 @@ const processProductExcel = async (file, userId, companyId) => {
     } else {
       message = 'No products processed';
     }
-    
+
     results.message = message;
     return results;
-
   } catch (error) {
     throw new ApiError(500, `Excel processing failed: ${error.message}`);
   }
@@ -845,8 +920,8 @@ const findOrCreateCategory = async (categoryName, companyId, userId) => {
     where: {
       name: { equals: categoryName.trim(), mode: 'insensitive' },
       companyId: Number(companyId),
-      parentId: null // Only main categories
-    }
+      parentId: null, // Only main categories
+    },
   });
 
   // If not found, create new category
@@ -859,8 +934,8 @@ const findOrCreateCategory = async (categoryName, companyId, userId) => {
         parentId: null,
         isActive: true,
         createdAt: new Date(),
-        updatedAt: new Date()
-      }
+        updatedAt: new Date(),
+      },
     });
   }
 
@@ -895,14 +970,19 @@ const getCategoryWithPackagingHierarchy = async (categoryId) => {
   }));
 };
 
-const findOrCreateSubcategory = async (subcategoryName, categoryId, companyId, userId) => {
+const findOrCreateSubcategory = async (
+  subcategoryName,
+  categoryId,
+  companyId,
+  userId
+) => {
   // First try to find existing subcategory under the specific category
   let subcategory = await prisma.itemCategory.findFirst({
     where: {
       name: { equals: subcategoryName.trim(), mode: 'insensitive' },
       companyId: Number(companyId),
-      parentId: categoryId
-    }
+      parentId: categoryId,
+    },
   });
 
   // If not found, create new subcategory
@@ -915,8 +995,8 @@ const findOrCreateSubcategory = async (subcategoryName, categoryId, companyId, u
         parentId: categoryId,
         isActive: true,
         createdAt: new Date(),
-        updatedAt: new Date()
-      }
+        updatedAt: new Date(),
+      },
     });
   }
 
@@ -925,11 +1005,11 @@ const findOrCreateSubcategory = async (subcategoryName, categoryId, companyId, u
 
 const downloadTemplate = async (companyId, categoryId = null) => {
   console.log('Template download called with:', { companyId, categoryId });
-  
+
   try {
     let selectedCategory = null;
     let packagingHierarchy = [];
-    
+
     if (categoryId) {
       console.log('Fetching category:', categoryId);
       // Get specific category with packaging hierarchy
@@ -937,86 +1017,93 @@ const downloadTemplate = async (companyId, categoryId = null) => {
         where: {
           id: Number(categoryId),
           companyId: Number(companyId),
-          isActive: true
+          isActive: true,
         },
         include: {
-          other_ItemCategory: true // subcategories
-        }
+          other_ItemCategory: true, // subcategories
+        },
       });
-      
+
       console.log('Found category:', selectedCategory?.name);
-      
+
       if (selectedCategory) {
-        packagingHierarchy = await getCategoryWithPackagingHierarchy(categoryId);
+        packagingHierarchy =
+          await getCategoryWithPackagingHierarchy(categoryId);
         console.log('Packaging hierarchy:', packagingHierarchy);
       }
     }
 
     // Create template rows - only include fields from PackagingDetails component
     const templateData = [];
-    
+
     if (selectedCategory && selectedCategory.other_ItemCategory?.length > 0) {
       // Create sample for each subcategory
       selectedCategory.other_ItemCategory.forEach((subcat, index) => {
         const sampleRow = {
           'Product Name': `Sample Product ${index + 1}`,
-          'SKU': `SP-00${index + 1}`,
-          'Category': selectedCategory.name,
-          'Subcategory': subcat.name,
-          'Description': `${subcat.name} product description`,
-          'Price': 1000 * (index + 1),
-          'Currency': 'INR'
+          SKU: `SP-00${index + 1}`,
+          Category: selectedCategory.name,
+          Subcategory: subcat.name,
+          Description: `${subcat.name} product description`,
+          Price: 1000 * (index + 1),
+          Currency: 'INR',
         };
-        
+
         // Add only the first 2 packaging hierarchy fields (as shown in PackagingDetails component)
         if (packagingHierarchy && packagingHierarchy.length > 0) {
           packagingHierarchy.slice(0, 2).forEach((level) => {
             const quantityField = `${level.from}Per${level.to}`;
             sampleRow[quantityField] = level.quantity || 5;
           });
-          
+
           // Add fields matching PackagingDetails component exactly
           sampleRow['Unit Weight'] = 0.5;
           sampleRow['Unit Weight Unit'] = 'kg';
-          sampleRow['Weight Unit Type'] = packagingHierarchy[0]?.from || 'Pieces';
-          
+          sampleRow['Weight Unit Type'] =
+            packagingHierarchy[0]?.from || 'Pieces';
+
           // Add packaging material weight and dimensions (using last level container name)
-          const lastLevel = packagingHierarchy[packagingHierarchy.length - 1] || { to: 'Box' };
+          const lastLevel = packagingHierarchy[
+            packagingHierarchy.length - 1
+          ] || { to: 'Box' };
           sampleRow[`${lastLevel.to} Material Weight`] = 0.1;
           sampleRow[`${lastLevel.to} Material Weight Unit`] = 'kg';
           sampleRow[`${lastLevel.to} Length (m)`] = 0.3;
           sampleRow[`${lastLevel.to} Width (m)`] = 0.2;
           sampleRow[`${lastLevel.to} Height (m)`] = 0.1;
         }
-        
+
         templateData.push(sampleRow);
       });
     } else {
       // Single row template
       const baseTemplate = {
         'Product Name': 'Sample Product',
-        'SKU': 'SP-001',
-        'Category': selectedCategory?.name || 'Electronics',
-        'Subcategory': 'YourSubcategory',
-        'Description': 'Product description',
-        'Price': 1000,
-        'Currency': 'INR'
+        SKU: 'SP-001',
+        Category: selectedCategory?.name || 'Electronics',
+        Subcategory: 'YourSubcategory',
+        Description: 'Product description',
+        Price: 1000,
+        Currency: 'INR',
       };
-      
+
       // Add only the first 2 packaging hierarchy fields (as shown in PackagingDetails component)
       if (packagingHierarchy && packagingHierarchy.length > 0) {
         packagingHierarchy.slice(0, 2).forEach((level) => {
           const quantityField = `${level.from}Per${level.to}`;
           baseTemplate[quantityField] = level.quantity || 5;
         });
-        
+
         // Add fields matching PackagingDetails component exactly
         baseTemplate['Unit Weight'] = 0.5;
         baseTemplate['Unit Weight Unit'] = 'kg';
-        baseTemplate['Weight Unit Type'] = packagingHierarchy[0]?.from || 'Pieces';
-        
+        baseTemplate['Weight Unit Type'] =
+          packagingHierarchy[0]?.from || 'Pieces';
+
         // Add packaging material weight and dimensions (using last level container name)
-        const lastLevel = packagingHierarchy[packagingHierarchy.length - 1] || { to: 'Box' };
+        const lastLevel = packagingHierarchy[packagingHierarchy.length - 1] || {
+          to: 'Box',
+        };
         baseTemplate[`${lastLevel.to} Material Weight`] = 0.1;
         baseTemplate[`${lastLevel.to} Material Weight Unit`] = 'kg';
         baseTemplate[`${lastLevel.to} Length (m)`] = 0.3;
@@ -1033,7 +1120,7 @@ const downloadTemplate = async (companyId, categoryId = null) => {
         baseTemplate['Box Width (m)'] = 0.2;
         baseTemplate['Box Height (m)'] = 0.1;
       }
-      
+
       templateData.push(baseTemplate);
     }
 
@@ -1041,42 +1128,61 @@ const downloadTemplate = async (companyId, categoryId = null) => {
     console.log('Final template data:', templateData);
 
     const worksheet = XLSX.utils.json_to_sheet(templateData);
-    
+
     // Add instructions
-    const subcategoryList = selectedCategory?.other_ItemCategory?.map(s => s.name).join(', ') || 'None';
+    const subcategoryList =
+      selectedCategory?.other_ItemCategory?.map((s) => s.name).join(', ') ||
+      'None';
     const instructions = [
-      { 'Field': 'Template Info', 'Description': categoryId ? `Category: ${selectedCategory?.name}` : 'General template' },
-      { 'Field': 'Subcategories', 'Description': subcategoryList },
-      { 'Field': 'Packaging Hierarchy', 'Description': packagingHierarchy.map(h => `${h.from} → ${h.to}`).join(', ') || 'None' },
-      { 'Field': '', 'Description': '' },
-      { 'Field': 'Required Fields', 'Description': 'Product Name, Category' },
-      { 'Field': 'Packaging Fields', 'Description': 'Only first 2 hierarchy levels + unit weight + material weight + dimensions' },
-      { 'Field': 'Note', 'Description': 'Template matches PackagingDetails component fields only' }
+      {
+        Field: 'Template Info',
+        Description: categoryId
+          ? `Category: ${selectedCategory?.name}`
+          : 'General template',
+      },
+      { Field: 'Subcategories', Description: subcategoryList },
+      {
+        Field: 'Packaging Hierarchy',
+        Description:
+          packagingHierarchy.map((h) => `${h.from} → ${h.to}`).join(', ') ||
+          'None',
+      },
+      { Field: '', Description: '' },
+      { Field: 'Required Fields', Description: 'Product Name, Category' },
+      {
+        Field: 'Packaging Fields',
+        Description:
+          'Only first 2 hierarchy levels + unit weight + material weight + dimensions',
+      },
+      {
+        Field: 'Note',
+        Description: 'Template matches PackagingDetails component fields only',
+      },
     ];
-    
+
     const instructionSheet = XLSX.utils.json_to_sheet(instructions);
-    
+
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Products');
     XLSX.utils.book_append_sheet(workbook, instructionSheet, 'Instructions');
 
     const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
     console.log('Excel buffer created, size:', buffer.length);
-    
+
     return buffer;
   } catch (error) {
     console.error('Template generation error:', error);
-    
+
     // Fallback simple template matching PackagingDetails component
     const fallbackTemplate = [
       {
         'Product Name': 'iPhone 15',
-        'SKU': 'IP15-001', 
-        'Category': 'Electronics',
-        'Subcategory': 'Mobile Phones',
-        'Description': 'Latest iPhone model',
-        'Price': 50000,
-        'Currency': 'INR',
+        SKU: 'IP15-001',
+        Category: 'Electronics',
+        Subcategory: 'Mobile Phones',
+        Description: 'Latest iPhone model',
+        Price: 50000,
+        Currency: 'INR',
         'Unit Weight': 0.2,
         'Unit Weight Unit': 'kg',
         'Weight Unit Type': 'Pieces',
@@ -1084,14 +1190,18 @@ const downloadTemplate = async (companyId, categoryId = null) => {
         'Box Material Weight Unit': 'kg',
         'Box Length (m)': 0.3,
         'Box Width (m)': 0.2,
-        'Box Height (m)': 0.1
-      }
+        'Box Height (m)': 0.1,
+      },
     ];
-    
+
     const fallbackWorksheet = XLSX.utils.json_to_sheet(fallbackTemplate);
     const fallbackWorkbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(fallbackWorkbook, fallbackWorksheet, 'Products');
-    
+    XLSX.utils.book_append_sheet(
+      fallbackWorkbook,
+      fallbackWorksheet,
+      'Products'
+    );
+
     return XLSX.write(fallbackWorkbook, { type: 'buffer', bookType: 'xlsx' });
   }
 };

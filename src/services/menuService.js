@@ -4,11 +4,7 @@ import { ApiError } from '../utils/ApiError.js';
 export const menuService = {
   // Get all menus with submenus and pagination
   async getAllMenus(options = {}) {
-    const {
-      page = 1,
-      limit = 10,
-      search = '',
-    } = options;
+    const { page = 1, limit = 10, search = '' } = options;
 
     const pageNum = parseInt(page) || 1;
     const limitNum = parseInt(limit) || 10;
