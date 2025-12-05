@@ -6,11 +6,13 @@ import {
   updateProduct,
   deleteProduct,
   getProductStats,
+  bulkUploadProducts,
+  downloadTemplate,
 } from '../controller/productController.js';
 import { validate } from '../middleware/validate.js';
 import { productValidation } from '../validations/product.validation.js';
 import { verifyJWT, requireCompany, filterByRole } from '../middleware/auth.js';
-
+import { uploadExcel, handleMulterError } from '../config/multer.js';
 
 const router = Router();
 
@@ -56,5 +58,17 @@ router.delete(
 );
 
 router.get('/stats/products', verifyJWT, requireCompany, getProductStats);
+
+// Bulk Upload routes
+router.post(
+  '/bulk-upload/products',
+  verifyJWT,
+  requireCompany,
+  uploadExcel,
+  handleMulterError,
+  bulkUploadProducts
+);
+
+router.get('/download/template', verifyJWT, requireCompany, downloadTemplate);
 
 export default router;

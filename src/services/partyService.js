@@ -66,7 +66,7 @@ const getAllParties = async (companyId, options = {}, dataFilters = {}) => {
       limit: parseInt(limit),
       include: { company: true, user: true },
     });
-    
+
     return result;
   } catch (error) {
     console.error('Party service error:', error);

@@ -2,17 +2,51 @@ import { prisma } from '../config/dbConfig.js';
 import { ApiError } from '../utils/ApiError.js';
 
 export const menuService = {
-  // Get all menus with submenus
-  async getAllMenus() {
-    return await prisma.menu.findMany({
-      include: {
-        submenus: {
-          where: { isActive: true },
-          orderBy: { sortOrder: 'asc' }
-        }
+  // Get all menus with submenus and pagination
+  async getAllMenus(options = {}) {
+    const { page = 1, limit = 10, search = '' } = options;
+
+    const pageNum = parseInt(page) || 1;
+    const limitNum = parseInt(limit) || 10;
+    const skip = (pageNum - 1) * limitNum;
+
+    const where = {};
+
+    if (search) {
+      where.OR = [
+        { name: { contains: search, mode: 'insensitive' } },
+        { slug: { contains: search, mode: 'insensitive' } },
+        { path: { contains: search, mode: 'insensitive' } },
+      ];
+    }
+
+    const [menus, total] = await Promise.all([
+      prisma.menu.findMany({
+        where,
+        include: {
+          submenus: {
+            where: { isActive: true },
+            orderBy: { sortOrder: 'asc' },
+          },
+        },
+        orderBy: { sortOrder: 'asc' },
+        skip,
+        take: limitNum,
+      }),
+      prisma.menu.count({ where }),
+    ]);
+
+    return {
+      data: menus,
+      pagination: {
+        page: pageNum,
+        limit: limitNum,
+        total,
+        totalPages: Math.ceil(total / limitNum),
+        hasNext: pageNum * limitNum < total,
+        hasPrev: pageNum > 1,
       },
-      orderBy: { sortOrder: 'asc' }
-    });
+    };
   },
 
   // Get menu by ID
@@ -22,9 +56,9 @@ export const menuService = {
       include: {
         submenus: {
           where: { isActive: true },
-          orderBy: { sortOrder: 'asc' }
-        }
-      }
+          orderBy: { sortOrder: 'asc' },
+        },
+      },
     });
 
     if (!menu) {
@@ -40,7 +74,7 @@ export const menuService = {
 
     // Check if slug exists
     const existingMenu = await prisma.menu.findUnique({
-      where: { slug }
+      where: { slug },
     });
 
     if (existingMenu) {
@@ -53,8 +87,8 @@ export const menuService = {
         slug,
         path,
         icon,
-        sortOrder: sortOrder || 0
-      }
+        sortOrder: sortOrder || 0,
+      },
     });
   },
 
@@ -67,7 +101,7 @@ export const menuService = {
     // Check if slug exists (excluding current menu)
     if (slug && slug !== menu.slug) {
       const existingMenu = await prisma.menu.findUnique({
-        where: { slug }
+        where: { slug },
       });
 
       if (existingMenu) {
@@ -83,8 +117,8 @@ export const menuService = {
         path,
         icon,
         sortOrder,
-        isActive
-      }
+        isActive,
+      },
     });
   },
 
@@ -94,8 +128,8 @@ export const menuService = {
       where: { id },
       include: {
         submenus: true,
-        permissions: true
-      }
+        permissions: true,
+      },
     });
 
     if (!menu) {
@@ -103,7 +137,10 @@ export const menuService = {
     }
 
     if (menu.submenus.length > 0) {
-      throw new ApiError(400, 'Cannot delete menu with submenus. Delete submenus first.');
+      throw new ApiError(
+        400,
+        'Cannot delete menu with submenus. Delete submenus first.'
+      );
     }
 
     if (menu.permissions.length > 0) {
@@ -111,7 +148,7 @@ export const menuService = {
     }
 
     await prisma.menu.delete({
-      where: { id }
+      where: { id },
     });
 
     return true;
@@ -123,7 +160,7 @@ export const menuService = {
 
     // Check if parent menu exists
     const menu = await prisma.menu.findUnique({
-      where: { id: menuId }
+      where: { id: menuId },
     });
 
     if (!menu) {
@@ -134,12 +171,15 @@ export const menuService = {
     const existingSubmenu = await prisma.submenu.findFirst({
       where: {
         menuId,
-        slug
-      }
+        slug,
+      },
     });
 
     if (existingSubmenu) {
-      throw new ApiError(400, 'Submenu with this slug already exists in this menu');
+      throw new ApiError(
+        400,
+        'Submenu with this slug already exists in this menu'
+      );
     }
 
     return await prisma.submenu.create({
@@ -149,8 +189,8 @@ export const menuService = {
         slug,
         path,
         icon,
-        sortOrder: sortOrder || 0
-      }
+        sortOrder: sortOrder || 0,
+      },
     });
   },
 
@@ -159,7 +199,7 @@ export const menuService = {
     const { name, slug, path, icon, sortOrder, isActive } = data;
 
     const submenu = await prisma.submenu.findUnique({
-      where: { id }
+      where: { id },
     });
 
     if (!submenu) {
@@ -172,12 +212,15 @@ export const menuService = {
         where: {
           menuId: submenu.menuId,
           slug,
-          id: { not: id }
-        }
+          id: { not: id },
+        },
       });
 
       if (existingSubmenu) {
-        throw new ApiError(400, 'Submenu with this slug already exists in this menu');
+        throw new ApiError(
+          400,
+          'Submenu with this slug already exists in this menu'
+        );
       }
     }
 
@@ -189,8 +232,8 @@ export const menuService = {
         path,
         icon,
         sortOrder,
-        isActive
-      }
+        isActive,
+      },
     });
   },
 
@@ -199,8 +242,8 @@ export const menuService = {
     const submenu = await prisma.submenu.findUnique({
       where: { id },
       include: {
-        permissions: true
-      }
+        permissions: true,
+      },
     });
 
     if (!submenu) {
@@ -208,13 +251,16 @@ export const menuService = {
     }
 
     if (submenu.permissions.length > 0) {
-      throw new ApiError(400, 'Cannot delete submenu with assigned permissions');
+      throw new ApiError(
+        400,
+        'Cannot delete submenu with assigned permissions'
+      );
     }
 
     await prisma.submenu.delete({
-      where: { id }
+      where: { id },
     });
 
     return true;
-  }
+  },
 };

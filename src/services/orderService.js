@@ -387,32 +387,31 @@ export class OrderService {
     return updatedOrder;
   }
 
- static async deleteOrder(orderId, companyId) {
-  const order = await prisma.order.findFirst({
-    where: { id: orderId, companyId },
-    include: { piInvoice: true }
-  });
+  static async deleteOrder(orderId, companyId) {
+    const order = await prisma.order.findFirst({
+      where: { id: orderId, companyId },
+      include: { piInvoice: true },
+    });
 
-  if (!order) {
-    throw new ApiError(404, 'Order not found');
+    if (!order) {
+      throw new ApiError(404, 'Order not found');
+    }
+
+    await prisma.$transaction(async (tx) => {
+      // Delete the order
+      await tx.order.delete({
+        where: { id: orderId },
+      });
+
+      // Update PI status back to pending
+      await tx.piInvoice.update({
+        where: { id: order.piInvoiceId },
+        data: { status: 'pending' },
+      });
+    });
+
+    return { message: 'Order deleted successfully' };
   }
-
-  await prisma.$transaction(async (tx) => {
-    // Delete the order
-    await tx.order.delete({
-      where: { id: orderId },
-    });
-
-    // Update PI status back to pending
-    await tx.piInvoice.update({
-      where: { id: order.piInvoiceId },
-      data: { status: 'pending' },
-    });
-  });
-
-  return { message: 'Order deleted successfully' };
-}
-
 
   static async generateOrderNumber() {
     const today = new Date();
@@ -497,9 +496,9 @@ export class OrderService {
         blNumber: `BL-${order.orderNumber}-DRAFT`,
         vesselName: order.vesselVoyageInfo || 'TBD',
         voyageNumber: order.bookingNumber || 'TBD',
-        marksAndNumbers: order.containerNumber || 'TBD'
+        marksAndNumbers: order.containerNumber || 'TBD',
       },
-      logoBase64: null
+      logoBase64: null,
     });
 
     const browser = await puppeteer.launch({

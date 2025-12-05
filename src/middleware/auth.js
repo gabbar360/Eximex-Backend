@@ -26,8 +26,8 @@ export const verifyJWT = asyncHandler(async (req, res, next) => {
             id: true,
             name: true,
             displayName: true,
-            permissions: true
-          }
+            permissions: true,
+          },
         },
         status: true,
         isBlocked: true,
@@ -59,7 +59,7 @@ export const verifyJWT = asyncHandler(async (req, res, next) => {
     }
 
     req.user = user;
-    
+
     // Auto permission check
     await autoCheckPermissions(req, res, next);
   } catch (error) {
@@ -73,74 +73,91 @@ const autoCheckPermissions = async (req, res, next) => {
   if (!req.user || !req.user.id) {
     return next();
   }
-  
+
   const userId = req.user.id;
   const method = req.method;
   const path = req.path;
 
   // Skip for specific routes
-  if (path.includes('/auth/') || path.includes('/super-admin/') || path.includes('/getroles') || path.includes('/my-sidebar-menu') || path.includes('/user-permissions')) {
+  if (
+    path.includes('/auth/') ||
+    path.includes('/super-admin/') ||
+    path.includes('/getroles') ||
+    path.includes('/my-sidebar-menu') ||
+    path.includes('/user-permissions')
+  ) {
     return next();
   }
 
   // Map HTTP methods to permissions
   const methodToPermission = {
-    'GET': 'canView',
-    'POST': 'canCreate',
-    'PUT': 'canUpdate',
-    'PATCH': 'canUpdate', 
-    'DELETE': 'canDelete'
+    GET: 'canView',
+    POST: 'canCreate',
+    PUT: 'canUpdate',
+    PATCH: 'canUpdate',
+    DELETE: 'canDelete',
   };
 
   // Dynamic menu slug detection from path
   let menuSlug = null;
   const pathSegments = path.split('/').filter(Boolean);
-  
+
   // Smart pattern matching function
   const getMenuSlugFromSegment = (segment) => {
     // Direct matches
     const directMatches = {
-      'dashboard': 'dashboard',
-      'cprospect': 'customer-prospect',
-      'categories': 'categories',
-      'products': 'products',
-      'orders': 'orders',
+      dashboard: 'dashboard',
+      cprospect: 'customer-prospect',
+      categories: 'categories',
+      products: 'products',
+      orders: 'orders',
       'purchase-orders': 'purchase-orders',
       'staff-management': 'staff-management',
-      'profile': 'user-profile'
+      profile: 'user-profile',
     };
-    
+
     if (directMatches[segment]) return directMatches[segment];
-    
+
     // Pattern-based matches
-    if (segment.includes('category') || segment.includes('categories')) return 'categories';
-    if (segment.includes('product') || segment.includes('products')) return 'products';
-    if (segment.includes('proforma') || segment.includes('pi')) return 'proforma-invoices';
-    if (segment.includes('customer') || segment.includes('prospect') || segment.includes('cprospect') || segment.includes('parties') || segment.includes('party')) return 'customer-prospect';
-    if (segment.includes('order') && !segment.includes('purchase')) return 'orders';
+    if (segment.includes('category') || segment.includes('categories'))
+      return 'categories';
+    if (segment.includes('product') || segment.includes('products'))
+      return 'products';
+    if (segment.includes('proforma') || segment.includes('pi'))
+      return 'proforma-invoices';
+    if (
+      segment.includes('customer') ||
+      segment.includes('prospect') ||
+      segment.includes('cprospect') ||
+      segment.includes('parties') ||
+      segment.includes('party')
+    )
+      return 'customer-prospect';
+    if (segment.includes('order') && !segment.includes('purchase'))
+      return 'orders';
     if (segment.includes('purchase')) return 'purchase-orders';
     if (segment.includes('staff')) return 'staff-management';
     if (segment.includes('profile')) return 'user-profile';
-    
+
     return null;
   };
-  
+
   // Submenu patterns
   const submenuPatterns = {
     'all-orders': { menu: 'orders', submenu: 'all-orders' },
     'delete-order': { menu: 'orders', submenu: 'all-orders' },
     'create-order': { menu: 'orders', submenu: 'all-orders' },
     'update-order': { menu: 'orders', submenu: 'all-orders' },
-    'orders': { menu: 'orders', submenu: 'all-orders' },
-    'shipments': { menu: 'orders', submenu: 'shipments' },
+    orders: { menu: 'orders', submenu: 'all-orders' },
+    shipments: { menu: 'orders', submenu: 'shipments' },
     'packing-lists': { menu: 'orders', submenu: 'packing-lists' },
     'vgm-documents': { menu: 'orders', submenu: 'vgm-documents' },
-    'vgm': { menu: 'orders', submenu: 'vgm-documents' },
-    'reports': { menu: 'orders', submenu: 'reports' }
+    vgm: { menu: 'orders', submenu: 'vgm-documents' },
+    reports: { menu: 'orders', submenu: 'reports' },
   };
-  
+
   let submenuSlug = null;
-  
+
   // First check for submenu patterns
   for (const segment of pathSegments) {
     if (submenuPatterns[segment]) {
@@ -149,7 +166,7 @@ const autoCheckPermissions = async (req, res, next) => {
       break;
     }
   }
-  
+
   // If no submenu found, check for menu patterns
   if (!menuSlug) {
     for (const segment of pathSegments) {
@@ -167,7 +184,7 @@ const autoCheckPermissions = async (req, res, next) => {
     console.log(`🔍 DEBUG: Path segments: [${pathSegments.join(', ')}]`);
     return next();
   }
-  
+
   console.log(`✅ DEBUG: Found menu slug: ${menuSlug} for path: ${path}`);
   console.log(`🔍 DEBUG: Submenu slug: ${submenuSlug || 'null'}`);
   console.log(`🔍 DEBUG: Path segments: [${pathSegments.join(', ')}]`);
@@ -179,7 +196,7 @@ const autoCheckPermissions = async (req, res, next) => {
 
   // Get menu item from Menu table
   const menu = await prisma.menu.findUnique({
-    where: { slug: menuSlug }
+    where: { slug: menuSlug },
   });
 
   if (!menu) {
@@ -187,22 +204,22 @@ const autoCheckPermissions = async (req, res, next) => {
   }
 
   let userPermission;
-  
+
   if (submenuSlug) {
     // Check submenu permission
     const submenu = await prisma.submenu.findFirst({
-      where: { 
+      where: {
         slug: submenuSlug,
-        menuId: menu.id 
-      }
+        menuId: menu.id,
+      },
     });
-    
+
     if (submenu) {
       userPermission = await prisma.userPermission.findFirst({
         where: {
           userId: userId,
-          submenuId: submenu.id
-        }
+          submenuId: submenu.id,
+        },
       });
     }
   } else {
@@ -211,8 +228,8 @@ const autoCheckPermissions = async (req, res, next) => {
       where: {
         userId: userId,
         menuId: menu.id,
-        submenuId: null
-      }
+        submenuId: null,
+      },
     });
   }
 
@@ -220,7 +237,10 @@ const autoCheckPermissions = async (req, res, next) => {
   if (!userPermission || !userPermission[requiredPermission]) {
     const actionName = requiredPermission.replace('can', '').toLowerCase();
     const resourceName = submenuSlug ? `${menuSlug}/${submenuSlug}` : menuSlug;
-    throw new ApiError(403, `You don't have ${actionName} permission for ${resourceName}`);
+    throw new ApiError(
+      403,
+      `You don't have ${actionName} permission for ${resourceName}`
+    );
   }
 
   next();
@@ -232,11 +252,17 @@ export const checkPermissions = asyncHandler(async (req, res, next) => {
   if (!req.user || !req.user.id) {
     return next();
   }
-  
+
   // Skip permission check for certain routes
-  const skipRoutes = ['/auth/', '/super-admin/', '/getroles', '/my-sidebar-menu', '/invitation/'];
-  const shouldSkip = skipRoutes.some(route => req.path.includes(route));
-  
+  const skipRoutes = [
+    '/auth/',
+    '/super-admin/',
+    '/getroles',
+    '/my-sidebar-menu',
+    '/invitation/',
+  ];
+  const shouldSkip = skipRoutes.some((route) => req.path.includes(route));
+
   if (shouldSkip) {
     return next();
   }
@@ -244,50 +270,61 @@ export const checkPermissions = asyncHandler(async (req, res, next) => {
   // Auto-detect menu slug from route path
   const pathSegments = req.path.split('/').filter(Boolean);
   let menuSlug = null;
-  
+
   // Smart pattern matching for checkPermissions
   const getMenuSlugFromSegment = (segment) => {
     const directMatches = {
-      'dashboard': 'dashboard',
-      'cprospect': 'customer-prospect',
-      'categories': 'categories',
-      'products': 'products',
-      'orders': 'orders',
+      dashboard: 'dashboard',
+      cprospect: 'customer-prospect',
+      categories: 'categories',
+      products: 'products',
+      orders: 'orders',
       'purchase-orders': 'purchase-orders',
       'staff-management': 'staff-management',
-      'profile': 'user-profile'
+      profile: 'user-profile',
     };
-    
+
     if (directMatches[segment]) return directMatches[segment];
-    
-    if (segment.includes('category') || segment.includes('categories')) return 'categories';
-    if (segment.includes('product') || segment.includes('products')) return 'products';
-    if (segment.includes('proforma') || segment.includes('pi')) return 'proforma-invoices';
-    if (segment.includes('customer') || segment.includes('prospect') || segment.includes('cprospect') || segment.includes('parties') || segment.includes('party')) return 'customer-prospect';
-    if (segment.includes('order') && !segment.includes('purchase')) return 'orders';
+
+    if (segment.includes('category') || segment.includes('categories'))
+      return 'categories';
+    if (segment.includes('product') || segment.includes('products'))
+      return 'products';
+    if (segment.includes('proforma') || segment.includes('pi'))
+      return 'proforma-invoices';
+    if (
+      segment.includes('customer') ||
+      segment.includes('prospect') ||
+      segment.includes('cprospect') ||
+      segment.includes('parties') ||
+      segment.includes('party')
+    )
+      return 'customer-prospect';
+    if (segment.includes('order') && !segment.includes('purchase'))
+      return 'orders';
     if (segment.includes('purchase')) return 'purchase-orders';
     if (segment.includes('staff')) return 'staff-management';
     if (segment.includes('profile')) return 'user-profile';
-    
+
     return null;
   };
-  
+
   // Submenu patterns
   const submenuToMenuMap = {
     'all-orders': { menu: 'orders', submenu: 'all-orders' },
     'delete-order': { menu: 'orders', submenu: 'all-orders' },
     'create-order': { menu: 'orders', submenu: 'all-orders' },
     'update-order': { menu: 'orders', submenu: 'all-orders' },
-    'orders': { menu: 'orders', submenu: 'all-orders' },
-    'shipments': { menu: 'orders', submenu: 'shipments' },
+    orders: { menu: 'orders', submenu: 'all-orders' },
+    shipments: { menu: 'orders', submenu: 'shipments' },
     'packing-lists': { menu: 'orders', submenu: 'packing-lists' },
     'vgm-documents': { menu: 'orders', submenu: 'vgm-documents' },
-    'vgm': { menu: 'orders', submenu: 'vgm-documents' },
-    'reports': { menu: 'orders', submenu: 'reports' }
+    vgm: { menu: 'orders', submenu: 'vgm-documents' },
+    reports: { menu: 'orders', submenu: 'reports' },
   };
-  
+
   let submenuSlug = null;
-  
+
   // First check for submenu patterns
   for (const segment of pathSegments) {
     if (submenuToMenuMap[segment]) {
@@ -296,7 +333,7 @@ export const checkPermissions = asyncHandler(async (req, res, next) => {
       break;
     }
   }
-  
+
   // If no submenu found, check for menu patterns
   if (!menuSlug) {
     for (const segment of pathSegments) {
@@ -307,54 +344,54 @@ export const checkPermissions = asyncHandler(async (req, res, next) => {
       }
     }
   }
-  
+
   if (!menuSlug) {
     return next(); // Skip if no menu mapping found
   }
-  
+
   // Check permissions
   const userId = req.user.id;
   const method = req.method;
-  
+
   const methodToPermission = {
-    'GET': 'canView',
-    'POST': 'canCreate',
-    'PUT': 'canUpdate', 
-    'PATCH': 'canUpdate',
-    'DELETE': 'canDelete'
+    GET: 'canView',
+    POST: 'canCreate',
+    PUT: 'canUpdate',
+    PATCH: 'canUpdate',
+    DELETE: 'canDelete',
   };
-  
+
   const requiredPermission = methodToPermission[method];
   if (!requiredPermission) {
     return next();
   }
-  
+
   // Get menu item and check permission
   const menu = await prisma.menu.findUnique({
-    where: { slug: menuSlug }
+    where: { slug: menuSlug },
   });
-  
+
   if (!menu) {
     return next(); // Skip if menu item not found
   }
-  
+
   let userPermission;
-  
+
   if (submenuSlug) {
     // Check submenu permission
     const submenu = await prisma.submenu.findFirst({
-      where: { 
+      where: {
         slug: submenuSlug,
-        menuId: menu.id 
-      }
+        menuId: menu.id,
+      },
     });
-    
+
     if (submenu) {
       userPermission = await prisma.userPermission.findFirst({
         where: {
           userId: userId,
-          submenuId: submenu.id
-        }
+          submenuId: submenu.id,
+        },
       });
     }
   } else {
@@ -363,17 +400,20 @@ export const checkPermissions = asyncHandler(async (req, res, next) => {
       where: {
         userId: userId,
         menuId: menu.id,
-        submenuId: null
-      }
+        submenuId: null,
+      },
     });
   }
-  
+
   if (!userPermission || !userPermission[requiredPermission]) {
     const actionName = requiredPermission.replace('can', '').toLowerCase();
     const resourceName = submenuSlug ? `${menuSlug}/${submenuSlug}` : menuSlug;
-    throw new ApiError(403, `You don't have ${actionName} permission for ${resourceName}`);
+    throw new ApiError(
+      403,
+      `You don't have ${actionName} permission for ${resourceName}`
+    );
   }
-  
+
   next();
 });
 
@@ -420,11 +460,11 @@ export const authorizeRoles = (...roleNames) => {
 export const authorizePermissions = (...permissions) => {
   return (req, res, next) => {
     const userPermissions = req.user?.role?.permissions || {};
-    
-    const hasPermission = permissions.some(permission => 
-      userPermissions[permission] === true
+
+    const hasPermission = permissions.some(
+      (permission) => userPermissions[permission] === true
     );
-    
+
     if (!hasPermission) {
       return next(
         new ApiError(403, "You don't have permission to access this resource")
@@ -449,7 +489,7 @@ export const requireCompany = asyncHandler(async (req, res, next) => {
   if (req.user?.role?.name === 'SUPER_ADMIN') {
     return next();
   }
-  
+
   if (!req.user?.companyId) {
     throw new ApiError(
       400,
@@ -511,7 +551,14 @@ export const filterByRole = asyncHandler(async (req, res, next) => {
   const { user } = req;
 
   console.log('🔍 FILTER_BY_ROLE MIDDLEWARE CALLED');
-  console.log('User:', user?.name, 'ID:', user?.id, 'Company:', user?.companyId);
+  console.log(
+    'User:',
+    user?.name,
+    'ID:',
+    user?.id,
+    'Company:',
+    user?.companyId
+  );
 
   if (!user || !user.id) {
     req.roleFilter = {};
@@ -522,12 +569,12 @@ export const filterByRole = asyncHandler(async (req, res, next) => {
   // Get user's role permissions
   const userRole = await prisma.role.findUnique({
     where: { id: user.roleId },
-    select: { permissions: true, name: true }
+    select: { permissions: true, name: true },
   });
 
   const permissions = userRole?.permissions || {};
   console.log('Role:', userRole?.name, 'Permissions:', permissions);
-  
+
   // Check if user has company-wide data access permission
   if (permissions.canViewAllCompanyData === true) {
     req.roleFilter = {}; // Can see all company data
@@ -551,6 +598,11 @@ export const validateStaffManagement = asyncHandler(async (req, res, next) => {
     throw new ApiError(403, 'Only admins can manage staff accounts');
   }
 
+  // Super admins can update users from any company
+  if (user.role?.name === 'SUPER_ADMIN') {
+    return next();
+  }
+
   // If updating/deleting a user, ensure they belong to the same company
   if (targetUserId) {
     const targetUser = await prisma.user.findFirst({
@@ -561,11 +613,14 @@ export const validateStaffManagement = asyncHandler(async (req, res, next) => {
     });
 
     if (!targetUser) {
-      throw new ApiError(404, 'User not found in your company');
+      throw new ApiError(403, 'Cannot update user from different company');
     }
 
     // Prevent admins from modifying super admins
-    if (targetUser.role?.name === 'SUPER_ADMIN' && user.role?.name !== 'SUPER_ADMIN') {
+    if (
+      targetUser.role?.name === 'SUPER_ADMIN' &&
+      user.role?.name !== 'SUPER_ADMIN'
+    ) {
       throw new ApiError(403, 'Cannot modify super admin accounts');
     }
   }

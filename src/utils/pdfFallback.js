@@ -8,8 +8,16 @@ export const generatePDFFallback = async (htmlContent, pdfOptions = {}) => {
   let browser;
   try {
     // Find Chrome executable
-    const chromePath = path.join(os.homedir(), '.cache', 'puppeteer', 'chrome', 'win64-138.0.7204.94', 'chrome-win64', 'chrome.exe');
-    
+    const chromePath = path.join(
+      os.homedir(),
+      '.cache',
+      'puppeteer',
+      'chrome',
+      'win64-138.0.7204.94',
+      'chrome-win64',
+      'chrome.exe'
+    );
+
     const launchOptions = {
       headless: true,
       args: [
@@ -20,20 +28,20 @@ export const generatePDFFallback = async (htmlContent, pdfOptions = {}) => {
       ],
       timeout: 30000,
     };
-    
+
     // Add Chrome path if it exists
     if (existsSync(chromePath)) {
       launchOptions.executablePath = chromePath;
     }
-    
+
     browser = await puppeteer.launch(launchOptions);
 
     const page = await browser.newPage();
-    
+
     // Set simple content without waiting for network
-    await page.setContent(htmlContent, { 
+    await page.setContent(htmlContent, {
       waitUntil: 'domcontentloaded',
-      timeout: 20000 
+      timeout: 20000,
     });
 
     // Simple PDF options for single page

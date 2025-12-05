@@ -113,7 +113,10 @@ const getFullPackagingStructure = async (req, res) => {
     const hierarchy = await PackagingService.getPackagingHierarchy(categoryId);
 
     // Build the complete structure
-    const structure = PackagingService.buildPackagingStructure(category, hierarchy);
+    const structure = PackagingService.buildPackagingStructure(
+      category,
+      hierarchy
+    );
 
     res.json({
       success: true,
@@ -136,7 +139,12 @@ const convertUnits = async (req, res) => {
     const { categoryId, fromUnit, toUnit, quantity } = req.body;
 
     // Validate input
-    PackagingService.validateConversionInput(categoryId, fromUnit, toUnit, quantity);
+    PackagingService.validateConversionInput(
+      categoryId,
+      fromUnit,
+      toUnit,
+      quantity
+    );
 
     // Get packaging hierarchy for the category
     const hierarchy = await PackagingService.getPackagingHierarchy(categoryId);

@@ -43,11 +43,14 @@ const registerUser = async (userData) => {
 
   // Get default ADMIN role
   const defaultRole = await prisma.role.findUnique({
-    where: { name: 'ADMIN' }
+    where: { name: 'ADMIN' },
   });
 
   if (!defaultRole) {
-    throw new ApiError(500, 'Default ADMIN role not found. Please contact administrator.');
+    throw new ApiError(
+      500,
+      'Default ADMIN role not found. Please contact administrator.'
+    );
   }
 
   const hashedPassword = await bcrypt.hash(password, 12);
@@ -70,8 +73,8 @@ const registerUser = async (userData) => {
           id: true,
           name: true,
           displayName: true,
-          permissions: true
-        }
+          permissions: true,
+        },
       },
       status: true,
       createdAt: true,

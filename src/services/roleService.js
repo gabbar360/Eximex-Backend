@@ -2,18 +2,51 @@ import { prisma } from '../config/dbConfig.js';
 import { ApiError } from '../utils/ApiError.js';
 
 export const roleService = {
-  // Get all roles
-  async getAllRoles() {
-    return await prisma.role.findMany({
-      where: { isActive: true },
-      orderBy: { name: 'asc' }
-    });
+  // Get all roles with pagination
+  async getAllRoles(options = {}) {
+    const { page = 1, limit = 10, search = '' } = options;
+
+    const pageNum = parseInt(page) || 1;
+    const limitNum = parseInt(limit) || 10;
+    const skip = (pageNum - 1) * limitNum;
+
+    const where = { isActive: true };
+
+    if (search) {
+      where.OR = [
+        { name: { contains: search, mode: 'insensitive' } },
+        { displayName: { contains: search, mode: 'insensitive' } },
+        { description: { contains: search, mode: 'insensitive' } },
+      ];
+    }
+
+    const [roles, total] = await Promise.all([
+      prisma.role.findMany({
+        where,
+        orderBy: { name: 'asc' },
+        skip,
+        take: limitNum,
+      }),
+      prisma.role.count({ where }),
+    ]);
+
+    return {
+      data: roles,
+      pagination: {
+        page: pageNum,
+        limit: limitNum,
+        total,
+        totalPages: Math.ceil(total / limitNum),
+        hasNext: pageNum * limitNum < total,
+        hasPrev: pageNum > 1,
+      },
+    };
   },
 
   // Get role by ID
   async getRoleById(id) {
     const role = await prisma.role.findUnique({
-      where: { id: parseInt(id) }
+      where: { id: parseInt(id) },
     });
 
     if (!role) {
@@ -32,7 +65,7 @@ export const roleService = {
 
     // Check if role exists
     const existingRole = await prisma.role.findUnique({
-      where: { name: formattedName }
+      where: { name: formattedName },
     });
 
     if (existingRole) {
@@ -44,8 +77,8 @@ export const roleService = {
         name: formattedName,
         displayName,
         description,
-        isSystem: false
-      }
+        isSystem: false,
+      },
     });
   },
 
@@ -66,7 +99,7 @@ export const roleService = {
       const formattedName = name.trim().replace(/\s+/g, '_').toUpperCase();
 
       const existingRole = await prisma.role.findUnique({
-        where: { name: formattedName }
+        where: { name: formattedName },
       });
 
       if (existingRole && existingRole.id !== parseInt(id)) {
@@ -78,7 +111,7 @@ export const roleService = {
 
     return await prisma.role.update({
       where: { id: parseInt(id) },
-      data: updateData
+      data: updateData,
     });
   },
 
@@ -86,7 +119,7 @@ export const roleService = {
   async deleteRole(id) {
     const role = await prisma.role.findUnique({
       where: { id: parseInt(id) },
-      include: { users: true }
+      include: { users: true },
     });
 
     if (!role) {
@@ -102,9 +135,9 @@ export const roleService = {
     }
 
     await prisma.role.delete({
-      where: { id: parseInt(id) }
+      where: { id: parseInt(id) },
     });
 
     return true;
-  }
+  },
 };

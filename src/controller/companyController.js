@@ -1,11 +1,13 @@
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { ApiResponse } from '../utils/ApiResponse.js';
+import { ApiError } from '../utils/ApiError.js';
 import { CompanyService } from '../services/companyService.js';
 
 export const createCompany = asyncHandler(async (req, res) => {
   const company = await CompanyService.createCompany(
     req.body,
-    req.file || null,
+    req.files?.logo?.[0] || null,
+    req.files?.signature?.[0] || null,
     req.user.email
   );
 
@@ -17,12 +19,13 @@ export const createCompany = asyncHandler(async (req, res) => {
 export const updateCompany = asyncHandler(async (req, res) => {
   console.log('Update company request - ID:', req.params.id);
   console.log('Update company request - Body:', req.body);
-  console.log('Update company request - File:', req.file);
+  console.log('Update company request - Files:', req.files);
 
   const updated = await CompanyService.updateCompany(
     req.params.id,
     req.body,
-    req.file || null
+    req.files?.logo?.[0] || null,
+    req.files?.signature?.[0] || null
   );
 
   console.log('Company updated successfully:', updated);
@@ -54,4 +57,24 @@ export const deleteCompany = asyncHandler(async (req, res) => {
 export const restoreCompany = asyncHandler(async (req, res) => {
   const result = await CompanyService.restoreCompany(req.params.id);
   return res.status(200).json(new ApiResponse(200, null, result.message));
+});
+
+export const uploadSignature = asyncHandler(async (req, res) => {
+  const companyId = req.params.id;
+  const signatureFile = req.file;
+
+  if (!signatureFile) {
+    throw new ApiError(400, 'Signature file is required');
+  }
+
+  const updated = await CompanyService.updateCompany(
+    companyId,
+    {},
+    null,
+    signatureFile
+  );
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, updated, 'Signature uploaded successfully'));
 });

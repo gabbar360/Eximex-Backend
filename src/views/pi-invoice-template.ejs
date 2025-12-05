@@ -214,9 +214,9 @@
                     <th style="width: 8%;">HS Code</th>
                     <th style="width: 10%;">Quantity</th>
                     <th style="width: 6%;">Unit</th>
-                    <th style="width: 10%;">Rate USD</th>
+                    <th style="width: 10%;">Rate <%= piInvoice.currency || 'USD' %></th>
                     <th style="width: 10%;">Weight (Kgs)</th>
-                    <th style="width: 12%;">Amount USD</th>
+                    <th style="width: 12%;">Amount <%= piInvoice.currency || 'USD' %></th>
                 </tr>
             </thead>
             <tbody>
@@ -234,18 +234,24 @@
                                 <br><%= product.productDescription %>
                             <% } %>
                         </td>
-                        <td class="center"><%= product.hsCode || product.hsnCode || product.category?.hsnCode || product.product?.category?.hsnCode || '' %></td>
+                        <td class="center"><%= (product.hsCode && product.hsCode !== 'N/A') ? product.hsCode : (product.hsnCode && product.hsnCode !== 'N/A') ? product.hsnCode : product.category?.hsnCode || product.product?.category?.hsnCode || product.product?.hsCode || product.product?.hsnCode || 'N/A' %></td>
                         <td class="right"><%= product.quantity || 0 %></td>
                         <td class="center"><%= product.unit || 'PCS' %></td>
                         <td class="right"><%= (product.rate || 0) %></td>
                         <td class="right"><%= gross ? gross.toFixed(0) + 'kg' : '0kg' %></td>
-                        <td class="right">$ <%= (product.total || 0).toFixed(2) %></td>
+                        <td class="right"><%= piInvoice.currency === 'INR' ? '₹' : '$' %> <%= (product.total || 0).toFixed(2) %></td>
                     </tr>
                 <% }) %>
                 <tr class="bold header">
                     <td colspan="6" class="center">SUB TOTAL</td>
                     <td></td>
-                    <td class="right">$ <%= sumAmount.toFixed(2) %></td>
+                    <td class="right"><%= piInvoice.currency === 'INR' ? '₹' : '$' %> <%= sumAmount.toFixed(2) %></td>
+                </tr>
+                <tr class="bold">
+                    <td colspan="8">
+                        NET WEIGHT:- <%= (piInvoice.totalWeight || totalNet).toFixed(1) %> KG<br>
+                        GROSS WEIGHT:- <%= (piInvoice.totalGrossWeight || totalGross).toFixed(1) %> KG
+                    </td>
                 </tr>
             </tbody>
         </table>
@@ -265,7 +271,7 @@
         <table>
             <tr>
                 <td style="width: 70%;">
-                    <div class="bold">AMOUNT IN WORDS (USD) :-</div>
+                    <div class="bold">AMOUNT IN WORDS (<%= piInvoice.currency || 'USD' %>) :-</div>
                     <% 
                         const finalAmount = piInvoice.totalAmount || totalAmount;
                         function numberToWords(num) {
@@ -279,7 +285,8 @@
                             if (num < 1000000) return numberToWords(Math.floor(num/1000)) + ' THOUSAND' + (num%1000 ? ' ' + numberToWords(num%1000) : '');
                             return numberToWords(Math.floor(num/1000000)) + ' MILLION' + (num%1000000 ? ' ' + numberToWords(num%1000000) : '');
                         }
-                        const amountInWords = finalAmount ? numberToWords(Math.floor(finalAmount)) + ' DOLLARS ONLY' : '';
+                        const currencyWord = piInvoice.currency === 'INR' ? 'RUPEES' : 'DOLLARS';
+                        const amountInWords = finalAmount ? numberToWords(Math.floor(finalAmount)) + ' ' + currencyWord + ' ONLY' : '';
                     %>
                     <%= amountInWords %>
                 </td>
@@ -294,7 +301,7 @@
                                                 <%= charge.name.toUpperCase() %>:-
                                             </td>
                                             <td class="right" style="border: var(--inner); padding:8px 6px; font-weight:bold;">
-                                                <%= charge.amount && !isNaN(parseFloat(charge.amount)) ? '$' + parseFloat(charge.amount).toFixed(2) : '-' %>
+                                                <%= charge.amount && !isNaN(parseFloat(charge.amount)) ? (piInvoice.currency === 'INR' ? '₹' : '$') + parseFloat(charge.amount).toFixed(2) : '-' %>
                                             </td>
                                         </tr>
                                     <% }) %>
@@ -304,7 +311,7 @@
                                             <%= key.toUpperCase() %>:-
                                         </td>
                                         <td class="right" style="border: var(--inner); padding:8px 6px; font-weight:bold;">
-                                            <%= value && !isNaN(parseFloat(value)) ? '$' + parseFloat(value).toFixed(2) : '-' %>
+                                            <%= value && !isNaN(parseFloat(value)) ? (piInvoice.currency === 'INR' ? '₹' : '$') + parseFloat(value).toFixed(2) : '-' %>
                                         </td>
                                     </tr>
                                 <% } %>
@@ -313,7 +320,7 @@
                         <tr>
                             <td style="border: var(--inner); padding:8px 6px; font-weight:bold;">TOTAL AMOUNT:-</td>
                             <td class="right" style="border: var(--inner); padding:8px 6px; font-weight:bold;">
-                                $ <%= (piInvoice.totalAmount || totalAmount).toFixed(2) %>
+                                <%= piInvoice.currency === 'INR' ? '₹' : '$' %> <%= (piInvoice.totalAmount || totalAmount).toFixed(2) %>
                             </td>
                         </tr>
                     </table>
@@ -338,9 +345,17 @@
                         <strong>For, <%= piInvoice.company?.name || 'COMPANY NAME' %></strong>
                     </div>
                     <div style="height: 80px; display: flex; align-items: center; justify-content: center;">
-                        <div style="width: 100px; height: 100px; border: 1px dashed #ccc; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 8px; color: #999;">
-                            COMPANY<br>SEAL
-                        </div>
+                        <% const signatureUrl = piInvoice.company?.signature; %>
+                        <% const fullSignatureUrl = signatureUrl ? (signatureUrl.startsWith('http') ? signatureUrl : `http://localhost:8000${signatureUrl}`) : null; %>
+                        <% if (typeof signatureBase64 !== 'undefined' && signatureBase64) { %>
+                            <img src="data:image/*;base64,<%= signatureBase64 %>" alt="Signature" style="max-height: 60px; max-width: 120px; object-fit: contain;">
+                        <% } else if (fullSignatureUrl) { %>
+                            <img src="<%= fullSignatureUrl %>" alt="Signature" style="max-height: 60px; max-width: 120px; object-fit: contain;">
+                        <% } else { %>
+                            <div style="width: 120px; height: 60px; border: 1px dashed #ccc; display: flex; align-items: center; justify-content: center; font-size: 8px; color: #999;">
+                                SIGNATURE
+                            </div>
+                        <% } %>
                     </div>
                     <div style="margin-top: 10px;">
                         <div style="border-bottom: 1px solid #000; width: 120px; margin: 0 auto;"></div>

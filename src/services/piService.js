@@ -17,11 +17,11 @@ const generatePiNumber = async () => {
   const financialYear = date.getMonth() >= 3 ? currentYear : currentYear - 1; // April to March
   const nextYear = financialYear + 1;
   const yearSuffix = `${financialYear.toString().slice(-2)}-${nextYear.toString().slice(-2)}`;
-  
+
   const counter = await prisma.$transaction(async (tx) => {
     // Use financial year as key instead of daily date
     const yearKey = `${financialYear}-${nextYear}`;
-    
+
     const existing = await tx.piYearlyCounter.findUnique({
       where: { financialYear: yearKey },
     });
@@ -47,7 +47,7 @@ const generatePiNumber = async () => {
   } else {
     paddedCounter = counter.toString().padStart(4, '0');
   }
-  
+
   return `VGR-${paddedCounter}-${yearSuffix}`;
 };
 
@@ -111,41 +111,52 @@ const calculatePackingBreakdown = (product, quantity, unit) => {
   };
 };
 
-const calculateTotals = (products, charges = {}, containerType = null, frontendGrossWeight = null) => {
+const calculateTotals = (
+  products,
+  charges = {},
+  containerType = null,
+  frontendGrossWeight = null
+) => {
   const subtotal = products.reduce((sum, product) => sum + product.total, 0);
   const totalWeight = products.reduce(
     (sum, product) => sum + (product.totalWeight || 0),
     0
   );
-  
+
   // Use frontend calculated gross weight if provided, otherwise calculate
-  const totalGrossWeight = frontendGrossWeight !== null ? frontendGrossWeight : products.reduce((sum, product) => {
-    if (!product.productId) return sum;
-    
-    let boxes = 0;
-    
-    // Calculate boxes based on unit - same as frontend
-    if (product.unit === 'Box' || product.unit === 'box') {
-      boxes = product.quantity;
-    } else if (product.unit === 'pcs') {
-      boxes = product.quantity / 2000; // 50 pcs/pack × 40 pack/box
-    } else if (product.unit === 'package') {
-      boxes = product.quantity / 40; // 40 packages per box
-    } else {
-      boxes = product.quantity; // fallback assume it's boxes
-    }
-    
-    // Get gross weight per box from product data - same as frontend
-    let grossWeightPerBox = product.product?.packagingHierarchyData?.dynamicFields?.grossWeightPerBox || 
-                           product.product?.grossWeightPerBox || 10.06;
-    
-    // Convert to KG if in grams - same as frontend
-    if (grossWeightPerBox > 100) {
-      grossWeightPerBox = grossWeightPerBox / 1000;
-    }
-    
-    return sum + (boxes * grossWeightPerBox);
-  }, 0);
+  const totalGrossWeight =
+    frontendGrossWeight !== null
+      ? frontendGrossWeight
+      : products.reduce((sum, product) => {
+          if (!product.productId) return sum;
+
+          let boxes = 0;
+
+          // Calculate boxes based on unit - same as frontend
+          if (product.unit === 'Box' || product.unit === 'box') {
+            boxes = product.quantity;
+          } else if (product.unit === 'pcs') {
+            boxes = product.quantity / 2000; // 50 pcs/pack × 40 pack/box
+          } else if (product.unit === 'package') {
+            boxes = product.quantity / 40; // 40 packages per box
+          } else {
+            boxes = product.quantity; // fallback assume it's boxes
+          }
+
+          // Get gross weight per box from product data - same as frontend
+          let grossWeightPerBox =
+            product.product?.packagingHierarchyData?.dynamicFields
+              ?.grossWeightPerBox ||
+            product.product?.grossWeightPerBox ||
+            10.06;
+
+          // Convert to KG if in grams - same as frontend
+          if (grossWeightPerBox > 100) {
+            grossWeightPerBox = grossWeightPerBox / 1000;
+          }
+
+          return sum + boxes * grossWeightPerBox;
+        }, 0);
   const chargesTotal = Object.values(charges).reduce(
     (sum, charge) => sum + (parseFloat(charge) || 0),
     0
@@ -207,7 +218,7 @@ const createPiInvoice = async (data, userId, req = {}) => {
   if (!companyId) {
     throw new ApiError(400, 'Company ID is required');
   }
-  
+
   // Log the received gross weight from frontend
   console.log('Frontend totalGrossWeight received:', piData.totalGrossWeight);
 
@@ -272,12 +283,15 @@ const createPiInvoice = async (data, userId, req = {}) => {
 
       if (productsWithTotals.length > 0) {
         await tx.piProduct.createMany({
-          data: productsWithTotals.map((product, index) => ({
-            ...product,
-            piInvoiceId: pi.id,
-            companyId: companyId,
-            lineNumber: index + 1,
-          })),
+          data: productsWithTotals.map((product, index) => {
+            const { packagingCalculation, ...productData } = product;
+            return {
+              ...productData,
+              piInvoiceId: pi.id,
+              companyId: companyId,
+              lineNumber: index + 1,
+            };
+          }),
         });
       }
 
@@ -408,9 +422,12 @@ const updatePiInvoice = async (id, data, userId, companyId, req = {}) => {
 
   // Separate products and exclude companyId from update data
   const { products, companyId: _, ...piData } = data;
-  
+
   // Log the received gross weight from frontend
-  console.log('Frontend totalGrossWeight received for update:', piData.totalGrossWeight);
+  console.log(
+    'Frontend totalGrossWeight received for update:',
+    piData.totalGrossWeight
+  );
 
   try {
     const updatedPi = await prisma.$transaction(async (tx) => {
@@ -456,7 +473,10 @@ const updatePiInvoice = async (id, data, userId, companyId, req = {}) => {
         });
 
         await tx.piProduct.createMany({
-          data: productsWithTotals,
+          data: productsWithTotals.map((product) => {
+            const { packagingCalculation, ...productData } = product;
+            return productData;
+          }),
         });
 
         // Use new products for calculation

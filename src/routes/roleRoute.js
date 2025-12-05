@@ -5,7 +5,7 @@ import {
   getRoleById,
   createRole,
   updateRole,
-  deleteRole
+  deleteRole,
 } from '../controller/roleController.js';
 
 const router = Router();
@@ -17,12 +17,27 @@ router.get('/getroles', verifyJWT, getAllRoles);
 router.get('/getroles/:id', verifyJWT, getRoleById);
 
 // Create role (Super Admin only)
-router.post('/create-role', verifyJWT, authorizeRoles('SUPER_ADMIN'), createRole);
+router.post(
+  '/create-role',
+  verifyJWT,
+  authorizeRoles('SUPER_ADMIN'),
+  createRole
+);
 
 // Update role (Super Admin only)
-router.put('/update-roles/:id', verifyJWT, authorizeRoles('SUPER_ADMIN'), updateRole);
+router.put(
+  '/update-roles/:id',
+  verifyJWT,
+  authorizeRoles('SUPER_ADMIN'),
+  updateRole
+);
 
 // Delete role (Super Admin only)
-router.delete('/delete-roles/:id', verifyJWT, authorizeRoles('SUPER_ADMIN'), deleteRole);
+router.delete(
+  '/delete-roles/:id',
+  verifyJWT,
+  authorizeRoles('SUPER_ADMIN'),
+  deleteRole
+);
 
 export default router;

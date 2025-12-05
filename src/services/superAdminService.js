@@ -21,23 +21,61 @@ const transporter = nodemailer.createTransport({
 });
 
 export const superAdminService = {
-  // Get all users
-  async getAllUsers() {
-    return await prisma.user.findMany({
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        roleId: true,
-        companyId: true,
-        status: true,
-        isBlocked: true,
-        createdAt: true,
-        role: true,
-        company: true
-      },
-      orderBy: { createdAt: 'desc' }
-    });
+  // Get all users with pagination
+  async getAllUsers(options = {}) {
+    try {
+      const { page = 1, limit = 10, search = '' } = options;
+
+      const pageNum = Math.max(1, parseInt(page) || 1);
+      const limitNum = Math.min(100, Math.max(1, parseInt(limit) || 10));
+      const skip = (pageNum - 1) * limitNum;
+
+      const where = {};
+
+      if (search && search.trim()) {
+        where.OR = [
+          { name: { contains: search.trim(), mode: 'insensitive' } },
+          { email: { contains: search.trim(), mode: 'insensitive' } },
+        ];
+      }
+
+      const [users, total] = await Promise.all([
+        prisma.user.findMany({
+          where,
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            roleId: true,
+            companyId: true,
+            status: true,
+            isBlocked: true,
+            createdAt: true,
+            role: true,
+            company: true,
+          },
+          orderBy: { createdAt: 'desc' },
+          skip,
+          take: limitNum,
+        }),
+        prisma.user.count({ where }),
+      ]);
+
+      return {
+        data: users,
+        pagination: {
+          page: pageNum,
+          limit: limitNum,
+          total,
+          totalPages: Math.ceil(total / limitNum),
+          hasNext: pageNum * limitNum < total,
+          hasPrev: pageNum > 1,
+        },
+      };
+    } catch (error) {
+      console.error('Error in getAllUsers:', error);
+      throw new ApiError(500, 'Database error while fetching users');
+    }
   },
 
   // Get user by ID
@@ -58,10 +96,10 @@ export const superAdminService = {
         company: true,
         userPermissions: {
           include: {
-            menuItem: true
-          }
-        }
-      }
+            menuItem: true,
+          },
+        },
+      },
     });
 
     if (!user) {
@@ -73,10 +111,17 @@ export const superAdminService = {
 
   // Create user with invitation
   async createUser(data) {
-    const { name, email, password, roleId, companyId, sendInvitation = true } = data;
+    const {
+      name,
+      email,
+      password,
+      roleId,
+      companyId,
+      sendInvitation = true,
+    } = data;
 
     const existingUser = await prisma.user.findUnique({
-      where: { email }
+      where: { email },
     });
 
     if (existingUser) {
@@ -87,7 +132,7 @@ export const superAdminService = {
       name,
       email,
       roleId: parseInt(roleId),
-      companyId: companyId ? parseInt(companyId) : null
+      companyId: companyId ? parseInt(companyId) : null,
     };
 
     // If password provided, hash it and set user as active
@@ -98,7 +143,7 @@ export const superAdminService = {
       // No password - send invitation
       const invitationToken = crypto.randomBytes(32).toString('hex');
       const tokenExpiry = new Date(Date.now() + 30 * 60 * 1000); // 30 minutes
-      
+
       userData.password = null;
       userData.status = 'INVITED';
       userData.resetPasswordToken = invitationToken;
@@ -109,14 +154,20 @@ export const superAdminService = {
       data: userData,
       include: {
         role: true,
-        company: true
-      }
+        company: true,
+      },
     });
 
     // Send invitation email if no password was provided
     if (!password || password.trim() === '') {
       try {
-        await this.sendInvitationEmail(user.email, user.name, userData.resetPasswordToken, user.role?.displayName, user.company?.name);
+        await this.sendInvitationEmail(
+          user.email,
+          user.name,
+          userData.resetPasswordToken,
+          user.role?.displayName,
+          user.company?.name
+        );
       } catch (emailError) {
         console.error('Failed to send invitation email:', emailError);
       }
@@ -126,16 +177,22 @@ export const superAdminService = {
   },
 
   // Send invitation email
-  async sendInvitationEmail(email, userName, invitationToken, userRole, companyName) {
+  async sendInvitationEmail(
+    email,
+    userName,
+    invitationToken,
+    userRole,
+    companyName
+  ) {
     const invitationLink = `${process.env.FRONTEND_URL}/set-password?token=${invitationToken}`;
-    console.log("link", invitationLink)
+    console.log('link', invitationLink);
     console.log('🔗 Invitation link generated:', invitationLink);
 
     const templatePath = path.join(
       __dirname,
       '../views/user-invitation-template.ejs'
     );
-    
+
     const htmlContent = await ejs.renderFile(templatePath, {
       userName,
       userEmail: email,
@@ -163,8 +220,8 @@ export const superAdminService = {
         resetPasswordTokenExpiry: {
           gt: new Date(),
         },
-        status: 'INVITED'
-      }
+        status: 'INVITED',
+      },
     });
 
     if (!user) {
@@ -180,14 +237,14 @@ export const superAdminService = {
         status: 'ACTIVE',
         resetPasswordToken: null,
         resetPasswordTokenExpiry: null,
-        isEmailVerified: true
+        isEmailVerified: true,
       },
       select: {
         id: true,
         name: true,
         email: true,
-        status: true
-      }
+        status: true,
+      },
     });
   },
 
@@ -196,12 +253,13 @@ export const superAdminService = {
     const { name, email, password, roleId, companyId, status } = data;
 
     const updateData = {};
-    
+
     // Only update fields that are provided
     if (name !== undefined) updateData.name = name;
     if (email !== undefined) updateData.email = email;
     if (roleId !== undefined) updateData.roleId = parseInt(roleId);
-    if (companyId !== undefined) updateData.companyId = companyId ? parseInt(companyId) : null;
+    if (companyId !== undefined)
+      updateData.companyId = companyId ? parseInt(companyId) : null;
     if (status !== undefined) updateData.status = status;
 
     // Hash password if provided
@@ -222,17 +280,198 @@ export const superAdminService = {
         isBlocked: true,
         createdAt: true,
         role: true,
-        company: true
-      }
+        company: true,
+      },
     });
   },
 
   // Delete user
   async deleteUser(id) {
     await prisma.user.delete({
-      where: { id: parseInt(id) }
+      where: { id: parseInt(id) },
     });
 
     return true;
-  }
+  },
+
+  // Assign company to user
+  async assignCompanyToUser(userId, companyId) {
+    const user = await prisma.user.findUnique({
+      where: { id: parseInt(userId) },
+    });
+
+    if (!user) {
+      throw new ApiError(404, 'User not found');
+    }
+
+    const company = await prisma.companyDetails.findUnique({
+      where: { id: parseInt(companyId) },
+    });
+
+    if (!company) {
+      throw new ApiError(404, 'Company not found');
+    }
+
+    return await prisma.user.update({
+      where: { id: parseInt(userId) },
+      data: { companyId: parseInt(companyId) },
+      include: {
+        role: true,
+        company: true,
+      },
+    });
+  },
+
+  // Get all companies with pagination
+  async getAllCompanies(options = {}) {
+    const { page = 1, limit = 10, search = '' } = options;
+
+    const pageNum = parseInt(page) || 1;
+    const limitNum = parseInt(limit) || 10;
+    const skip = (pageNum - 1) * limitNum;
+
+    const where = {};
+
+    if (search) {
+      where.OR = [
+        { name: { contains: search, mode: 'insensitive' } },
+        { email: { contains: search, mode: 'insensitive' } },
+      ];
+    }
+
+    const [companies, total] = await Promise.all([
+      prisma.companyDetails.findMany({
+        where,
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          address: true,
+          phoneNo: true,
+          gstNumber: true,
+          iecNumber: true,
+          defaultCurrency: true,
+          bankName: true,
+          accountNumber: true,
+          ifscCode: true,
+          bankAddress: true,
+          swiftCode: true,
+          logo: true,
+          signature: true,
+          isActive: true,
+          createdAt: true,
+          _count: {
+            select: {
+              users: true,
+            },
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limitNum,
+      }),
+      prisma.companyDetails.count({ where }),
+    ]);
+
+    return {
+      data: companies,
+      pagination: {
+        page: pageNum,
+        limit: limitNum,
+        total,
+        totalPages: Math.ceil(total / limitNum),
+        hasNext: pageNum * limitNum < total,
+        hasPrev: pageNum > 1,
+      },
+    };
+  },
+
+  // Create company by SuperAdmin
+  async createCompany(data) {
+    const {
+      name,
+      email,
+      address,
+      phoneNo,
+      gstNumber,
+      iecNumber,
+      defaultCurrency = 'USD',
+      bankName,
+      accountNumber,
+      ifscCode,
+      bankAddress,
+      swiftCode,
+    } = data;
+
+    const existingCompany = await prisma.companyDetails.findFirst({
+      where: {
+        OR: [
+          { name: { equals: name, mode: 'insensitive' } },
+          { email: email },
+          { gstNumber: gstNumber },
+          { iecNumber: iecNumber },
+        ],
+      },
+    });
+
+    if (existingCompany) {
+      throw new ApiError(
+        400,
+        'Company with this name, email, GST, or IEC already exists'
+      );
+    }
+
+    return await prisma.companyDetails.create({
+      data: {
+        name,
+        email,
+        address,
+        phoneNo,
+        gstNumber,
+        iecNumber,
+        currencies: [defaultCurrency],
+        defaultCurrency,
+        allowedUnits: ['sqm', 'kg', 'pcs', 'box'],
+        bankName,
+        accountNumber,
+        ifscCode,
+        bankAddress,
+        swiftCode,
+        planId: 'trial',
+      },
+    });
+  },
+
+  // Update company
+  async updateCompany(id, data) {
+    const company = await prisma.companyDetails.findUnique({
+      where: { id: parseInt(id) },
+    });
+
+    if (!company) {
+      throw new ApiError(404, 'Company not found');
+    }
+
+    return await prisma.companyDetails.update({
+      where: { id: parseInt(id) },
+      data,
+    });
+  },
+
+  // Delete company
+  async deleteCompany(id) {
+    const company = await prisma.companyDetails.findUnique({
+      where: { id: parseInt(id) },
+    });
+
+    if (!company) {
+      throw new ApiError(404, 'Company not found');
+    }
+
+    await prisma.companyDetails.delete({
+      where: { id: parseInt(id) },
+    });
+
+    return true;
+  },
 };

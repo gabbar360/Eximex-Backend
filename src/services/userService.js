@@ -166,7 +166,7 @@ const updateUser = async (userId, updateData, updatingUser = null) => {
   if (!existingUser) throw new ApiError(404, 'User not found');
 
   // Ensure user belongs to same company (for non-super-admins)
-  if (updatingUser && updatingUser.role !== 'SUPER_ADMIN') {
+  if (updatingUser && updatingUser.role?.name !== 'SUPER_ADMIN') {
     if (existingUser.companyId !== updatingUser.companyId) {
       throw new ApiError(403, 'Cannot update user from different company');
     }
@@ -544,17 +544,25 @@ const getSuperAdminDashboardStats = async () => {
   const cached = cacheManager.get(cacheKey);
   if (cached) return cached;
 
-  const [parties, products, piInvoices, orders, vgmDocuments, companies, users, categories] =
-    await Promise.all([
-      prisma.partyList.count(),
-      prisma.product.count(),
-      prisma.piInvoice.count(),
-      prisma.order.count(),
-      prisma.vgmDocument.count(),
-      prisma.companyDetails.count(),
-      prisma.user.count({ where: { status: { not: 'DELETED' } } }),
-      prisma.itemCategory.count(),
-    ]);
+  const [
+    parties,
+    products,
+    piInvoices,
+    orders,
+    vgmDocuments,
+    companies,
+    users,
+    categories,
+  ] = await Promise.all([
+    prisma.partyList.count(),
+    prisma.product.count(),
+    prisma.piInvoice.count(),
+    prisma.order.count(),
+    prisma.vgmDocument.count(),
+    prisma.companyDetails.count(),
+    prisma.user.count({ where: { status: { not: 'DELETED' } } }),
+    prisma.itemCategory.count(),
+  ]);
 
   const stats = {
     parties,
@@ -574,105 +582,114 @@ const getSuperAdminDashboardStats = async () => {
 // Enhanced Super Admin functions for complete database access
 const getAllDatabaseData = async (options = {}) => {
   const { table = '', limit = 100, page = 1 } = options;
-  
+
   const allData = {};
-  
+
   try {
     // Get all main tables data
-    const [users, companies, parties, products, piInvoices, orders, vgmDocuments, categories, packagingUnits] = 
-      await Promise.all([
-        prisma.user.findMany({
-          take: Number(limit),
-          skip: (Number(page) - 1) * Number(limit),
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            role: true,
-            status: true,
-            isBlocked: true,
-            lastLogin: true,
-            createdAt: true,
-            companyId: true,
-            company: { select: { name: true } }
+    const [
+      users,
+      companies,
+      parties,
+      products,
+      piInvoices,
+      orders,
+      vgmDocuments,
+      categories,
+      packagingUnits,
+    ] = await Promise.all([
+      prisma.user.findMany({
+        take: Number(limit),
+        skip: (Number(page) - 1) * Number(limit),
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true,
+          status: true,
+          isBlocked: true,
+          lastLogin: true,
+          createdAt: true,
+          companyId: true,
+          company: { select: { name: true } },
+        },
+        orderBy: { createdAt: 'desc' },
+      }),
+      prisma.companyDetails.findMany({
+        take: Number(limit),
+        skip: (Number(page) - 1) * Number(limit),
+        include: {
+          _count: {
+            select: {
+              users: true,
+              parties: true,
+              products: true,
+            },
           },
-          orderBy: { createdAt: 'desc' }
-        }),
-        prisma.companyDetails.findMany({
-          take: Number(limit),
-          skip: (Number(page) - 1) * Number(limit),
-          include: {
-            _count: {
-              select: {
-                users: true,
-                parties: true,
-                products: true
-              }
-            }
-          },
-          orderBy: { createdAt: 'desc' }
-        }),
-        prisma.partyList.findMany({
-          take: Number(limit),
-          skip: (Number(page) - 1) * Number(limit),
-          include: {
-            company: { select: { name: true } },
-            creator: { select: { name: true, email: true } }
-          },
-          orderBy: { createdAt: 'desc' }
-        }),
-        prisma.product.findMany({
-          take: Number(limit),
-          skip: (Number(page) - 1) * Number(limit),
-          include: {
-            company: { select: { name: true } },
-            user: { select: { name: true, email: true } },
-            category: { select: { name: true } }
-          },
-          orderBy: { createdAt: 'desc' }
-        }),
-        prisma.piInvoice.findMany({
-          take: Number(limit),
-          skip: (Number(page) - 1) * Number(limit),
-          include: {
-            company: { select: { name: true } },
-            creator: { select: { name: true, email: true } }
-          },
-          orderBy: { createdAt: 'desc' }
-        }),
-        prisma.order.findMany({
-          take: Number(limit),
-          skip: (Number(page) - 1) * Number(limit),
-          include: {
-            company: { select: { name: true } },
-            creator: { select: { name: true, email: true } }
-          },
-          orderBy: { createdAt: 'desc' }
-        }),
-        prisma.vgmDocument.findMany({
-          take: Number(limit),
-          skip: (Number(page) - 1) * Number(limit),
-          include: {
-            company: { select: { name: true } },
-            creator: { select: { name: true, email: true } }
-          },
-          orderBy: { createdAt: 'desc' }
-        }),
-        prisma.itemCategory.findMany({
-          take: Number(limit),
-          skip: (Number(page) - 1) * Number(limit),
-          include: {
-            CompanyDetails: { select: { name: true } },
-            User: { select: { name: true, email: true } }
-          },
-          orderBy: { createdAt: 'desc' }
-        }),
-        prisma.packagingUnit.findMany({
-          take: Number(limit),
-          skip: (Number(page) - 1) * Number(limit),
-          orderBy: { createdAt: 'desc' }
-        })
-      ]);
+        },
+        orderBy: { createdAt: 'desc' },
+      }),
+      prisma.partyList.findMany({
+        take: Number(limit),
+        skip: (Number(page) - 1) * Number(limit),
+        include: {
+          company: { select: { name: true } },
+          creator: { select: { name: true, email: true } },
+        },
+        orderBy: { createdAt: 'desc' },
+      }),
+      prisma.product.findMany({
+        take: Number(limit),
+        skip: (Number(page) - 1) * Number(limit),
+        include: {
+          company: { select: { name: true } },
+          user: { select: { name: true, email: true } },
+          category: { select: { name: true } },
+        },
+        orderBy: { createdAt: 'desc' },
+      }),
+      prisma.piInvoice.findMany({
+        take: Number(limit),
+        skip: (Number(page) - 1) * Number(limit),
+        include: {
+          company: { select: { name: true } },
+          creator: { select: { name: true, email: true } },
+        },
+        orderBy: { createdAt: 'desc' },
+      }),
+      prisma.order.findMany({
+        take: Number(limit),
+        skip: (Number(page) - 1) * Number(limit),
+        include: {
+          company: { select: { name: true } },
+          creator: { select: { name: true, email: true } },
+        },
+        orderBy: { createdAt: 'desc' },
+      }),
+      prisma.vgmDocument.findMany({
+        take: Number(limit),
+        skip: (Number(page) - 1) * Number(limit),
+        include: {
+          company: { select: { name: true } },
+          creator: { select: { name: true, email: true } },
+        },
+        orderBy: { createdAt: 'desc' },
+      }),
+      prisma.itemCategory.findMany({
+        take: Number(limit),
+        skip: (Number(page) - 1) * Number(limit),
+        include: {
+          CompanyDetails: { select: { name: true } },
+          User: { select: { name: true, email: true } },
+        },
+        orderBy: { createdAt: 'desc' },
+      }),
+      prisma.packagingUnit.findMany({
+        take: Number(limit),
+        skip: (Number(page) - 1) * Number(limit),
+        orderBy: { createdAt: 'desc' },
+      }),
+    ]);
 
     allData.users = users;
     allData.companies = companies;
@@ -694,7 +711,7 @@ const getAllDatabaseData = async (options = {}) => {
       prisma.order.count(),
       prisma.vgmDocument.count(),
       prisma.itemCategory.count(),
-      prisma.packagingUnit.count()
+      prisma.packagingUnit.count(),
     ]);
 
     allData.counts = {
@@ -706,7 +723,7 @@ const getAllDatabaseData = async (options = {}) => {
       orders: counts[5],
       vgmDocuments: counts[6],
       categories: counts[7],
-      packagingUnits: counts[8]
+      packagingUnits: counts[8],
     };
 
     return allData;
@@ -766,9 +783,9 @@ const getAllCompanies = async (options = {}) => {
           parties: true,
           products: true,
           piInvoices: true,
-          orders: true
-        }
-      }
+          orders: true,
+        },
+      },
     },
     orderBy,
     page: Number(page),
@@ -788,9 +805,9 @@ const getCompanyDetails = async (companyId) => {
           role: true,
           status: true,
           lastLogin: true,
-          createdAt: true
+          createdAt: true,
         },
-        orderBy: { createdAt: 'desc' }
+        orderBy: { createdAt: 'desc' },
       },
       _count: {
         select: {
@@ -799,10 +816,10 @@ const getCompanyDetails = async (companyId) => {
           products: true,
           piInvoices: true,
           orders: true,
-          vgmDocuments: true
-        }
-      }
-    }
+          vgmDocuments: true,
+        },
+      },
+    },
   });
 
   if (!company) throw new ApiError(404, 'Company not found');
@@ -822,78 +839,82 @@ const getAllTables = async () => {
       { name: 'vgmDocuments', description: 'VGM Documents' },
       { name: 'categories', description: 'Item categories' },
       { name: 'packagingUnits', description: 'Packaging units' },
-
-    ]
+    ],
   };
 };
 
 const getTableData = async (tableName, options = {}) => {
   const { page = 1, limit = 50, search = '' } = options;
-  
+
   let data = [];
   let count = 0;
-  
+
   try {
     switch (tableName) {
       case 'users':
-        const userWhere = search ? {
-          OR: [
-            { name: { contains: search, mode: 'insensitive' } },
-            { email: { contains: search, mode: 'insensitive' } }
-          ]
-        } : {};
-        
+        const userWhere = search
+          ? {
+              OR: [
+                { name: { contains: search, mode: 'insensitive' } },
+                { email: { contains: search, mode: 'insensitive' } },
+              ],
+            }
+          : {};
+
         [data, count] = await Promise.all([
           prisma.user.findMany({
             where: userWhere,
             include: { company: { select: { name: true } } },
             take: Number(limit),
             skip: (Number(page) - 1) * Number(limit),
-            orderBy: { createdAt: 'desc' }
+            orderBy: { createdAt: 'desc' },
           }),
-          prisma.user.count({ where: userWhere })
+          prisma.user.count({ where: userWhere }),
         ]);
         break;
-        
+
       case 'companies':
-        const companyWhere = search ? {
-          OR: [
-            { name: { contains: search, mode: 'insensitive' } },
-            { email: { contains: search, mode: 'insensitive' } }
-          ]
-        } : {};
-        
+        const companyWhere = search
+          ? {
+              OR: [
+                { name: { contains: search, mode: 'insensitive' } },
+                { email: { contains: search, mode: 'insensitive' } },
+              ],
+            }
+          : {};
+
         [data, count] = await Promise.all([
           prisma.companyDetails.findMany({
             where: companyWhere,
             include: {
-              _count: { select: { users: true, products: true } }
+              _count: { select: { users: true, products: true } },
             },
             take: Number(limit),
             skip: (Number(page) - 1) * Number(limit),
-            orderBy: { createdAt: 'desc' }
+            orderBy: { createdAt: 'desc' },
           }),
-          prisma.companyDetails.count({ where: companyWhere })
+          prisma.companyDetails.count({ where: companyWhere }),
         ]);
         break;
-        
 
-        
       default:
         throw new ApiError(400, 'Invalid table name');
     }
-    
+
     return {
       data,
       pagination: {
         page: Number(page),
         limit: Number(limit),
         total: count,
-        pages: Math.ceil(count / Number(limit))
-      }
+        pages: Math.ceil(count / Number(limit)),
+      },
     };
   } catch (error) {
-    throw new ApiError(500, `Error fetching ${tableName} data: ${error.message}`);
+    throw new ApiError(
+      500,
+      `Error fetching ${tableName} data: ${error.message}`
+    );
   }
 };
 

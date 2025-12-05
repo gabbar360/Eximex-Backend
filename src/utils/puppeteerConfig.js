@@ -8,14 +8,20 @@ import { generateSimplePDF } from './simplePdf.js';
 
 // Function to find Chrome executable
 const findChromeExecutable = () => {
-  const possiblePaths = [
-    process.env.PUPPETEER_EXECUTABLE_PATH,
-  ];
+  const possiblePaths = [process.env.PUPPETEER_EXECUTABLE_PATH];
 
   // Add platform-specific paths
   if (process.platform === 'win32') {
     possiblePaths.push(
-      path.join(os.homedir(), '.cache', 'puppeteer', 'chrome', 'win64-138.0.7204.94', 'chrome-win64', 'chrome.exe'),
+      path.join(
+        os.homedir(),
+        '.cache',
+        'puppeteer',
+        'chrome',
+        'win64-138.0.7204.94',
+        'chrome-win64',
+        'chrome.exe'
+      ),
       'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
       'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe'
     );
@@ -135,7 +141,7 @@ export const generatePDF = async (htmlContent, pdfOptions = {}) => {
     page.setDefaultNavigationTimeout(60000);
 
     await page.setViewport({ width: 1200, height: 800 });
-    
+
     // Set content with better error handling
     await page.setContent(htmlContent, {
       waitUntil: 'domcontentloaded',
@@ -143,7 +149,7 @@ export const generatePDF = async (htmlContent, pdfOptions = {}) => {
     });
 
     // Wait for content to render
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await new Promise((resolve) => setTimeout(resolve, 1000));
 
     const defaultOptions = {
       format: 'A4',
@@ -165,9 +171,12 @@ export const generatePDF = async (htmlContent, pdfOptions = {}) => {
     return pdfBuffer;
   } catch (error) {
     console.error('PDF generation error:', error);
-    
+
     // Try fallback method if main method fails
-    if (error.message.includes('Target closed') || error.message.includes('Protocol error')) {
+    if (
+      error.message.includes('Target closed') ||
+      error.message.includes('Protocol error')
+    ) {
       console.log('Attempting fallback PDF generation...');
       try {
         return await generatePDFFallback(htmlContent, pdfOptions);
@@ -178,11 +187,13 @@ export const generatePDF = async (htmlContent, pdfOptions = {}) => {
           return await generateSimplePDF(htmlContent);
         } catch (simpleError) {
           console.error('Simple PDF generation also failed:', simpleError);
-          throw new Error(`All PDF generation methods failed. Main: ${error.message}, Fallback: ${fallbackError.message}, Simple: ${simpleError.message}`);
+          throw new Error(
+            `All PDF generation methods failed. Main: ${error.message}, Fallback: ${fallbackError.message}, Simple: ${simpleError.message}`
+          );
         }
       }
     }
-    
+
     throw new Error(`Failed to generate PDF: ${error.message}`);
   } finally {
     try {

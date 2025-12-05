@@ -196,7 +196,9 @@ export const getCompanyDetails = asyncHandler(async (req, res) => {
 
   return res
     .status(200)
-    .json(new ApiResponse(200, company, 'Company details fetched successfully'));
+    .json(
+      new ApiResponse(200, company, 'Company details fetched successfully')
+    );
 });
 
 export const getAllTables = asyncHandler(async (req, res) => {
@@ -212,5 +214,11 @@ export const getTableData = asyncHandler(async (req, res) => {
 
   return res
     .status(200)
-    .json(new ApiResponse(200, data, `${req.params.tableName} data fetched successfully`));
+    .json(
+      new ApiResponse(
+        200,
+        data,
+        `${req.params.tableName} data fetched successfully`
+      )
+    );
 });

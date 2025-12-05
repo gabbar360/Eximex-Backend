@@ -1,7 +1,7 @@
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { ProductService } from '../services/productService.js';
 import { ApiResponse } from '../utils/ApiResponse.js';
-
+import { ApiError } from '../utils/ApiError.js';
 
 export const createProduct = asyncHandler(async (req, res) => {
   const product = await ProductService.createProduct(
@@ -64,8 +64,42 @@ export const getProductStats = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, stats, 'Product stats fetched successfully'));
 });
 
+// Bulk Upload
+export const bulkUploadProducts = asyncHandler(async (req, res) => {
+  if (!req.file) {
+    throw new ApiError(400, 'Excel file is required');
+  }
+
+  const result = await ProductService.processProductExcel(
+    req.file,
+    req.user.id,
+    req.user.companyId
+  );
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(200, result, result.message || 'Bulk upload completed')
+    );
+});
+
+export const downloadTemplate = asyncHandler(async (req, res) => {
+  const { categoryId } = req.query;
+  const buffer = await ProductService.downloadTemplate(
+    req.user.companyId,
+    categoryId
+  );
+
+  res.setHeader(
+    'Content-Type',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+  );
+  res.setHeader(
+    'Content-Disposition',
+    'attachment; filename=product-template.xlsx'
+  );
+
+  return res.send(buffer);
+});
+
 // Product Variant CRUD
-
-
-
-
