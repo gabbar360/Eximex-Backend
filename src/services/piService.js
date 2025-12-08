@@ -53,55 +53,63 @@ const generatePiNumber = async () => {
 
 // Enhanced packing breakdown calculation
 const calculatePackingBreakdown = (product, quantity, unit) => {
-  if (!product.packingHierarchy) {
+  if (!product.packagingHierarchyData?.dynamicFields) {
     return null;
   }
 
-  const hierarchy = product.packingHierarchy;
+  const dynamicFields = product.packagingHierarchyData.dynamicFields;
   let boxes = 0;
   let pallets = 0;
   let totalWeight = 0;
   let totalCBM = 0;
 
   // Calculate based on input unit
-  switch (unit) {
-    case 'pcs':
-      boxes = Math.ceil(quantity / hierarchy.conversionRates.piecesPerBox);
-      totalWeight = quantity * hierarchy.weights.weightPerPiece;
-      break;
-    case 'kg':
-      const pieces = quantity / hierarchy.weights.weightPerPiece;
-      boxes = Math.ceil(pieces / hierarchy.conversionRates.piecesPerBox);
-      totalWeight = quantity;
-      break;
-    case 'box':
-      boxes = quantity;
-      totalWeight = quantity * hierarchy.weights.weightPerBox;
-      break;
-    case 'pallet':
-      pallets = quantity;
-      boxes = quantity * hierarchy.conversionRates.boxesPerPallet;
-      totalWeight = quantity * hierarchy.weights.weightPerPallet;
-      break;
+  switch (unit.toLowerCase()) {
+    case 'square meter':
     case 'sqm':
     case 'm²':
-      boxes = Math.ceil(quantity / hierarchy.conversionRates.piecesPerBox);
-      totalWeight = quantity * hierarchy.weights.weightPerPiece;
+      const sqmPerBox = dynamicFields['Square MeterPerBox'] || dynamicFields['sqmPerBox'] || 1;
+      boxes = Math.ceil(quantity / sqmPerBox);
+      const weightPerSqm = dynamicFields['weightPerSquare Meter'] || dynamicFields['weightPerSqm'] || 0;
+      totalWeight = quantity * weightPerSqm;
+      break;
+    case 'pcs':
+    case 'pieces':
+      const piecesPerBox = dynamicFields['PiecesPerBox'] || dynamicFields['piecesPerBox'] || 1;
+      boxes = Math.ceil(quantity / piecesPerBox);
+      const weightPerPiece = dynamicFields['weightPerPiece'] || 0;
+      totalWeight = quantity * weightPerPiece;
+      break;
+    case 'box':
+    case 'boxes':
+      boxes = quantity;
+      const weightPerBox = dynamicFields['weightPerBox'] || dynamicFields['grossWeightPerBox'] || 0;
+      totalWeight = quantity * weightPerBox;
+      break;
+    case 'pallet':
+    case 'pallets':
+      pallets = quantity;
+      const boxesPerPallet = dynamicFields['BoxPerPallet'] || dynamicFields['boxesPerPallet'] || 1;
+      boxes = quantity * boxesPerPallet;
+      const weightPerPallet = dynamicFields['weightPerPallet'] || 0;
+      totalWeight = quantity * weightPerPallet;
       break;
     default:
-      boxes = Math.ceil(
-        quantity / (hierarchy.conversionRates.piecesPerBox || 1)
-      );
-      totalWeight = boxes * (hierarchy.weights.weightPerBox || 0);
+      // Fallback calculation
+      const defaultPerBox = dynamicFields['Square MeterPerBox'] || dynamicFields['PiecesPerBox'] || 1;
+      boxes = Math.ceil(quantity / defaultPerBox);
+      totalWeight = boxes * (dynamicFields['weightPerBox'] || dynamicFields['grossWeightPerBox'] || 0);
   }
 
   // Calculate pallets if not already calculated
   if (pallets === 0) {
-    pallets = Math.ceil(boxes / hierarchy.conversionRates.boxesPerPallet);
+    const boxesPerPallet = dynamicFields['BoxPerPallet'] || dynamicFields['boxesPerPallet'] || 40;
+    pallets = Math.ceil(boxes / boxesPerPallet);
   }
 
   // Calculate CBM
-  totalCBM = boxes * hierarchy.volumes.cbmPerBox;
+  const cbmPerBox = dynamicFields['volumePerBox'] || dynamicFields['cbmPerBox'] || 0;
+  totalCBM = boxes * cbmPerBox;
 
   return {
     calculatedBoxes: boxes,
@@ -225,14 +233,26 @@ const createPiInvoice = async (data, userId, req = {}) => {
   const piNumber = await generatePiNumber();
 
   // Calculate product totals and enhanced packing breakdown
-  const productsWithTotals = products.map((product) => {
+  const productsWithTotals = await Promise.all(products.map(async (product) => {
     const total = (product.quantity || 0) * (product.rate || 0);
+
+    // Get full product data if productId is provided
+    let fullProduct = product;
+    if (product.productId) {
+      const dbProduct = await prisma.product.findUnique({
+        where: { id: product.productId },
+        select: { packagingHierarchyData: true }
+      });
+      if (dbProduct?.packagingHierarchyData) {
+        fullProduct = { ...product, packagingHierarchyData: dbProduct.packagingHierarchyData };
+      }
+    }
 
     // Calculate enhanced packing breakdown if available
     let packingBreakdown = null;
-    if (product.packingHierarchy && product.quantity && product.unit) {
+    if (fullProduct.packagingHierarchyData && product.quantity && product.unit) {
       packingBreakdown = calculatePackingBreakdown(
-        product,
+        fullProduct,
         product.quantity,
         product.unit
       );
@@ -251,7 +271,7 @@ const createPiInvoice = async (data, userId, req = {}) => {
         product.quantity * 1 ||
         0,
     };
-  });
+  }));
 
   const totals = calculateTotals(
     productsWithTotals,
@@ -441,14 +461,26 @@ const updatePiInvoice = async (id, data, userId, companyId, req = {}) => {
         });
 
         // Create new products with enhanced totals and packing breakdown
-        const productsWithTotals = products.map((product, index) => {
+        const productsWithTotals = await Promise.all(products.map(async (product, index) => {
           const total = (product.quantity || 0) * (product.rate || 0);
+
+          // Get full product data if productId is provided
+          let fullProduct = product;
+          if (product.productId) {
+            const dbProduct = await tx.product.findUnique({
+              where: { id: product.productId },
+              select: { packagingHierarchyData: true }
+            });
+            if (dbProduct?.packagingHierarchyData) {
+              fullProduct = { ...product, packagingHierarchyData: dbProduct.packagingHierarchyData };
+            }
+          }
 
           // Calculate enhanced packing breakdown if available
           let packingBreakdown = null;
-          if (product.packingHierarchy && product.quantity && product.unit) {
+          if (fullProduct.packagingHierarchyData && product.quantity && product.unit) {
             packingBreakdown = calculatePackingBreakdown(
-              product,
+              fullProduct,
               product.quantity,
               product.unit
             );
@@ -470,7 +502,7 @@ const updatePiInvoice = async (id, data, userId, companyId, req = {}) => {
             companyId: companyId,
             lineNumber: index + 1,
           };
-        });
+        }));
 
         await tx.piProduct.createMany({
           data: productsWithTotals.map((product) => {
