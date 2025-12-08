@@ -78,16 +78,27 @@ export const bulkUploadProducts = asyncHandler(async (req, res) => {
 
   return res
     .status(200)
-    .json(new ApiResponse(200, result, result.message || 'Bulk upload completed'));
+    .json(
+      new ApiResponse(200, result, result.message || 'Bulk upload completed')
+    );
 });
 
 export const downloadTemplate = asyncHandler(async (req, res) => {
   const { categoryId } = req.query;
-  const buffer = await ProductService.downloadTemplate(req.user.companyId, categoryId);
-  
-  res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-  res.setHeader('Content-Disposition', 'attachment; filename=product-template.xlsx');
-  
+  const buffer = await ProductService.downloadTemplate(
+    req.user.companyId,
+    categoryId
+  );
+
+  res.setHeader(
+    'Content-Type',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+  );
+  res.setHeader(
+    'Content-Disposition',
+    'attachment; filename=product-template.xlsx'
+  );
+
   return res.send(buffer);
 });
 

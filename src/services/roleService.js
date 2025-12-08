@@ -4,11 +4,7 @@ import { ApiError } from '../utils/ApiError.js';
 export const roleService = {
   // Get all roles with pagination
   async getAllRoles(options = {}) {
-    const {
-      page = 1,
-      limit = 10,
-      search = '',
-    } = options;
+    const { page = 1, limit = 10, search = '' } = options;
 
     const pageNum = parseInt(page) || 1;
     const limitNum = parseInt(limit) || 10;

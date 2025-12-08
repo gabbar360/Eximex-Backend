@@ -62,18 +62,18 @@ export const restoreCompany = asyncHandler(async (req, res) => {
 export const uploadSignature = asyncHandler(async (req, res) => {
   const companyId = req.params.id;
   const signatureFile = req.file;
-  
+
   if (!signatureFile) {
     throw new ApiError(400, 'Signature file is required');
   }
-  
+
   const updated = await CompanyService.updateCompany(
-    companyId, 
-    {}, 
-    null, 
+    companyId,
+    {},
+    null,
     signatureFile
   );
-  
+
   return res
     .status(200)
     .json(new ApiResponse(200, updated, 'Signature uploaded successfully'));
