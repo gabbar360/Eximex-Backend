@@ -206,18 +206,40 @@
         </table>
 
         <div class="table-title">Description of Goods</div>
+        <% 
+            // Check if any product has box/pallet calculations (more flexible approach)
+            const hasTilesProducts = piInvoice.products.some(product => {
+                return (product.calculatedBoxes && product.calculatedBoxes > 0) || 
+                       (product.calculatedPallets && product.calculatedPallets > 0);
+            });
+        %>
         <table>
             <thead>
-                <tr class="header center">
-                    <th style="width: 4%;">S.No.</th>
-                    <th style="width: 40%;">Description of Goods</th>
-                    <th style="width: 8%;">HS Code</th>
-                    <th style="width: 10%;">Quantity</th>
-                    <th style="width: 6%;">Unit</th>
-                    <th style="width: 10%;">Rate <%= piInvoice.currency || 'USD' %></th>
-                    <th style="width: 10%;">Weight (Kgs)</th>
-                    <th style="width: 12%;">Amount <%= piInvoice.currency || 'USD' %></th>
-                </tr>
+                <% if (hasTilesProducts) { %>
+                    <tr class="header center">
+                        <th style="width: 3%;">S.No.</th>
+                        <th style="width: 30%;">Description of Goods</th>
+                        <th style="width: 7%;">HS Code</th>
+                        <th style="width: 8%;">Quantity</th>
+                        <th style="width: 5%;">Unit</th>
+                        <th style="width: 7%;">Boxes</th>
+                        <th style="width: 7%;">Pallets</th>
+                        <th style="width: 8%;">Rate <%= piInvoice.currency || 'USD' %></th>
+                        <th style="width: 8%;">Weight (Kgs)</th>
+                        <th style="width: 10%;">Amount <%= piInvoice.currency || 'USD' %></th>
+                    </tr>
+                <% } else { %>
+                    <tr class="header center">
+                        <th style="width: 4%;">S.No.</th>
+                        <th style="width: 40%;">Description of Goods</th>
+                        <th style="width: 8%;">HS Code</th>
+                        <th style="width: 10%;">Quantity</th>
+                        <th style="width: 6%;">Unit</th>
+                        <th style="width: 10%;">Rate <%= piInvoice.currency || 'USD' %></th>
+                        <th style="width: 10%;">Weight (Kgs)</th>
+                        <th style="width: 12%;">Amount <%= piInvoice.currency || 'USD' %></th>
+                    </tr>
+                <% } %>
             </thead>
             <tbody>
                 <% let sumAmount=0, totalNet=0, totalGross=0; %>
@@ -226,33 +248,87 @@
                     <% const net = product.totalWeight ? (parseFloat(product.totalWeight) * 0.9) : 0; %>
                     <% const gross = product.totalWeight ? parseFloat(product.totalWeight) : 0; %>
                     <% sumAmount += lineAmt; totalNet += net; totalGross += gross; %>
-                    <tr>
-                        <td class="center"><%= index + 1 %></td>
-                        <td>
-                            <strong><%= product.productName || '-' %></strong>
-                            <% if (product.productDescription && product.productDescription !== product.productName) { %>
-                                <br><%= product.productDescription %>
-                            <% } %>
-                        </td>
-                        <td class="center"><%= (product.hsCode && product.hsCode !== 'N/A') ? product.hsCode : (product.hsnCode && product.hsnCode !== 'N/A') ? product.hsnCode : product.category?.hsnCode || product.product?.category?.hsnCode || product.product?.hsCode || product.product?.hsnCode || 'N/A' %></td>
-                        <td class="right"><%= product.quantity || 0 %></td>
-                        <td class="center"><%= product.unit || 'PCS' %></td>
-                        <td class="right"><%= (product.rate || 0) %></td>
-                        <td class="right"><%= gross ? gross.toFixed(0) + 'kg' : '0kg' %></td>
-                        <td class="right"><%= piInvoice.currency === 'INR' ? '₹' : '$' %> <%= (product.total || 0).toFixed(2) %></td>
-                    </tr>
+                    <% 
+                        // Check if this specific product has box/pallet calculations
+                        const isTilesProduct = (product.calculatedBoxes && product.calculatedBoxes > 0) || 
+                                              (product.calculatedPallets && product.calculatedPallets > 0);
+                    %>
+                    <% if (hasTilesProducts) { %>
+                        <tr>
+                            <td class="center"><%= index + 1 %></td>
+                            <td>
+                                <strong><%= product.productName || '-' %></strong>
+                                <% if (product.productDescription && product.productDescription !== product.productName) { %>
+                                    <br><%= product.productDescription %>
+                                <% } %>
+                            </td>
+                            <td class="center"><%= (product.hsCode && product.hsCode !== 'N/A') ? product.hsCode : (product.hsnCode && product.hsnCode !== 'N/A') ? product.hsnCode : product.category?.hsnCode || product.product?.category?.hsnCode || product.product?.hsCode || product.product?.hsnCode || 'N/A' %></td>
+                            <td class="right"><%= product.quantity || 0 %></td>
+                            <td class="center"><%= product.unit || 'PCS' %></td>
+                            <td class="center">
+                                <% if (isTilesProduct && product.calculatedBoxes) { %>
+                                    <%= product.calculatedBoxes %>
+                                <% } else { %>
+                                    -
+                                <% } %>
+                            </td>
+                            <td class="center">
+                                <% if (isTilesProduct && product.calculatedPallets) { %>
+                                    <%= product.calculatedPallets %>
+                                <% } else { %>
+                                    -
+                                <% } %>
+                            </td>
+                            <td class="right"><%= (product.rate || 0) %></td>
+                            <td class="right"><%= gross ? gross.toFixed(0) + 'kg' : '0kg' %></td>
+                            <td class="right"><%= piInvoice.currency === 'INR' ? '₹' : '$' %> <%= (product.total || 0).toFixed(2) %></td>
+                        </tr>
+                    <% } else { %>
+                        <tr>
+                            <td class="center"><%= index + 1 %></td>
+                            <td>
+                                <strong><%= product.productName || '-' %></strong>
+                                <% if (product.productDescription && product.productDescription !== product.productName) { %>
+                                    <br><%= product.productDescription %>
+                                <% } %>
+                            </td>
+                            <td class="center"><%= (product.hsCode && product.hsCode !== 'N/A') ? product.hsCode : (product.hsnCode && product.hsnCode !== 'N/A') ? product.hsnCode : product.category?.hsnCode || product.product?.category?.hsnCode || product.product?.hsCode || product.product?.hsnCode || 'N/A' %></td>
+                            <td class="right"><%= product.quantity || 0 %></td>
+                            <td class="center"><%= product.unit || 'PCS' %></td>
+                            <td class="right"><%= (product.rate || 0) %></td>
+                            <td class="right"><%= gross ? gross.toFixed(0) + 'kg' : '0kg' %></td>
+                            <td class="right"><%= piInvoice.currency === 'INR' ? '₹' : '$' %> <%= (product.total || 0).toFixed(2) %></td>
+                        </tr>
+                    <% } %>
                 <% }) %>
-                <tr class="bold header">
-                    <td colspan="6" class="center">SUB TOTAL</td>
-                    <td></td>
-                    <td class="right"><%= piInvoice.currency === 'INR' ? '₹' : '$' %> <%= sumAmount.toFixed(2) %></td>
-                </tr>
-                <tr class="bold">
-                    <td colspan="8">
-                        NET WEIGHT:- <%= (piInvoice.totalWeight || totalNet).toFixed(1) %> KG<br>
-                        GROSS WEIGHT:- <%= (piInvoice.totalGrossWeight || totalGross).toFixed(1) %> KG
-                    </td>
-                </tr>
+                <% if (hasTilesProducts) { %>
+                    <tr class="bold header">
+                        <td colspan="8" class="center">SUB TOTAL</td>
+                        <td></td>
+                        <td class="right"><%= piInvoice.currency === 'INR' ? '₹' : '$' %> <%= sumAmount.toFixed(2) %></td>
+                    </tr>
+                <% } else { %>
+                    <tr class="bold header">
+                        <td colspan="6" class="center">SUB TOTAL</td>
+                        <td></td>
+                        <td class="right"><%= piInvoice.currency === 'INR' ? '₹' : '$' %> <%= sumAmount.toFixed(2) %></td>
+                    </tr>
+                <% } %>
+                <% if (hasTilesProducts) { %>
+                    <tr class="bold">
+                        <td colspan="10">
+                            NET WEIGHT:- <%= (piInvoice.totalWeight || totalNet).toFixed(1) %> KG<br>
+                            GROSS WEIGHT:- <%= (piInvoice.totalGrossWeight || totalGross).toFixed(1) %> KG
+                        </td>
+                    </tr>
+                <% } else { %>
+                    <tr class="bold">
+                        <td colspan="8">
+                            NET WEIGHT:- <%= (piInvoice.totalWeight || totalNet).toFixed(1) %> KG<br>
+                            GROSS WEIGHT:- <%= (piInvoice.totalGrossWeight || totalGross).toFixed(1) %> KG
+                        </td>
+                    </tr>
+                <% } %>
             </tbody>
         </table>
 
