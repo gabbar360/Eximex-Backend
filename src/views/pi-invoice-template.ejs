@@ -132,10 +132,25 @@
                     <div class="bold">Terms & Conditions :-</div>
                     <ol style="margin: 4px 0 0 16px; padding: 0;">
                         <% if (piInvoice.deliveryTerm) { %>
-                            <li>TRADE TERM: <%= piInvoice.deliveryTerm %></li>
+                            <li>TRADE TERM: <%= piInvoice.deliveryTerm.toUpperCase() %></li>
                         <% } %>
                         <% if (piInvoice.paymentTerm) { %>
-                            <li>PAYMENT TERM: <%= piInvoice.paymentTerm %></li>
+                            <% 
+                                // Format payment term based on advance percentage and balance term
+                                let formattedPaymentTerm = piInvoice.paymentTerm;
+                                if (piInvoice.paymentTerm === 'advance' && piInvoice.advancePercentage) {
+                                    const advance = parseInt(piInvoice.advancePercentage);
+                                    const balance = 100 - advance;
+                                    if (balance > 0 && piInvoice.balancePaymentTerm) {
+                                        formattedPaymentTerm = `${advance}% ADVANCE. ${balance}% ${piInvoice.balancePaymentTerm}`;
+                                    } else {
+                                        formattedPaymentTerm = `${advance}% ADVANCE`;
+                                    }
+                                } else {
+                                    formattedPaymentTerm = piInvoice.paymentTerm.toUpperCase();
+                                }
+                            %>
+                            <li>PAYMENT TERM: <%= formattedPaymentTerm %></li>
                         <% } %>
                     </ol>
                 </td>
@@ -150,16 +165,22 @@
             </tr>
             <tr>
                 <td style="width: 40%;">
-                    <div class="bold" style="margin-top:2px;">
-                        <%= piInvoice.partyName || piInvoice.party?.companyName || '-' %>
-                    </div>
-                    <div>Address: <%= piInvoice.address || piInvoice.party?.address || '' %></div>
-                    <div><%= piInvoice.country || piInvoice.party?.country || '' %></div>
-                    <% if (piInvoice.phone || piInvoice.party?.phone) { %>
-                        <div>Phone: <%= piInvoice.phone || piInvoice.party?.phone %></div>
-                    <% } %>
-                    <% if (piInvoice.email || piInvoice.party?.email) { %>
-                        <div>Email: <%= piInvoice.email || piInvoice.party?.email %></div>
+                    <% if (piInvoice.showToTheOrder) { %>
+                        <div class="bold" style="margin-top:2px; text-align: center; font-size: 14px;">
+                            TO THE ORDER
+                        </div>
+                    <% } else { %>
+                        <div class="bold" style="margin-top:2px;">
+                            <%= piInvoice.partyName || piInvoice.party?.companyName || '-' %>
+                        </div>
+                        <div>Address: <%= piInvoice.address || piInvoice.party?.address || '' %></div>
+                        <div><%= piInvoice.country || piInvoice.party?.country || '' %></div>
+                        <% if (piInvoice.phone || piInvoice.party?.phone) { %>
+                            <div>Phone: <%= piInvoice.phone || piInvoice.party?.phone %></div>
+                        <% } %>
+                        <% if (piInvoice.email || piInvoice.party?.email) { %>
+                            <div>Email: <%= piInvoice.email || piInvoice.party?.email %></div>
+                        <% } %>
                     <% } %>
                 </td>
                 <td style="width: 40%;">
