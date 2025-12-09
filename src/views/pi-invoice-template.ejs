@@ -222,8 +222,8 @@
                         <th style="width: 7%;">HS Code</th>
                         <th style="width: 8%;">Quantity</th>
                         <th style="width: 5%;">Unit</th>
-                        <th style="width: 7%;">Boxes</th>
-                        <th style="width: 7%;">Pallets</th>
+                        <th style="width: 7%;">Boxes Per Pallet</th>
+                        <th style="width: 7%;">Pallets Per CNTR</th>
                         <th style="width: 8%;">Rate <%= piInvoice.currency || 'USD' %></th>
                         <th style="width: 8%;">Weight (Kgs)</th>
                         <th style="width: 10%;">Amount <%= piInvoice.currency || 'USD' %></th>
@@ -281,7 +281,7 @@
                             </td>
                             <td class="right"><%= (product.rate || 0) %></td>
                             <td class="right"><%= gross ? gross.toFixed(0) + 'kg' : '0kg' %></td>
-                            <td class="right"><%= piInvoice.currency === 'INR' ? '₹' : '$' %> <%= (product.total || 0).toFixed(2) %></td>
+                            <td class="right"><%= piInvoice.currency === 'INR' ? '₹' : piInvoice.currency === 'EUR' ? '€' : '$' %> <%= (product.total || 0).toFixed(2) %></td>
                         </tr>
                     <% } else { %>
                         <tr>
@@ -297,7 +297,7 @@
                             <td class="center"><%= product.unit || 'PCS' %></td>
                             <td class="right"><%= (product.rate || 0) %></td>
                             <td class="right"><%= gross ? gross.toFixed(0) + 'kg' : '0kg' %></td>
-                            <td class="right"><%= piInvoice.currency === 'INR' ? '₹' : '$' %> <%= (product.total || 0).toFixed(2) %></td>
+                            <td class="right"><%= piInvoice.currency === 'INR' ? '₹' : piInvoice.currency === 'EUR' ? '€' : '$' %> <%= (product.total || 0).toFixed(2) %></td>
                         </tr>
                     <% } %>
                 <% }) %>
@@ -305,13 +305,13 @@
                     <tr class="bold header">
                         <td colspan="8" class="center">SUB TOTAL</td>
                         <td></td>
-                        <td class="right"><%= piInvoice.currency === 'INR' ? '₹' : '$' %> <%= sumAmount.toFixed(2) %></td>
+                        <td class="right"><%= piInvoice.currency === 'INR' ? '₹' : piInvoice.currency === 'EUR' ? '€' : '$' %> <%= sumAmount.toFixed(2) %></td>
                     </tr>
                 <% } else { %>
                     <tr class="bold header">
                         <td colspan="6" class="center">SUB TOTAL</td>
                         <td></td>
-                        <td class="right"><%= piInvoice.currency === 'INR' ? '₹' : '$' %> <%= sumAmount.toFixed(2) %></td>
+                        <td class="right"><%= piInvoice.currency === 'INR' ? '₹' : piInvoice.currency === 'EUR' ? '€' : '$' %> <%= sumAmount.toFixed(2) %></td>
                     </tr>
                 <% } %>
                 <% if (hasTilesProducts) { %>
@@ -361,7 +361,7 @@
                             if (num < 1000000) return numberToWords(Math.floor(num/1000)) + ' THOUSAND' + (num%1000 ? ' ' + numberToWords(num%1000) : '');
                             return numberToWords(Math.floor(num/1000000)) + ' MILLION' + (num%1000000 ? ' ' + numberToWords(num%1000000) : '');
                         }
-                        const currencyWord = piInvoice.currency === 'INR' ? 'RUPEES' : 'DOLLARS';
+                        const currencyWord = piInvoice.currency === 'INR' ? 'RUPEES' : piInvoice.currency === 'EUR' ? 'EUROS' : 'DOLLARS';
                         const amountInWords = finalAmount ? numberToWords(Math.floor(finalAmount)) + ' ' + currencyWord + ' ONLY' : '';
                     %>
                     <%= amountInWords %>
@@ -377,7 +377,7 @@
                                                 <%= charge.name.toUpperCase() %>:-
                                             </td>
                                             <td class="right" style="border: var(--inner); padding:8px 6px; font-weight:bold;">
-                                                <%= charge.amount && !isNaN(parseFloat(charge.amount)) ? (piInvoice.currency === 'INR' ? '₹' : '$') + parseFloat(charge.amount).toFixed(2) : '-' %>
+                                                <%= charge.amount && !isNaN(parseFloat(charge.amount)) ? (piInvoice.currency === 'INR' ? '₹' : piInvoice.currency === 'EUR' ? '€' : '$') + parseFloat(charge.amount).toFixed(2) : '-' %>
                                             </td>
                                         </tr>
                                     <% }) %>
@@ -387,7 +387,7 @@
                                             <%= key.toUpperCase() %>:-
                                         </td>
                                         <td class="right" style="border: var(--inner); padding:8px 6px; font-weight:bold;">
-                                            <%= value && !isNaN(parseFloat(value)) ? (piInvoice.currency === 'INR' ? '₹' : '$') + parseFloat(value).toFixed(2) : '-' %>
+                                            <%= value && !isNaN(parseFloat(value)) ? (piInvoice.currency === 'INR' ? '₹' : piInvoice.currency === 'EUR' ? '€' : '$') + parseFloat(value).toFixed(2) : '-' %>
                                         </td>
                                     </tr>
                                 <% } %>
@@ -396,7 +396,7 @@
                         <tr>
                             <td style="border: var(--inner); padding:8px 6px; font-weight:bold;">TOTAL AMOUNT:-</td>
                             <td class="right" style="border: var(--inner); padding:8px 6px; font-weight:bold;">
-                                <%= piInvoice.currency === 'INR' ? '₹' : '$' %> <%= (piInvoice.totalAmount || totalAmount).toFixed(2) %>
+                                <%= piInvoice.currency === 'INR' ? '₹' : piInvoice.currency === 'EUR' ? '€' : '$' %> <%= (piInvoice.totalAmount || totalAmount).toFixed(2) %>
                             </td>
                         </tr>
                     </table>
