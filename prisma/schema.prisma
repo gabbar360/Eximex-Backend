@@ -413,6 +413,9 @@ model PiInvoice {
 
   // Terms & Container Info
   paymentTerm          String  @map("payment_term")
+  advancePercentage    String? @map("advance_percentage")
+  balancePaymentTerm   String? @map("balance_payment_term")
+  showToTheOrder       Boolean @default(false) @map("show_to_the_order")
   deliveryTerm         String  @map("delivery_term")
   containerType        String? @map("container_type")
   capacityBasis        String? @map("capacity_basis")
