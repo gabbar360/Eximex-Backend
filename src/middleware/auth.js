@@ -107,7 +107,7 @@ const autoCheckPermissions = async (req, res, next) => {
     // Direct matches
     const directMatches = {
       dashboard: 'dashboard',
-      cprospect: 'customer-prospect',
+      contacts: 'contacts',
       categories: 'categories',
       products: 'products',
       orders: 'orders',
@@ -128,11 +128,11 @@ const autoCheckPermissions = async (req, res, next) => {
     if (
       segment.includes('customer') ||
       segment.includes('prospect') ||
-      segment.includes('cprospect') ||
       segment.includes('parties') ||
-      segment.includes('party')
+      segment.includes('party') ||
+      segment.includes('contact')
     )
-      return 'customer-prospect';
+      return 'contacts';
     if (segment.includes('order') && !segment.includes('purchase'))
       return 'orders';
     if (segment.includes('purchase')) return 'purchase-orders';
@@ -275,7 +275,7 @@ export const checkPermissions = asyncHandler(async (req, res, next) => {
   const getMenuSlugFromSegment = (segment) => {
     const directMatches = {
       dashboard: 'dashboard',
-      cprospect: 'customer-prospect',
+      contacts: 'contacts',
       categories: 'categories',
       products: 'products',
       orders: 'orders',
@@ -295,11 +295,11 @@ export const checkPermissions = asyncHandler(async (req, res, next) => {
     if (
       segment.includes('customer') ||
       segment.includes('prospect') ||
-      segment.includes('cprospect') ||
       segment.includes('parties') ||
-      segment.includes('party')
+      segment.includes('party') ||
+      segment.includes('contact')
     )
-      return 'customer-prospect';
+      return 'contacts';
     if (segment.includes('order') && !segment.includes('purchase'))
       return 'orders';
     if (segment.includes('purchase')) return 'purchase-orders';

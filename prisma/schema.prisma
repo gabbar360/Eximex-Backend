@@ -113,6 +113,7 @@ model PartyList {
   pincode       String?
   state         String?
   status        Boolean        @default(true)
+  stage         ContactStage   @default(NEW) @map("stage")
   company       CompanyDetails @relation(fields: [companyId], references: [id], onDelete: Cascade)
   user          User?          @relation("UserToParty", fields: [userId], references: [id])
   creator       User           @relation("PartyCreator", fields: [createdBy], references: [id])
@@ -298,6 +299,15 @@ enum PartyRole {
   CHA
   Transporter
   Supplier
+}
+
+enum ContactStage {
+  NEW
+  QUALIFIED
+  NEGOTIATION
+  QUOTATION_SENT
+  WON
+  LOST
 }
 
 enum PackingUnit {

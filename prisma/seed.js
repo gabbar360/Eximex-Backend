@@ -14,9 +14,9 @@ const seedMenuItems = async () => {
       sortOrder: 1,
     },
     {
-      name: 'Customer & Prospect',
-      slug: 'customer-prospect',
-      path: '/cprospect',
+      name: 'Contacts',
+      slug: 'contacts',
+      path: '/contacts',
       icon: 'MdPeople',
       sortOrder: 2,
     },
