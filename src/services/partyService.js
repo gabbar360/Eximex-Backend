@@ -42,14 +42,48 @@ const getAllParties = async (companyId, options = {}, dataFilters = {}) => {
     ...dataFilters, // Then apply role-based filters (createdBy for staff)
   };
 
-  if (search) {
-    where.OR = [
-      { companyName: { contains: search, mode: 'insensitive' } },
-      { contactPerson: { contains: search, mode: 'insensitive' } },
-      { email: { contains: search, mode: 'insensitive' } },
-      { phone: { contains: search, mode: 'insensitive' } },
-      { city: { contains: search, mode: 'insensitive' } },
+  // Handle search with proper null checks - only use existing fields from PartyList schema
+  if (search && search.trim() && search.trim().length > 0) {
+    const searchTerm = search.trim();
+    const searchConditions = [
+      { companyName: { contains: searchTerm, mode: 'insensitive' } },
+      { contactPerson: { contains: searchTerm, mode: 'insensitive' } },
+      { email: { contains: searchTerm, mode: 'insensitive' } },
+      { phone: { contains: searchTerm, mode: 'insensitive' } },
+      { city: { contains: searchTerm, mode: 'insensitive' } },
+      { country: { contains: searchTerm, mode: 'insensitive' } },
+      { state: { contains: searchTerm, mode: 'insensitive' } },
+      { address: { contains: searchTerm, mode: 'insensitive' } },
+      { partyType: { contains: searchTerm, mode: 'insensitive' } },
     ];
+
+    // Handle Role enum search (exact match for enum values)
+    const roleValues = ['Customer', 'Lead', 'Freight_Forwarder', 'Vendor', 'Agent', 'CHA', 'Transporter', 'Supplier'];
+    const matchingRoles = roleValues.filter(role => 
+      role.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    if (matchingRoles.length > 0) {
+      searchConditions.push({ role: { in: matchingRoles } });
+    }
+
+    // Handle Stage enum search (exact match for enum values)
+    const stageValues = ['NEW', 'QUALIFIED', 'NEGOTIATION', 'QUOTATION_SENT', 'WON', 'LOST'];
+    const matchingStages = stageValues.filter(stage => 
+      stage.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    if (matchingStages.length > 0) {
+      searchConditions.push({ stage: { in: matchingStages } });
+    }
+
+    // Handle Status boolean search
+    if (searchTerm.toLowerCase().includes('active')) {
+      searchConditions.push({ status: true });
+    }
+    if (searchTerm.toLowerCase().includes('inactive')) {
+      searchConditions.push({ status: false });
+    }
+
+    where.OR = searchConditions;
   }
 
   if (role) where.role = role;
@@ -70,6 +104,7 @@ const getAllParties = async (companyId, options = {}, dataFilters = {}) => {
     return result;
   } catch (error) {
     console.error('Party service error:', error);
+    console.error('Query where clause:', JSON.stringify(where, null, 2));
     throw error;
   }
 };
@@ -139,6 +174,11 @@ const createParty = async (partyData, companyId, userId = null) => {
   // Ensure status is boolean
   if (partyData.status !== undefined) {
     partyData.status = Boolean(partyData.status);
+  }
+
+  // Set default stage for Customer role
+  if (partyData.role === 'Customer' && !partyData.stage) {
+    partyData.stage = 'NEW';
   }
 
   const party = await DatabaseUtils.create('partyList', partyData);
@@ -273,6 +313,25 @@ const getPartyStats = async (companyId) => {
   return stats;
 };
 
+const updatePartyStage = async (partyId, stage) => {
+  const validStages = ['NEW', 'QUALIFIED', 'NEGOTIATION', 'QUOTATION_SENT', 'WON', 'LOST'];
+  
+  if (!validStages.includes(stage)) {
+    throw new ApiError(400, 'Invalid stage');
+  }
+
+  const updatedParty = await DatabaseUtils.update(
+    'partyList',
+    { id: Number(partyId) },
+    { stage }
+  );
+
+  cacheManager.delete(`party_${partyId}_false`);
+  cacheManager.delete(`party_${partyId}_true`);
+
+  return updatedParty;
+};
+
 export const PartyService = {
   getPartyById,
   getAllParties,
@@ -280,4 +339,5 @@ export const PartyService = {
   updateParty,
   deleteParty,
   getPartyStats,
+  updatePartyStage,
 };
