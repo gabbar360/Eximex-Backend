@@ -153,10 +153,21 @@ export class PackagingStepsService {
 
     let packingListData = {};
     let actualNotes = '';
+    let showToTheOrder = false;
 
     if (packingListEntry && packingListEntry.notes) {
       packingListData = packingListEntry.notes;
       actualNotes = packingListData.notes || '';
+    }
+    
+    // Get showToTheOrder - prioritize notes data over entry data
+    if (packingListEntry) {
+      // First check notes data, then fallback to entry data
+      if (packingListData.showToTheOrder !== undefined) {
+        showToTheOrder = packingListData.showToTheOrder;
+      } else {
+        showToTheOrder = packingListEntry.showToTheOrder || false;
+      }
     }
 
     return {
@@ -202,6 +213,7 @@ export class PackagingStepsService {
       dateOfIssue:
         packingListData.dateOfIssue || new Date().toISOString().split('T')[0],
       status: packingListData.status || piInvoice.status,
+      showToTheOrder: showToTheOrder,
       createdAt: packingListEntry?.createdAt || piInvoice.createdAt,
       updatedAt: packingListEntry?.updatedAt || piInvoice.updatedAt,
       pi: piInvoice,
@@ -258,6 +270,7 @@ export class PackagingStepsService {
       totalContainers: parseInt(data.totalContainers) || 0,
       dateOfIssue: data.dateOfIssue || new Date().toISOString().split('T')[0],
       status: data.status || 'draft',
+      showToTheOrder: data.showToTheOrder || false,
     };
   }
 
@@ -316,6 +329,7 @@ export class PackagingStepsService {
           containerNumber: data.containerNumber,
           sealNumber: data.sealNumber,
           sealType: data.sealType,
+          showToTheOrder: data.showToTheOrder || false,
           notes: data.packingListData,
           createdBy: userId,
         },
@@ -531,6 +545,10 @@ export class PackagingStepsService {
         updateData.status !== undefined
           ? updateData.status
           : existingData.status,
+      showToTheOrder:
+        updateData.showToTheOrder !== undefined
+          ? updateData.showToTheOrder
+          : (existingData.showToTheOrder || false),
     };
   }
 
@@ -540,6 +558,7 @@ export class PackagingStepsService {
       data: {
         productId: data.productId,
         categoryId: data.categoryId,
+        showToTheOrder: data.showToTheOrder,
         notes: data.updatedPackingData,
         updatedBy: userId,
       },

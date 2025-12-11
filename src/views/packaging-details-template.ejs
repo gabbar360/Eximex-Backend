@@ -185,29 +185,40 @@
                     </tr>
                     <tr>
                         <td style="width: 40%;">
-                            <div class="bold" style="margin-top:2px;">
-                                <%= packingListData.consigneeDetails || piInvoice.party?.companyName ||
-                                    piInvoice.partyName || 'N/A' %>
-                            </div>
-                            <div>Address: <%= piInvoice.party?.address || piInvoice.address || '' %>
-                            </div>
-                            <% if (piInvoice.party?.buildingName) { %>
-                                <div>Building Name: <%= piInvoice.party.buildingName %>
+                            <% 
+                                // Check if showToTheOrder is enabled from packing list data or packing list entry
+                                const showToTheOrder = (piInvoice.packingLists && piInvoice.packingLists[0] && piInvoice.packingLists[0].showToTheOrder) || 
+                                                      (packingListData && packingListData.showToTheOrder) || false;
+                            %>
+                            <% if (showToTheOrder) { %>
+                                <div class="bold" style="margin-top:2px; font-size: 14px; text-align: center; padding: 20px;">
+                                    TO THE ORDER
                                 </div>
-                                <% } %>
-                                    <div>
-                                        <%= piInvoice.party?.city || '' %>
-                                            <%= piInvoice.party?.state ? ', ' + piInvoice.party.state : '' %>
-                                                <%= piInvoice.party?.zip || '' %>
+                            <% } else { %>
+                                <div class="bold" style="margin-top:2px;">
+                                    <%= packingListData.consigneeDetails || piInvoice.party?.companyName ||
+                                        piInvoice.partyName || 'N/A' %>
+                                </div>
+                                <div>Address: <%= piInvoice.party?.address || piInvoice.address || '' %>
+                                </div>
+                                <% if (piInvoice.party?.buildingName) { %>
+                                    <div>Building Name: <%= piInvoice.party.buildingName %>
                                     </div>
-                                    <% if (piInvoice.party?.phone) { %>
-                                        <div>Phone: <%= piInvoice.party.phone %>
+                                    <% } %>
+                                        <div>
+                                            <%= piInvoice.party?.city || '' %>
+                                                <%= piInvoice.party?.state ? ', ' + piInvoice.party.state : '' %>
+                                                    <%= piInvoice.party?.zip || '' %>
                                         </div>
-                                        <% } %>
-                                            <% if (piInvoice.party?.email) { %>
-                                                <div>Email: <%= piInvoice.party.email %>
-                                                </div>
-                                                <% } %>
+                                        <% if (piInvoice.party?.phone) { %>
+                                            <div>Phone: <%= piInvoice.party.phone %>
+                                            </div>
+                                            <% } %>
+                                                <% if (piInvoice.party?.email) { %>
+                                                    <div>Email: <%= piInvoice.party.email %>
+                                                    </div>
+                                                    <% } %>
+                            <% } %>
                         </td>
                         <td style="width: 40%;">
                             <div class="bold" style="margin-top:2px;">
@@ -285,25 +296,67 @@
 
                 <!-- Packing List Preview Table -->
                 <div class="table-title">Description of Goods</div>
+                <% const allContainers = piInvoice.packingLists && piInvoice.packingLists[0] &&
+                    piInvoice.packingLists[0].notes && piInvoice.packingLists[0].notes.containers ?
+                    piInvoice.packingLists[0].notes.containers : []; %>
+                <% 
+                    // Based on unit type (if tiles always use sqm/sqft)
+                    let hasTilesProducts = false;
+                    if (allContainers.length > 0) {
+                        allContainers.forEach(containerData => {
+                            const items = containerData && containerData.products ? containerData.products : [];
+                            items.forEach(p => {
+                                const tilesUnits = ['sqm', 'sqft', 'square meter'];
+                                const isTilesProduct = tilesUnits.includes(p.unit?.toLowerCase()) && 
+                                                      ((p.noOfBoxes && p.noOfBoxes > 0) || (p.noOfPallets && p.noOfPallets > 0));
+                                if (isTilesProduct) {
+                                    hasTilesProducts = true;
+                                }
+                            });
+                        });
+                    } else {
+                        const items = piInvoice.products || [];
+                        items.forEach(p => {
+                            const tilesUnits = ['sqm', 'sqft', 'square meter'];
+                            const isTilesProduct = tilesUnits.includes(p.unit?.toLowerCase()) && 
+                                                  ((p.calculatedBoxes && p.calculatedBoxes > 0) || (p.calculatedPallets && p.calculatedPallets > 0));
+                            if (isTilesProduct) {
+                                hasTilesProducts = true;
+                            }
+                        });
+                    }
+                %>
                 <table>
                     <thead>
-                        <tr class="header center">
-                            <th style="width:5%;">Sr.</th>
-                            <th style="width:22%;">Product Name</th>
-                            <th style="width:13%;">Container</th>
-                            <th style="width:10%;">HSN Code</th>
-                            <th style="width:8%;">Unit</th>
-                            <th style="width:10%;">Quantity</th>
-                            <th style="width:10%;">Unit Wt (kg)</th>
-                            <th style="width:10%;">Net Wt (kg)</th>
-                            <th style="width:10%;">Gross Wt (kg)</th>
-                            <!-- <th style="width:12%;">Volume (m³)</th> -->
-                        </tr>
+                        <% if (hasTilesProducts) { %>
+                            <tr class="header center">
+                                <th style="width:5%;">Sr.</th>
+                                <th style="width:18%;">Product Name</th>
+                                <th style="width:10%;">Container</th>
+                                <th style="width:8%;">HSN Code</th>
+                                <th style="width:7%;">Unit</th>
+                                <th style="width:10%;">Quantity</th>
+                                <th style="width:10%;">Square Meter</th>
+                                <th style="width:7%;">Pallets</th>
+                                <th style="width:8%;">Unit Wt (kg)</th>
+                                <th style="width:8%;">Net Wt (kg)</th>
+                                <th style="width:9%;">Gross Wt (kg)</th>
+                            </tr>
+                        <% } else { %>
+                            <tr class="header center">
+                                <th style="width:5%;">Sr.</th>
+                                <th style="width:22%;">Product Name</th>
+                                <th style="width:13%;">Container</th>
+                                <th style="width:10%;">HSN Code</th>
+                                <th style="width:8%;">Unit</th>
+                                <th style="width:10%;">Quantity</th>
+                                <th style="width:10%;">Unit Wt (kg)</th>
+                                <th style="width:10%;">Net Wt (kg)</th>
+                                <th style="width:10%;">Gross Wt (kg)</th>
+                            </tr>
+                        <% } %>
                     </thead>
                     <tbody>
-                        <% const allContainers = piInvoice.packingLists && piInvoice.packingLists[0] &&
-                            piInvoice.packingLists[0].notes && piInvoice.packingLists[0].notes.containers ?
-                            piInvoice.packingLists[0].notes.containers : []; %>
                         <% let totalQuantity = 0, totalUnitWt = 0, totalNetWt = 0, totalGrossWt = 0, totalVolume = 0; %>
                         
                         <% let globalProductIndex = 1; %>
@@ -333,8 +386,15 @@
                                                 packingDescription = `${pcsPerPack}${pieceUnit}*${packsPerBox}${packUnit} = ${totalPcsPerBox} ${pieceUnit}/${boxUnit}`;
                                             }
                                         %>
+                                        <% 
+                                            const tilesUnits = ['sqm', 'sqft', 'square meter'];
+                                            const isTilesProduct = tilesUnits.includes(p.unit?.toLowerCase()) && 
+                                                                  ((p.noOfBoxes && p.noOfBoxes > 0) || (p.noOfPallets && p.noOfPallets > 0));
+                                            const squareMeter = isTilesProduct ? (p.quantity || p.packedQuantity || 0) : 0;
+                                            const pallets = isTilesProduct ? (p.noOfPallets || 0) : 0;
+                                        %>
                                         <% const hsnCode = p.hsnCode || p.hsCode || '484047'; %>
-                                        <% const unit = p.unit || 'Box'; %>
+                                        <% const unit = isTilesProduct ? 'Box' : (p.unit || 'Box'); %>
                                         <% const quantity = p.unit && p.unit.toLowerCase() === 'box' ? (p.packedQuantity || p.quantity || p.noOfBoxes || '-') : (p.noOfBoxes || '-'); %>
                                         <% const netWeight = Number(p.netWeight || 0); %>
                                         <% const grossWeight = Number(p.grossWeight || 0); %>
@@ -346,7 +406,6 @@
                                         <% totalNetWt += netWeight; %>
                                         <% totalGrossWt += grossWeight; %>
                                         <% totalVolume += volume; %>
-                                        
                                         <tr>
                                             <td class="center"><%= globalProductIndex++ %></td>
                                             <td>
@@ -368,10 +427,13 @@
                                             <td class="center"><%= hsnCode %></td>
                                             <td class="center"><%= unit %></td>
                                             <td class="right"><%= quantity %></td>
+                                            <% if (hasTilesProducts) { %>
+                                                <td class="right"><%= isTilesProduct && squareMeter > 0 ? squareMeter : '-' %></td>
+                                                <td class="right"><%= isTilesProduct && pallets > 0 ? pallets : '-' %></td>
+                                            <% } %>
                                             <td class="right"><%= unitWeight > 0 ? unitWeight.toFixed(2) : '-' %></td>
                                             <td class="right"><%= netWeight > 0 ? netWeight.toFixed(2) : '-' %></td>
                                             <td class="right"><%= grossWeight > 0 ? grossWeight.toFixed(2) : '-' %></td>
-                                            <!-- <td class="right"><%= volume > 0 ? volume.toFixed(4) : '-' %></td> -->
                                         </tr>
                                     <% }); %>
                                 <% } else { %>
@@ -484,15 +546,55 @@
                             <% }); %>
                         <% } %>
 
+                        <% 
+                            // Calculate totals for tiles products
+                            let totalSquareMeters = 0, totalPallets = 0;
+                            if (allContainers.length > 0) {
+                                allContainers.forEach(containerData => {
+                                    const items = containerData && containerData.products ? containerData.products : [];
+                                    items.forEach(p => {
+                                        const tilesUnits = ['sqm', 'sqft', 'square meter'];
+                                        const isTilesProduct = tilesUnits.includes(p.unit?.toLowerCase()) && 
+                                                              ((p.noOfBoxes && p.noOfBoxes > 0) || (p.noOfPallets && p.noOfPallets > 0));
+                                        if (isTilesProduct) {
+                                            totalSquareMeters += Number(p.quantity || p.packedQuantity || 0);
+                                            totalPallets += Number(p.noOfPallets || 0);
+                                        }
+                                    });
+                                });
+                            } else {
+                                const items = piInvoice.products || [];
+                                items.forEach(p => {
+                                    const tilesUnits = ['sqm', 'sqft', 'square meter'];
+                                    const isTilesProduct = tilesUnits.includes(p.unit?.toLowerCase()) && 
+                                                          ((p.calculatedBoxes && p.calculatedBoxes > 0) || (p.calculatedPallets && p.calculatedPallets > 0));
+                                    if (isTilesProduct) {
+                                        totalSquareMeters += Number(p.quantity || p.packedQuantity || 0);
+                                        totalPallets += Number(p.calculatedPallets || p.noOfPallets || 0);
+                                    }
+                                });
+                            }
+                        %>
                         <!-- TOTAL row -->
-                        <tr class="bold header">
-                            <td colspan="5" class="center">TOTAL</td>
-                            <td class="right"><%= totalQuantity || 0 %></td>
-                            <td class="right"><%= totalQuantity > 0 && totalNetWt > 0 ? (totalNetWt / totalQuantity).toFixed(2) : '-' %></td>
-                            <td class="right"><%= totalNetWt ? totalNetWt.toFixed(2) : '0' %></td>
-                            <td class="right"><%= totalGrossWt ? totalGrossWt.toFixed(2) : '0' %></td>
-                            <!-- <td class="right"><%= totalVolume ? totalVolume.toFixed(2) : '0' %></td> -->
-                        </tr>
+                        <% if (hasTilesProducts) { %>
+                            <tr class="bold header">
+                                <td colspan="5" class="center">TOTAL</td>
+                                <td class="right"><%= totalQuantity || 0 %></td>
+                                <td class="right"><%= totalSquareMeters > 0 ? totalSquareMeters.toFixed(1) : '0' %></td>
+                                <td class="right"><%= totalPallets || 0 %></td>
+                                <td class="right"><%= totalQuantity > 0 && totalNetWt > 0 ? (totalNetWt / totalQuantity).toFixed(2) : '-' %></td>
+                                <td class="right"><%= totalNetWt ? totalNetWt.toFixed(0) : '0' %></td>
+                                <td class="right"><%= totalGrossWt ? totalGrossWt.toFixed(0) : '0' %></td>
+                            </tr>
+                        <% } else { %>
+                            <tr class="bold header">
+                                <td colspan="5" class="center">TOTAL</td>
+                                <td class="right"><%= totalQuantity || 0 %></td>
+                                <td class="right"><%= totalQuantity > 0 && totalNetWt > 0 ? (totalNetWt / totalQuantity).toFixed(2) : '-' %></td>
+                                <td class="right"><%= totalNetWt ? totalNetWt.toFixed(2) : '0' %></td>
+                                <td class="right"><%= totalGrossWt ? totalGrossWt.toFixed(2) : '0' %></td>
+                            </tr>
+                        <% } %>
                     </tbody>
                 </table>
 

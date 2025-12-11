@@ -185,39 +185,44 @@
                     </tr>
                     <tr>
                         <td style="width: 40%;">
-                            <div class="bold" style="margin-top:2px;">
-                                To The Order
-                            </div>
-                        </td>
-                        <!-- <td style="width: 40%;">
-                            <div class="bold" style="margin-top:2px;">
-                                <%= piInvoice.party?.companyName || piInvoice.partyName || 'N/A' %>
-                            </div>
-                            <div>Address: <%= piInvoice.party?.address || piInvoice.address || '' %>
-                            </div>
-                            <% if (piInvoice.party?.buildingName) { %>
-                                <div>Building Name: <%= piInvoice.party.buildingName %>
+                            <% 
+                                // Check if showToTheOrder is enabled from packing list data or packing list entry
+                                const showToTheOrder = (piInvoice.packingLists && piInvoice.packingLists[0] && piInvoice.packingLists[0].showToTheOrder) || 
+                                                      (packingListData && packingListData.showToTheOrder) || true; // Default to true for port delivery
+                            %>
+                            <% if (showToTheOrder) { %>
+                                <div class="bold" style="margin-top:2px; font-size: 14px; text-align: center; padding: 20px;">
+                                    TO THE ORDER
                                 </div>
-                                <% } %>
-                                    <div>
-                                        <%= piInvoice.party?.city || '' %>
-                                            <%= piInvoice.party?.state ? ', ' + piInvoice.party.state : '' %>
-                                                <%= piInvoice.party?.zip || '' %>
+                            <% } else { %>
+                                <div class="bold" style="margin-top:2px;">
+                                    <%= packingListData.consigneeDetails || piInvoice.party?.companyName ||
+                                        piInvoice.partyName || 'N/A' %>
+                                </div>
+                                <div>Address: <%= piInvoice.party?.address || piInvoice.address || '' %>
+                                </div>
+                                <% if (piInvoice.party?.buildingName) { %>
+                                    <div>Building Name: <%= piInvoice.party.buildingName %>
                                     </div>
-                                    <% if (piInvoice.party?.phone) { %>
-                                        <div>Phone: <%= piInvoice.party.phone %>
+                                    <% } %>
+                                        <div>
+                                            <%= piInvoice.party?.city || '' %>
+                                                <%= piInvoice.party?.state ? ', ' + piInvoice.party.state : '' %>
+                                                    <%= piInvoice.party?.zip || '' %>
                                         </div>
-                                        <% } %>
-                                            <% if (piInvoice.party?.email) { %>
-                                                <div>Email: <%= piInvoice.party.email %>
-                                                </div>
-                                                <% } %>
-                        </td> -->
-                        
-                        
-                         <td style="width: 40%;">
+                                        <% if (piInvoice.party?.phone) { %>
+                                            <div>Phone: <%= piInvoice.party.phone %>
+                                            </div>
+                                            <% } %>
+                                                <% if (piInvoice.party?.email) { %>
+                                                    <div>Email: <%= piInvoice.party.email %>
+                                                    </div>
+                                                    <% } %>
+                            <% } %>
+                        </td>
+                        <td style="width: 40%;">
                             <div class="bold" style="margin-top:2px;">
-                                To The Order
+                                TO THE ORDER
                             </div>
                         </td>
                         <td style="width: 20%;"></td>
