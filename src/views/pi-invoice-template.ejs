@@ -228,12 +228,13 @@
 
         <div class="table-title">Description of Goods</div>
         <% 
-            // Only show box/pallet columns for tiles/ceramic products, not for bagasse, paper, or PLA
+            // Based on unit type (if tiles always use sqm/sqft)
             const hasTilesProducts = piInvoice.products.some(product => {
-                const categoryName = product.category?.name?.toLowerCase() || '';
-                const isTilesCategory = categoryName.includes('porcelain') || categoryName.includes('ceramic') || categoryName.includes('tiles');
-                return isTilesCategory && ((product.calculatedBoxes && product.calculatedBoxes > 0) || 
-                       (product.calculatedPallets && product.calculatedPallets > 0));
+                const tilesUnits = ['sqm', 'sqft', 'square meter'];
+                const isTilesProduct = tilesUnits.includes(product.unit?.toLowerCase()) && 
+                                      ((product.calculatedBoxes && product.calculatedBoxes > 0) || 
+                                       (product.calculatedPallets && product.calculatedPallets > 0));
+                return isTilesProduct;
             });
         %>
         <table>
@@ -272,11 +273,11 @@
                     <% const gross = product.totalWeight ? parseFloat(product.totalWeight) : 0; %>
                     <% sumAmount += lineAmt; totalNet += net; totalGross += gross; %>
                     <% 
-                        // Only show box/pallet values for tiles/ceramic products
-                        const categoryName = product.category?.name?.toLowerCase() || '';
-                        const isTilesCategory = categoryName.includes('porcelain') || categoryName.includes('ceramic') || categoryName.includes('tiles');
-                        const isTilesProduct = isTilesCategory && ((product.calculatedBoxes && product.calculatedBoxes > 0) || 
-                                              (product.calculatedPallets && product.calculatedPallets > 0));
+                        // Based on unit type (if tiles always use sqm/sqft)
+                        const tilesUnits = ['sqm', 'sqft', 'square meter'];
+                        const isTilesProduct = tilesUnits.includes(product.unit?.toLowerCase()) && 
+                                              ((product.calculatedBoxes && product.calculatedBoxes > 0) || 
+                                               (product.calculatedPallets && product.calculatedPallets > 0));
                     %>
                     <% if (hasTilesProducts) { %>
                         <tr>

@@ -642,6 +642,7 @@ model PackingList {
   containerNumber String?           @map("container_number") // Container number for this packaging step
   sealType        String?           @map("seal_type") // Seal type for this packaging step (self seal, line seal)
   sealNumber      String?           @map("seal_number") // Seal number for this packaging step
+  showToTheOrder  Boolean           @default(false) @map("show_to_the_order") // Show "TO THE ORDER" instead of customer details
   notes           Json?             @map("notes") // Additional notes as JSON object
   isActive        Boolean           @default(true) @map("is_active")
   createdAt       DateTime          @default(now()) @map("created_at")
