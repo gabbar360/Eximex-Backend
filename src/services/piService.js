@@ -221,7 +221,7 @@ const calculateTotals = (
 };
 
 const createPiInvoice = async (data, userId, req = {}) => {
-  const { products = [], companyId, partyId, ...piData } = data;
+  const { products = [], companyId, partyId, notes, ...piData } = data;
 
   if (!companyId) {
     throw new ApiError(400, 'Company ID is required');
@@ -296,6 +296,7 @@ const createPiInvoice = async (data, userId, req = {}) => {
           ...(partyId && { partyId }),
           ...totals,
           numberOfContainers,
+          notes,
           createdBy: userId,
           updatedBy: userId,
         },
@@ -441,7 +442,7 @@ const updatePiInvoice = async (id, data, userId, companyId, req = {}) => {
   }
 
   // Separate products and exclude companyId from update data
-  const { products, companyId: _, ...piData } = data;
+  const { products, companyId: _, notes, ...piData } = data;
 
   // Log the received gross weight from frontend
   console.log(
@@ -555,6 +556,7 @@ const updatePiInvoice = async (id, data, userId, companyId, req = {}) => {
           ...piData,
           ...totals,
           numberOfContainers,
+          notes,
           updatedBy: userId,
         },
       });
