@@ -512,6 +512,9 @@ model PiProduct {
   totalCBM          Float? @map("total_cbm")
   packingBreakdown  Json?  @map("packing_breakdown")
 
+  // Container assignment
+  containerNumber Int? @default(1) @map("container_number")
+
   // Order in PI
   lineNumber Int @default(1) @map("line_number")
 

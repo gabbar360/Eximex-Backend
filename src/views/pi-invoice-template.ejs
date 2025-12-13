@@ -242,7 +242,8 @@
                 <% if (hasTilesProducts) { %>
                     <tr class="header center">
                         <th style="width: 3%;">S.No.</th>
-                        <th style="width: 30%;">Description of Goods</th>
+                        <th style="width: 28%;">Description of Goods</th>
+                        <th style="width: 6%;">No. of CNTRs</th>
                         <th style="width: 7%;">HS Code</th>
                         <th style="width: 8%;">Quantity</th>
                         <th style="width: 5%;">Unit</th>
@@ -267,69 +268,88 @@
             </thead>
             <tbody>
                 <% let sumAmount=0, totalNet=0, totalGross=0; %>
-                <% piInvoice.products.forEach((product, index) => { %>
-                    <% const lineAmt = Number(product.total || 0) || 0; %>
-                    <% const net = product.totalWeight ? (parseFloat(product.totalWeight) * 0.9) : 0; %>
-                    <% const gross = product.totalWeight ? parseFloat(product.totalWeight) : 0; %>
-                    <% sumAmount += lineAmt; totalNet += net; totalGross += gross; %>
-                    <% 
-                        // Based on unit type (if tiles always use sqm/sqft)
-                        const tilesUnits = ['sqm', 'sqft', 'square meter'];
-                        const isTilesProduct = tilesUnits.includes(product.unit?.toLowerCase()) && 
-                                              ((product.calculatedBoxes && product.calculatedBoxes > 0) || 
-                                               (product.calculatedPallets && product.calculatedPallets > 0));
-                    %>
-                    <% if (hasTilesProducts) { %>
-                        <tr>
-                            <td class="center"><%= index + 1 %></td>
-                            <td>
-                                <strong><%= product.productName || '-' %></strong>
-                                <% if (product.productDescription && product.productDescription !== product.productName) { %>
-                                    <br><%= product.productDescription %>
+                <% 
+                    // Group products by container number for rowspan
+                    const containerGroups = {};
+                    piInvoice.products.forEach((product, index) => {
+                        const containerNum = product.containerNumber || 1;
+                        if (!containerGroups[containerNum]) {
+                            containerGroups[containerNum] = [];
+                        }
+                        containerGroups[containerNum].push({...product, originalIndex: index});
+                    });
+                %>
+                <% let globalIndex = 0; %>
+                <% Object.keys(containerGroups).sort((a, b) => parseInt(a) - parseInt(b)).forEach(containerNum => { %>
+                    <% const containerProducts = containerGroups[containerNum]; %>
+                    <% containerProducts.forEach((product, containerIndex) => { %>
+                        <% const lineAmt = Number(product.total || 0) || 0; %>
+                        <% const net = product.totalWeight ? (parseFloat(product.totalWeight) * 0.9) : 0; %>
+                        <% const gross = product.totalWeight ? parseFloat(product.totalWeight) : 0; %>
+                        <% sumAmount += lineAmt; totalNet += net; totalGross += gross; %>
+                        <% 
+                            // Based on unit type (if tiles always use sqm/sqft)
+                            const tilesUnits = ['sqm', 'sqft', 'square meter'];
+                            const isTilesProduct = tilesUnits.includes(product.unit?.toLowerCase()) && 
+                                                  ((product.calculatedBoxes && product.calculatedBoxes > 0) || 
+                                                   (product.calculatedPallets && product.calculatedPallets > 0));
+                        %>
+                        <% if (hasTilesProducts) { %>
+                            <tr>
+                                <td class="center"><%= globalIndex + 1 %></td>
+                                <td>
+                                    <strong><%= product.productName || '-' %></strong>
+                                    <% if (product.productDescription && product.productDescription !== product.productName) { %>
+                                        <br><%= product.productDescription %>
+                                    <% } %>
+                                </td>
+                                <% if (containerIndex === 0) { %>
+                                    <td class="center" rowspan="<%= containerProducts.length %>" style="background-color: #f8f9fa; font-weight: bold; vertical-align: middle;"><%= containerNum %></td>
                                 <% } %>
-                            </td>
-                            <td class="center"><%= (product.hsCode && product.hsCode !== 'N/A') ? product.hsCode : (product.hsnCode && product.hsnCode !== 'N/A') ? product.hsnCode : product.category?.hsnCode || product.product?.category?.hsnCode || product.product?.hsCode || product.product?.hsnCode || 'N/A' %></td>
-                            <td class="right"><%= product.quantity || 0 %></td>
-                            <td class="center"><%= product.unit || 'PCS' %></td>
-                            <td class="center">
-                                <% if (isTilesProduct && product.calculatedBoxes) { %>
-                                    <%= product.calculatedBoxes %>
-                                <% } else { %>
-                                    -
-                                <% } %>
-                            </td>
-                            <td class="center">
-                                <% if (isTilesProduct && product.calculatedPallets) { %>
-                                    <%= product.calculatedPallets %>
-                                <% } else { %>
-                                    -
-                                <% } %>
-                            </td>
-                            <td class="right"><%= (product.rate || 0) %></td>
-                            <td class="right"><%= gross ? gross.toFixed(0) + 'kg' : '0kg' %></td>
-                            <td class="right"><%= piInvoice.currency === 'INR' ? '₹' : piInvoice.currency === 'EUR' ? '€' : '$' %> <%= (product.total || 0).toFixed(2) %></td>
-                        </tr>
-                    <% } else { %>
-                        <tr>
-                            <td class="center"><%= index + 1 %></td>
-                            <td>
-                                <strong><%= product.productName || '-' %></strong>
-                                <% if (product.productDescription && product.productDescription !== product.productName) { %>
-                                    <br><%= product.productDescription %>
-                                <% } %>
-                            </td>
-                            <td class="center"><%= (product.hsCode && product.hsCode !== 'N/A') ? product.hsCode : (product.hsnCode && product.hsnCode !== 'N/A') ? product.hsnCode : product.category?.hsnCode || product.product?.category?.hsnCode || product.product?.hsCode || product.product?.hsnCode || 'N/A' %></td>
-                            <td class="right"><%= product.quantity || 0 %></td>
-                            <td class="center"><%= product.unit || 'PCS' %></td>
-                            <td class="right"><%= (product.rate || 0) %></td>
-                            <td class="right"><%= gross ? gross.toFixed(0) + 'kg' : '0kg' %></td>
-                            <td class="right"><%= piInvoice.currency === 'INR' ? '₹' : piInvoice.currency === 'EUR' ? '€' : '$' %> <%= (product.total || 0).toFixed(2) %></td>
-                        </tr>
-                    <% } %>
+                                <td class="center"><%= (product.hsCode && product.hsCode !== 'N/A') ? product.hsCode : (product.hsnCode && product.hsnCode !== 'N/A') ? product.hsnCode : product.category?.hsnCode || product.product?.category?.hsnCode || product.product?.hsCode || product.product?.hsnCode || 'N/A' %></td>
+                                <td class="right"><%= product.quantity || 0 %></td>
+                                <td class="center"><%= product.unit || 'PCS' %></td>
+                                <td class="center">
+                                    <% if (isTilesProduct && product.calculatedBoxes) { %>
+                                        <%= product.calculatedBoxes %>
+                                    <% } else { %>
+                                        -
+                                    <% } %>
+                                </td>
+                                <td class="center">
+                                    <% if (isTilesProduct && product.calculatedPallets) { %>
+                                        <%= product.calculatedPallets %>
+                                    <% } else { %>
+                                        -
+                                    <% } %>
+                                </td>
+                                <td class="right"><%= (product.rate || 0) %></td>
+                                <td class="right"><%= gross ? gross.toFixed(0) + 'kg' : '0kg' %></td>
+                                <td class="right"><%= piInvoice.currency === 'INR' ? '₹' : piInvoice.currency === 'EUR' ? '€' : '$' %> <%= (product.total || 0).toFixed(2) %></td>
+                            </tr>
+                        <% } else { %>
+                            <tr>
+                                <td class="center"><%= globalIndex + 1 %></td>
+                                <td>
+                                    <strong><%= product.productName || '-' %></strong>
+                                    <% if (product.productDescription && product.productDescription !== product.productName) { %>
+                                        <br><%= product.productDescription %>
+                                    <% } %>
+                                </td>
+                                <td class="center"><%= (product.hsCode && product.hsCode !== 'N/A') ? product.hsCode : (product.hsnCode && product.hsnCode !== 'N/A') ? product.hsnCode : product.category?.hsnCode || product.product?.category?.hsnCode || product.product?.hsCode || product.product?.hsnCode || 'N/A' %></td>
+                                <td class="right"><%= product.quantity || 0 %></td>
+                                <td class="center"><%= product.unit || 'PCS' %></td>
+                                <td class="right"><%= (product.rate || 0) %></td>
+                                <td class="right"><%= gross ? gross.toFixed(0) + 'kg' : '0kg' %></td>
+                                <td class="right"><%= piInvoice.currency === 'INR' ? '₹' : piInvoice.currency === 'EUR' ? '€' : '$' %> <%= (product.total || 0).toFixed(2) %></td>
+                            </tr>
+                        <% } %>
+                        <% globalIndex++; %>
+                    <% }) %>
                 <% }) %>
                 <% if (hasTilesProducts) { %>
                     <tr class="bold header">
-                        <td colspan="8" class="center">SUB TOTAL</td>
+                        <td colspan="9" class="center">SUB TOTAL</td>
                         <td></td>
                         <td class="right"><%= piInvoice.currency === 'INR' ? '₹' : piInvoice.currency === 'EUR' ? '€' : '$' %> <%= sumAmount.toFixed(2) %></td>
                     </tr>
@@ -342,7 +362,7 @@
                 <% } %>
                 <% if (hasTilesProducts) { %>
                     <tr class="bold">
-                        <td colspan="10">
+                        <td colspan="11">
                             NET WEIGHT:- <%= (piInvoice.totalWeight || totalNet).toFixed(1) %> KG<br>
                             GROSS WEIGHT:- <%= (piInvoice.totalGrossWeight || totalGross).toFixed(1) %> KG
                         </td>
