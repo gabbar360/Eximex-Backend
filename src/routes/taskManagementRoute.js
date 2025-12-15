@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { verifyJWT, authorizeRoles } from '../middleware/auth.js';
-import { createTask, getTasks, updateTaskStatus, getTaskById, deleteTask, getStaffList } from '../controller/taskManagementController.js';
+import { createTask, getTasks, updateTask, getTaskById, deleteTask, getStaffList } from '../controller/taskManagementController.js';
 
 const router = Router();
 
@@ -16,8 +16,8 @@ router.get('/task-management/tasks/:id', getTaskById);
 // Create task
 router.post('/task-management/tasks', createTask);
 
-// Update task status
-router.patch('/task-management/tasks/:id/status', updateTaskStatus);
+// Update complete task
+router.put('/task-management/tasks/:id', updateTask);
 
 // Delete task
 router.delete('/task-management/tasks/:id', deleteTask);

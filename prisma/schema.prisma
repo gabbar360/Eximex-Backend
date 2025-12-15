@@ -49,7 +49,10 @@ model User {
   updatedShipments      Shipment[]             @relation("ShipmentUpdater")
   userPermissions       UserPermission[]
   assignedTasks         Task[]                 @relation("TaskAssignee")
-  createdTasks          Task[]                 @relation("TaskAssigner")
+  assignerTasks         Task[]                 @relation("TaskAssigner")
+  createdTasks          Task[]                 @relation("TaskCreator")
+  sentNotifications     Notification[]         @relation("NotificationSender")
+  receivedNotifications Notification[]         @relation("NotificationReceiver")
 
 }
 
@@ -90,6 +93,7 @@ model CompanyDetails {
 
   shipments       Shipment[]
   tasks           Task[]
+  notifications   Notification[]
 
 }
 
@@ -917,29 +921,58 @@ model UserPermission {
 }
 
 model Task {
-  id          Int      @id @default(autoincrement())
-  title       String
-  description String?
-  priority    TaskPriority @default(MEDIUM)
-  status      TaskStatus   @default(PENDING)
-  dueDate     DateTime?    @map("due_date")
-  
+  id            Int           @id @default(autoincrement())
+
+  // Basic Info
+  title         String
+  description   String?
+  type          TaskType
+  priority      TaskPriority  @default(MEDIUM)
+  status        TaskStatus    @default(PENDING)
+
+  // Dates
+  dueDate       DateTime?     @map("due_date")
+  completedAt   DateTime?     @map("completed_at")
+
   // Assignment
-  assignedBy  Int      @map("assigned_by")
-  assignedTo  Int      @map("assigned_to")
-  companyId   Int      @map("company_id")
-  
+  createdBy     Int           @map("created_by")
+  assignedBy    Int           @map("assigned_by")
+  assignedTo    Int           @map("assigned_to")
+
+  // Business References
+  companyId     Int           @map("company_id")
+  leadId        Int?          @map("lead_id")
+  projectId     Int?          @map("project_id")
+
+  // SLA / Escalation
+  slaHours      Int?          @map("sla_hours")
+  escalated     Boolean       @default(false)
+
+  // Soft Delete
+  isActive      Boolean       @default(true)
+
   // Timestamps
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
-  completedAt DateTime? @map("completed_at")
-  
+  createdAt     DateTime      @default(now()) @map("created_at")
+  updatedAt     DateTime      @updatedAt @map("updated_at")
+
   // Relations
-  assigner    User     @relation("TaskAssigner", fields: [assignedBy], references: [id])
-  assignee    User     @relation("TaskAssignee", fields: [assignedTo], references: [id])
-  company     CompanyDetails @relation(fields: [companyId], references: [id])
-  
+  creator       User          @relation("TaskCreator", fields: [createdBy], references: [id])
+  assigner      User          @relation("TaskAssigner", fields: [assignedBy], references: [id])
+  assignee      User          @relation("TaskAssignee", fields: [assignedTo], references: [id])
+  company       CompanyDetails @relation(fields: [companyId], references: [id])
+  // lead          Lead?         @relation(fields: [leadId], references: [id])
+  // project       Project?      @relation(fields: [projectId], references: [id])
+
   @@map("tasks")
+}
+
+enum TaskType {
+  LEAD_FOLLOW_UP
+  QUOTATION
+  DOCUMENTATION
+  SHIPMENT
+  PAYMENT
+  INTERNAL
 }
 
 enum TaskPriority {
@@ -952,8 +985,41 @@ enum TaskPriority {
 enum TaskStatus {
   PENDING
   IN_PROGRESS
+  ON_HOLD
   COMPLETED
   CANCELLED
+  OVERDUE
+}
+
+model Notification {
+  id          Int                @id @default(autoincrement())
+  companyId   Int                @map("company_id")
+  senderId    Int?               @map("sender_id")
+  receiverId  Int                @map("receiver_id")
+  type        NotificationType
+  title       String
+  message     String
+  data        Json?              // Additional data (task details, etc.)
+  isRead      Boolean            @default(false) @map("is_read")
+  readAt      DateTime?          @map("read_at")
+  createdAt   DateTime           @default(now()) @map("created_at")
+  updatedAt   DateTime           @updatedAt @map("updated_at")
+
+  // Relations
+  company     CompanyDetails     @relation(fields: [companyId], references: [id])
+  sender      User?              @relation("NotificationSender", fields: [senderId], references: [id])
+  receiver    User               @relation("NotificationReceiver", fields: [receiverId], references: [id])
+
+  @@map("notifications")
+}
+
+enum NotificationType {
+  TASK_ASSIGNED
+  TASK_STATUS_UPDATED
+  TASK_OVERDUE
+  TASK_COMPLETED
+  TASK_CANCELLED
+  SYSTEM_ALERT
 }
 
 
