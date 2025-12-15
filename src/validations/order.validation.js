@@ -54,17 +54,11 @@ const updateOrderStatus = {
   }),
 };
 
-const updatePaymentStatus = {
-  body: Joi.object().keys({
-    paymentStatus: Joi.string()
-      .valid('pending', 'partial', 'paid', 'overdue')
-      .required(),
-  }),
-};
+
 
 export const orderValidation = {
   createOrder,
   updateOrder,
   updateOrderStatus,
-  updatePaymentStatus,
+
 };

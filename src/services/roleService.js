@@ -1,9 +1,7 @@
 import { prisma } from '../config/dbConfig.js';
 import { ApiError } from '../utils/ApiError.js';
 
-export const roleService = {
-  // Get all roles with pagination
-  async getAllRoles(options = {}) {
+const getAllRoles = async (options = {}) => {
     const { page = 1, limit = 10, search = '' } = options;
 
     const pageNum = parseInt(page) || 1;
@@ -41,10 +39,9 @@ export const roleService = {
         hasPrev: pageNum > 1,
       },
     };
-  },
+};
 
-  // Get role by ID
-  async getRoleById(id) {
+const getRoleById = async (id) => {
     const role = await prisma.role.findUnique({
       where: { id: parseInt(id) },
     });
@@ -54,10 +51,9 @@ export const roleService = {
     }
 
     return role;
-  },
+};
 
-  // Create new role
-  async createRole(data) {
+const createRole = async (data) => {
     const { name, displayName, description } = data;
 
     // Format name
@@ -80,13 +76,12 @@ export const roleService = {
         isSystem: false,
       },
     });
-  },
+};
 
-  // Update role
-  async updateRole(id, data) {
+const updateRole = async (id, data) => {
     const { name, displayName, description } = data;
 
-    const role = await this.getRoleById(id);
+    const role = await getRoleById(id);
 
     if (role.isSystem) {
       throw new ApiError(400, 'System roles cannot be modified');
@@ -113,10 +108,9 @@ export const roleService = {
       where: { id: parseInt(id) },
       data: updateData,
     });
-  },
+};
 
-  // Delete role
-  async deleteRole(id) {
+const deleteRole = async (id) => {
     const role = await prisma.role.findUnique({
       where: { id: parseInt(id) },
       include: { users: true },
@@ -139,5 +133,12 @@ export const roleService = {
     });
 
     return true;
-  },
+};
+
+export const RoleService = {
+  getAllRoles,
+  getRoleById,
+  createRole,
+  updateRole,
+  deleteRole,
 };
