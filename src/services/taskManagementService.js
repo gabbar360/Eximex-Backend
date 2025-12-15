@@ -1,10 +1,11 @@
 import { prisma } from '../config/dbConfig.js';
 import { ApiError } from '../utils/ApiError.js';
+import notificationService from './notificationService.js';
 
 export const taskManagementService = {
   // Create task (Admin only)
   async createTask(taskData, assignerId) {
-    const { title, description, priority, dueDate, assignedTo } = taskData;
+    const { title, description, type, priority, dueDate, assignedTo, slaHours } = taskData;
     
     const assigner = await prisma.user.findUnique({
       where: { id: assignerId },
@@ -27,21 +28,30 @@ export const taskManagementService = {
       throw new ApiError(404, 'Staff member not found');
     }
 
-    return await prisma.task.create({
+    const task = await prisma.task.create({
       data: {
         title,
         description,
+        type,
         priority: priority || 'MEDIUM',
         dueDate: dueDate ? new Date(dueDate) : null,
+        slaHours,
+        createdBy: assignerId,
         assignedBy: assignerId,
         assignedTo,
         companyId: assigner.companyId
       },
       include: {
+        creator: { select: { name: true, email: true } },
         assigner: { select: { name: true, email: true } },
         assignee: { select: { name: true, email: true } }
       }
     });
+
+    // Create notification for task assignment
+    await notificationService.createTaskAssignedNotification(task, assignerId);
+
+    return task;
   },
 
   // Get tasks (Admin sees all, Staff sees only assigned)
@@ -101,8 +111,9 @@ export const taskManagementService = {
     try {
       const [tasks, total] = await Promise.all([
         prisma.task.findMany({
-          where,
+          where: { ...where, isActive: true },
           include: {
+            creator: { select: { name: true, email: true } },
             assigner: { select: { name: true, email: true } },
             assignee: { select: { name: true, email: true } }
           },
@@ -110,7 +121,7 @@ export const taskManagementService = {
           skip: Number((pageNum - 1) * limitNum),
           take: Number(limitNum)
         }),
-        prisma.task.count({ where })
+        prisma.task.count({ where: { ...where, isActive: true } })
       ]);
 
       console.log('✅ Query successful:', { tasksCount: tasks.length, total });
@@ -132,11 +143,17 @@ export const taskManagementService = {
     }
   },
 
-  // Update task status (Staff can update their tasks)
-  async updateTaskStatus(taskId, status, userId) {
+  // Update complete task (Admin can update all fields, Staff can update status only)
+  async updateTask(taskId, taskData, userId) {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      include: { role: true }
+    });
+
     const task = await prisma.task.findFirst({
       where: { 
         id: taskId,
+        companyId: user.companyId,
         OR: [
           { assignedTo: userId },
           { assignedBy: userId }
@@ -148,19 +165,60 @@ export const taskManagementService = {
       throw new ApiError(404, 'Task not found or access denied');
     }
 
-    const updateData = { status };
-    if (status === 'COMPLETED') {
+    const updateData = {};
+    
+    // Admin can update all fields
+    if (['ADMIN', 'SUPER_ADMIN'].includes(user.role?.name)) {
+      const { title, description, type, priority, dueDate, assignedTo, slaHours, status } = taskData;
+      
+      if (title !== undefined) updateData.title = title;
+      if (description !== undefined) updateData.description = description;
+      if (type !== undefined) updateData.type = type;
+      if (priority !== undefined) updateData.priority = priority;
+      if (dueDate !== undefined) updateData.dueDate = dueDate ? new Date(dueDate) : null;
+      if (assignedTo !== undefined) updateData.assignedTo = assignedTo;
+      if (slaHours !== undefined) updateData.slaHours = slaHours;
+      if (status !== undefined) updateData.status = status;
+    } else {
+      // Staff can only update status
+      if (taskData.status !== undefined) updateData.status = taskData.status;
+    }
+
+    if (updateData.status === 'COMPLETED') {
       updateData.completedAt = new Date();
     }
 
-    return await prisma.task.update({
+    const updatedTask = await prisma.task.update({
       where: { id: taskId },
       data: updateData,
       include: {
+        creator: { select: { name: true, email: true } },
         assigner: { select: { name: true, email: true } },
         assignee: { select: { name: true, email: true } }
       }
     });
+
+    // Create notifications for updates
+    if (updateData.status && updateData.status !== task.status) {
+      updatedTask.previousStatus = task.status;
+      
+      if (updateData.status === 'COMPLETED') {
+        await notificationService.createTaskCompletedNotification(updatedTask, userId);
+      } else {
+        await notificationService.createTaskStatusUpdatedNotification(updatedTask, userId);
+      }
+    }
+    
+    // If admin updates task, notify staff (except for status-only updates by staff)
+    if (['ADMIN', 'SUPER_ADMIN'].includes(user.role?.name) && Object.keys(updateData).length > 0) {
+      // Only notify if there are actual changes and it's not just a status update
+      const hasNonStatusUpdates = Object.keys(updateData).some(key => key !== 'status' && key !== 'completedAt');
+      if (hasNonStatusUpdates || updateData.status) {
+        await notificationService.createTaskUpdatedNotification(updatedTask, userId);
+      }
+    }
+
+    return updatedTask;
   },
 
   // Get task by ID
@@ -207,6 +265,10 @@ export const taskManagementService = {
       where: { 
         id: taskId, 
         companyId: user.companyId 
+      },
+      include: {
+        assigner: { select: { name: true, email: true } },
+        assignee: { select: { name: true, email: true } }
       }
     });
 
@@ -214,11 +276,16 @@ export const taskManagementService = {
       throw new ApiError(404, 'Task not found');
     }
 
+    // Create notification before deleting task
+    if (task.assignedTo) {
+      await notificationService.createTaskDeletedNotification(task, userId);
+    }
+
     await prisma.task.delete({
       where: { id: taskId }
     });
 
-    return { message: 'Task deleted successfully' };
+    return { message: 'Task deleted successfully...' };
   },
 
   // Get staff list for assignment (Admin only)

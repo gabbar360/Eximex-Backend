@@ -19,11 +19,10 @@ export const getTasks = asyncHandler(async (req, res) => {
   return res.status(200).json(new ApiResponse(200, tasks, 'Tasks fetched successfully'));
 });
 
-export const updateTaskStatus = asyncHandler(async (req, res) => {
+export const updateTask = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const { status } = req.body;
-  const task = await taskManagementService.updateTaskStatus(Number(id), status, req.user.id);
-  return res.status(200).json(new ApiResponse(200, task, 'Task updated successfully'));
+  const task = await taskManagementService.updateTask(Number(id), req.body, req.user.id);
+  return res.status(200).json(new ApiResponse(200, task, 'Task updated successfully...'));
 });
 
 export const getTaskById = asyncHandler(async (req, res) => {
@@ -35,7 +34,7 @@ export const getTaskById = asyncHandler(async (req, res) => {
 export const deleteTask = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const result = await taskManagementService.deleteTask(Number(id), req.user.id);
-  return res.status(200).json(new ApiResponse(200, result, 'Task deleted successfully'));
+  return res.status(200).json(new ApiResponse(200, result, 'Task deleted successfully...'));
 });
 
 export const getStaffList = asyncHandler(async (req, res) => {
