@@ -8,7 +8,6 @@ import {
   updatePackingList,
   deletePackingList,
   downloadPackingListPDF,
-  downloadPackingingListPortDetailsPDF,
 } from '../controller/packagingStepsController.js';
 import { verifyJWT } from '../middleware/auth.js';
 
@@ -53,10 +52,5 @@ router.delete('/packing-lists/:id', verifyJWT, deletePackingList);
  * @access Private
  */
 router.get('/packing-lists/:id/pdf', verifyJWT, downloadPackingListPDF);
-router.get(
-  '/packing-lists/port-delivery/:id/pdf',
-  verifyJWT,
-  downloadPackingingListPortDetailsPDF
-);
 
 export default router;

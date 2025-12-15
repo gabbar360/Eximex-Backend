@@ -826,33 +826,7 @@ const updatePiStatus = async (
 
       // AUTOMATIC PAYMENT CREATION
       if (status === 'confirmed') {
-        // Check if payment already exists
-        const existingPayment = await tx.payment.findFirst({
-          where: { piInvoiceId: id },
-        });
 
-        if (!existingPayment) {
-          // Create payment entry
-          const dueDate = new Date();
-          dueDate.setDate(dueDate.getDate() + 30); // 30 days from now
-
-          // Store original total amount before any advance deduction
-          const originalAmount =
-            piInvoice.totalAmount + (piInvoice.advanceAmount || 0);
-
-          await tx.payment.create({
-            data: {
-              companyId,
-              piInvoiceId: id,
-              partyId: piInvoice.partyId,
-              amount: originalAmount, // Original PI total
-              dueAmount: piInvoice.totalAmount, // Remaining after advance
-              dueDate,
-              status: 'pending',
-              createdBy: userId,
-            },
-          });
-        }
       }
 
       // AUTOMATIC ORDER CREATION - FIXED LOGIC FOR MULTIPLE CONFIRMATIONS
@@ -911,47 +885,15 @@ const updatePiStatus = async (
             `✅ Order ${orderNumber} created automatically for PI ${piInvoice.piNumber}`
           );
         } else {
-          // Order exists, just update payment amount if provided
-          if (paymentAmount !== null) {
-            createdOrder = await tx.order.update({
-              where: { id: existingOrder.id },
-              data: {
-                paymentAmount: paymentAmount,
-                updatedBy: userId,
-              },
-            });
-            console.log(
-              `💰 Payment amount updated for existing order ${existingOrder.orderNumber}`
-            );
-          } else {
-            // Return existing order without changes
-            createdOrder = existingOrder;
-            console.log(
-              `ℹ️ PI ${piInvoice.piNumber} already confirmed with order ${existingOrder.orderNumber}`
-            );
-          }
-        }
-      }
-
-      // Handle payment amount update for confirmed orders (when status is not changing to confirmed)
-      if (status !== 'confirmed' && paymentAmount !== null) {
-        const existingOrder = await tx.order.findFirst({
-          where: { piInvoiceId: id },
-        });
-
-        if (existingOrder) {
-          createdOrder = await tx.order.update({
-            where: { id: existingOrder.id },
-            data: {
-              paymentAmount: paymentAmount,
-              updatedBy: userId,
-            },
-          });
+          // Return existing order without changes
+          createdOrder = existingOrder;
           console.log(
-            `💰 Payment amount updated for order ${existingOrder.orderNumber}`
+            `ℹ️ PI ${piInvoice.piNumber} already confirmed with order ${existingOrder.orderNumber}`
           );
         }
       }
+
+
 
       return { updated, createdOrder };
     });
@@ -968,12 +910,10 @@ const updatePiStatus = async (
       } else if (piInvoice.status === 'confirmed' && status === 'confirmed') {
         message = `PI is already confirmed with Order ${updatedPi.createdOrder.orderNumber}`;
       } else if (paymentAmount !== null) {
-        message += ` and payment amount updated`;
+
       }
 
-      if (paymentAmount !== null) {
-        message += ` with payment amount ₹${paymentAmount}`;
-      }
+
     }
 
     const response = {
@@ -1002,7 +942,7 @@ const generatePiInvoicePdf = async (
   id,
   companyId,
   logoBase64 = null,
-  paymentLink = null
+
 ) => {
   try {
     const piInvoice = await getPiInvoiceById(id, companyId);
@@ -1011,7 +951,7 @@ const generatePiInvoicePdf = async (
     const htmlContent = await ejs.renderFile(templatePath, {
       piInvoice,
       logoBase64,
-      paymentLink,
+  
     });
 
     return await generatePDF(htmlContent);

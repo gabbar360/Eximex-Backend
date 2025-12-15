@@ -20,9 +20,7 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-export const superAdminService = {
-  // Get all users with pagination
-  async getAllUsers(options = {}) {
+const getAllUsers = async (options = {}) => {
     try {
       const { page = 1, limit = 10, search = '' } = options;
 
@@ -76,10 +74,9 @@ export const superAdminService = {
       console.error('Error in getAllUsers:', error);
       throw new ApiError(500, 'Database error while fetching users');
     }
-  },
+};
 
-  // Get user by ID
-  async getUserById(id) {
+const getUserById = async (id) => {
     const user = await prisma.user.findUnique({
       where: { id: parseInt(id) },
       select: {
@@ -107,10 +104,9 @@ export const superAdminService = {
     }
 
     return user;
-  },
+};
 
-  // Create user with invitation
-  async createUser(data) {
+const createUser = async (data) => {
     const {
       name,
       email,
@@ -161,7 +157,7 @@ export const superAdminService = {
     // Send invitation email if no password was provided
     if (!password || password.trim() === '') {
       try {
-        await this.sendInvitationEmail(
+        await sendInvitationEmail(
           user.email,
           user.name,
           userData.resetPasswordToken,
@@ -174,16 +170,15 @@ export const superAdminService = {
     }
 
     return user;
-  },
+};
 
-  // Send invitation email
-  async sendInvitationEmail(
-    email,
-    userName,
-    invitationToken,
-    userRole,
-    companyName
-  ) {
+const sendInvitationEmail = async (
+  email,
+  userName,
+  invitationToken,
+  userRole,
+  companyName
+) => {
     const invitationLink = `${process.env.FRONTEND_URL}/set-password?token=${invitationToken}`;
     console.log('link', invitationLink);
     console.log('🔗 Invitation link generated:', invitationLink);
@@ -210,10 +205,9 @@ export const superAdminService = {
 
     await transporter.sendMail(mailOptions);
     console.log('📧 Invitation email sent to:', email);
-  },
+};
 
-  // Set password for invited user
-  async setInvitedUserPassword(token, password) {
+const setInvitedUserPassword = async (token, password) => {
     const user = await prisma.user.findFirst({
       where: {
         resetPasswordToken: token,
@@ -246,10 +240,9 @@ export const superAdminService = {
         status: true,
       },
     });
-  },
+};
 
-  // Update user
-  async updateUser(id, data) {
+const updateUser = async (id, data) => {
     const { name, email, password, roleId, companyId, status } = data;
 
     const updateData = {};
@@ -283,19 +276,17 @@ export const superAdminService = {
         company: true,
       },
     });
-  },
+};
 
-  // Delete user
-  async deleteUser(id) {
+const deleteUser = async (id) => {
     await prisma.user.delete({
       where: { id: parseInt(id) },
     });
 
     return true;
-  },
+};
 
-  // Assign company to user
-  async assignCompanyToUser(userId, companyId) {
+const assignCompanyToUser = async (userId, companyId) => {
     const user = await prisma.user.findUnique({
       where: { id: parseInt(userId) },
     });
@@ -320,10 +311,9 @@ export const superAdminService = {
         company: true,
       },
     });
-  },
+};
 
-  // Get all companies with pagination
-  async getAllCompanies(options = {}) {
+const getAllCompanies = async (options = {}) => {
     const { page = 1, limit = 10, search = '' } = options;
 
     const pageNum = parseInt(page) || 1;
@@ -384,10 +374,9 @@ export const superAdminService = {
         hasPrev: pageNum > 1,
       },
     };
-  },
+};
 
-  // Create company by SuperAdmin
-  async createCompany(data) {
+const createCompany = async (data) => {
     const {
       name,
       email,
@@ -440,10 +429,9 @@ export const superAdminService = {
         planId: 'trial',
       },
     });
-  },
+};
 
-  // Update company
-  async updateCompany(id, data) {
+const updateCompany = async (id, data) => {
     const company = await prisma.companyDetails.findUnique({
       where: { id: parseInt(id) },
     });
@@ -456,10 +444,9 @@ export const superAdminService = {
       where: { id: parseInt(id) },
       data,
     });
-  },
+};
 
-  // Delete company
-  async deleteCompany(id) {
+const deleteCompany = async (id) => {
     const company = await prisma.companyDetails.findUnique({
       where: { id: parseInt(id) },
     });
@@ -473,5 +460,19 @@ export const superAdminService = {
     });
 
     return true;
-  },
+};
+
+export const SuperAdminService = {
+  getAllUsers,
+  getUserById,
+  createUser,
+  sendInvitationEmail,
+  setInvitedUserPassword,
+  updateUser,
+  deleteUser,
+  assignCompanyToUser,
+  getAllCompanies,
+  createCompany,
+  updateCompany,
+  deleteCompany,
 };

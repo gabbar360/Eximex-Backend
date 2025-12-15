@@ -1,10 +1,10 @@
 import { ApiResponse } from '../utils/ApiResponse.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
-import { roleService } from '../services/roleService.js';
+import { RoleService } from '../services/roleService.js';
 
 // Get all roles
 export const getAllRoles = asyncHandler(async (req, res) => {
-  const roles = await roleService.getAllRoles(req.query);
+  const roles = await RoleService.getAllRoles(req.query);
 
   return res
     .status(200)
@@ -14,7 +14,7 @@ export const getAllRoles = asyncHandler(async (req, res) => {
 // Get role by ID
 export const getRoleById = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const role = await roleService.getRoleById(id);
+  const role = await RoleService.getRoleById(id);
 
   return res
     .status(200)
@@ -23,7 +23,7 @@ export const getRoleById = asyncHandler(async (req, res) => {
 
 // Create new role (Super Admin only)
 export const createRole = asyncHandler(async (req, res) => {
-  const role = await roleService.createRole(req.body);
+  const role = await RoleService.createRole(req.body);
 
   return res
     .status(201)
@@ -33,7 +33,7 @@ export const createRole = asyncHandler(async (req, res) => {
 // Update role (Super Admin only)
 export const updateRole = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const updatedRole = await roleService.updateRole(id, req.body);
+  const updatedRole = await RoleService.updateRole(id, req.body);
 
   return res
     .status(200)
@@ -43,7 +43,7 @@ export const updateRole = asyncHandler(async (req, res) => {
 // Delete role (Super Admin only)
 export const deleteRole = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  await roleService.deleteRole(id);
+  await RoleService.deleteRole(id);
 
   return res
     .status(200)

@@ -64,17 +64,7 @@ export const updateOrderStatus = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, order, 'Order status updated successfully'));
 });
 
-export const updatePaymentStatus = asyncHandler(async (req, res) => {
-  const order = await OrderService.updatePaymentStatus(
-    parseInt(req.params.id),
-    req.body.paymentStatus,
-    req.user.id,
-    req.user.companyId
-  );
-  return res
-    .status(200)
-    .json(new ApiResponse(200, order, 'Payment status updated successfully'));
-});
+
 
 export const deleteOrder = asyncHandler(async (req, res) => {
   const result = await OrderService.deleteOrder(

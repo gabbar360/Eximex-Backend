@@ -1,9 +1,7 @@
 import { prisma } from '../config/dbConfig.js';
 import { ApiError } from '../utils/ApiError.js';
 
-export const menuService = {
-  // Get all menus with submenus and pagination
-  async getAllMenus(options = {}) {
+const getAllMenus = async (options = {}) => {
     const { page = 1, limit = 10, search = '' } = options;
 
     const pageNum = parseInt(page) || 1;
@@ -47,10 +45,9 @@ export const menuService = {
         hasPrev: pageNum > 1,
       },
     };
-  },
+};
 
-  // Get menu by ID
-  async getMenuById(id) {
+const getMenuById = async (id) => {
     const menu = await prisma.menu.findUnique({
       where: { id },
       include: {
@@ -66,10 +63,9 @@ export const menuService = {
     }
 
     return menu;
-  },
+};
 
-  // Create new menu
-  async createMenu(data) {
+const createMenu = async (data) => {
     const { name, slug, path, icon, sortOrder } = data;
 
     // Check if slug exists
@@ -90,13 +86,12 @@ export const menuService = {
         sortOrder: sortOrder || 0,
       },
     });
-  },
+};
 
-  // Update menu
-  async updateMenu(id, data) {
+const updateMenu = async (id, data) => {
     const { name, slug, path, icon, sortOrder, isActive } = data;
 
-    const menu = await this.getMenuById(id);
+    const menu = await getMenuById(id);
 
     // Check if slug exists (excluding current menu)
     if (slug && slug !== menu.slug) {
@@ -120,10 +115,9 @@ export const menuService = {
         isActive,
       },
     });
-  },
+};
 
-  // Delete menu
-  async deleteMenu(id) {
+const deleteMenu = async (id) => {
     const menu = await prisma.menu.findUnique({
       where: { id },
       include: {
@@ -152,10 +146,9 @@ export const menuService = {
     });
 
     return true;
-  },
+};
 
-  // Create submenu
-  async createSubmenu(data) {
+const createSubmenu = async (data) => {
     const { menuId, name, slug, path, icon, sortOrder } = data;
 
     // Check if parent menu exists
@@ -192,10 +185,9 @@ export const menuService = {
         sortOrder: sortOrder || 0,
       },
     });
-  },
+};
 
-  // Update submenu
-  async updateSubmenu(id, data) {
+const updateSubmenu = async (id, data) => {
     const { name, slug, path, icon, sortOrder, isActive } = data;
 
     const submenu = await prisma.submenu.findUnique({
@@ -235,10 +227,9 @@ export const menuService = {
         isActive,
       },
     });
-  },
+};
 
-  // Delete submenu
-  async deleteSubmenu(id) {
+const deleteSubmenu = async (id) => {
     const submenu = await prisma.submenu.findUnique({
       where: { id },
       include: {
@@ -262,5 +253,15 @@ export const menuService = {
     });
 
     return true;
-  },
+};
+
+export const MenuService = {
+  getAllMenus,
+  getMenuById,
+  createMenu,
+  updateMenu,
+  deleteMenu,
+  createSubmenu,
+  updateSubmenu,
+  deleteSubmenu,
 };

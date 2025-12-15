@@ -5,7 +5,7 @@ import {
   getOrderById,
   updateOrder,
   updateOrderStatus,
-  updatePaymentStatus,
+
   deleteOrder,
   createOrderFromPi,
   downloadOrderInvoicePdf,
@@ -42,11 +42,6 @@ router.patch(
   '/:id/status',
   validate(orderValidation.updateOrderStatus),
   updateOrderStatus
-);
-router.patch(
-  '/:id/payment-status',
-  validate(orderValidation.updatePaymentStatus),
-  updatePaymentStatus
 );
 
 // Create order from confirmed PI
