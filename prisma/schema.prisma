@@ -48,6 +48,8 @@ model User {
   createdShipments      Shipment[]             @relation("ShipmentCreator")
   updatedShipments      Shipment[]             @relation("ShipmentUpdater")
   userPermissions       UserPermission[]
+  assignedTasks         Task[]                 @relation("TaskAssignee")
+  createdTasks          Task[]                 @relation("TaskAssigner")
 
 }
 
@@ -87,6 +89,7 @@ model CompanyDetails {
   payments        Payment[]
 
   shipments       Shipment[]
+  tasks           Task[]
 
 }
 
@@ -908,6 +911,46 @@ model UserPermission {
 
   @@unique([userId, menuId, submenuId])
   @@map("user_permissions")
+}
+
+model Task {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String?
+  priority    TaskPriority @default(MEDIUM)
+  status      TaskStatus   @default(PENDING)
+  dueDate     DateTime?    @map("due_date")
+  
+  // Assignment
+  assignedBy  Int      @map("assigned_by")
+  assignedTo  Int      @map("assigned_to")
+  companyId   Int      @map("company_id")
+  
+  // Timestamps
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  completedAt DateTime? @map("completed_at")
+  
+  // Relations
+  assigner    User     @relation("TaskAssigner", fields: [assignedBy], references: [id])
+  assignee    User     @relation("TaskAssignee", fields: [assignedTo], references: [id])
+  company     CompanyDetails @relation(fields: [companyId], references: [id])
+  
+  @@map("tasks")
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum TaskStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
 }
 
 
