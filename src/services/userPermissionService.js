@@ -194,6 +194,16 @@ export const userPermissionService = {
   },
 
   async getUserSidebarMenu(userId) {
+    // Get user with role
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      include: { role: true }
+    });
+
+    if (!user) {
+      throw new Error('User not found');
+    }
+
     // Get all user permissions
     const permissions = await prisma.userPermission.findMany({
       where: { userId },
@@ -216,6 +226,27 @@ export const userPermissionService = {
         menuPermissions.set(permission.menuId, permission.canView);
       }
     });
+
+    // For STAFF users, automatically add "My Tasks" menu
+    if (user.role?.name === 'STAFF') {
+      const taskManagementMenu = await prisma.menu.findFirst({
+        where: { slug: 'task-management', isActive: true }
+      });
+      
+      if (taskManagementMenu) {
+        menuMap.set(taskManagementMenu.id, {
+          id: taskManagementMenu.id,
+          name: taskManagementMenu.name,
+          slug: taskManagementMenu.slug,
+          path: taskManagementMenu.path,
+          icon: taskManagementMenu.icon,
+          sortOrder: taskManagementMenu.sortOrder,
+          isActive: taskManagementMenu.isActive,
+          submenus: [],
+        });
+        menuPermissions.set(taskManagementMenu.id, true);
+      }
+    }
 
     // Process menu permissions - only show menus with canView: true
     permissions.forEach((permission) => {

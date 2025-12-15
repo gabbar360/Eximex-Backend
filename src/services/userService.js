@@ -14,7 +14,14 @@ const getUserById = async (userId, includePassword = false) => {
     name: true,
     email: true,
     mobileNum: true,
-    role: true,
+    roleId: true,
+    role: {
+      select: {
+        id: true,
+        name: true,
+        displayName: true
+      }
+    },
     status: true,
     isBlocked: true,
     lastLogin: true,
@@ -40,7 +47,14 @@ const getUserByEmail = async (email, includePassword = false) => {
     name: true,
     email: true,
     mobileNum: true,
-    role: true,
+    roleId: true,
+    role: {
+      select: {
+        id: true,
+        name: true,
+        displayName: true
+      }
+    },
     status: true,
     isBlocked: true,
     lastLogin: true,
@@ -92,7 +106,14 @@ const getAllUsers = async (options = {}, requestingUser = null) => {
     name: true,
     email: true,
     mobileNum: true,
-    role: true,
+    roleId: true,
+    role: {
+      select: {
+        id: true,
+        name: true,
+        displayName: true
+      }
+    },
     status: true,
     isBlocked: true,
     lastLogin: true,
@@ -160,7 +181,7 @@ const createUser = async (userData, creatingUser = null) => {
 };
 
 const updateUser = async (userId, updateData, updatingUser = null) => {
-  const { name, email, mobileNum, role, status } = updateData;
+  const { name, email, mobileNum, roleId, status } = updateData;
 
   const existingUser = await getUserById(userId);
   if (!existingUser) throw new ApiError(404, 'User not found');
@@ -192,14 +213,22 @@ const updateUser = async (userId, updateData, updatingUser = null) => {
   if (name) updateFields.name = name.trim();
   if (email) updateFields.email = email.toLowerCase().trim();
   if (mobileNum) updateFields.mobileNum = mobileNum.trim();
-  if (role) updateFields.role = role;
+  if (roleId) updateFields.roleId = Number(roleId);
   if (status) updateFields.status = status;
 
-  const updatedUser = await DatabaseUtils.update(
-    'user',
-    { id: Number(userId) },
-    updateFields
-  );
+  const updatedUser = await prisma.user.update({
+    where: { id: Number(userId) },
+    data: updateFields,
+    include: {
+      role: {
+        select: {
+          id: true,
+          name: true,
+          displayName: true
+        }
+      }
+    }
+  });
 
   cacheManager.delete(`user_${userId}_false`);
   cacheManager.delete(`user_${userId}_true`);
@@ -348,7 +377,14 @@ const getCompanyStaff = async (companyId, options = {}) => {
       id: true,
       name: true,
       email: true,
-      role: true,
+      roleId: true,
+      role: {
+        select: {
+          id: true,
+          name: true,
+          displayName: true
+        }
+      },
       status: true,
       lastLogin: true,
       createdAt: true,
@@ -494,7 +530,14 @@ const getAllUsersForSuperAdmin = async (options = {}) => {
     name: true,
     email: true,
     mobileNum: true,
-    role: true,
+    roleId: true,
+    role: {
+      select: {
+        id: true,
+        name: true,
+        displayName: true
+      }
+    },
     status: true,
     isBlocked: true,
     lastLogin: true,
@@ -605,7 +648,14 @@ const getAllDatabaseData = async (options = {}) => {
           id: true,
           name: true,
           email: true,
-          role: true,
+          roleId: true,
+          role: {
+            select: {
+              id: true,
+              name: true,
+              displayName: true
+            }
+          },
           status: true,
           isBlocked: true,
           lastLogin: true,
@@ -802,7 +852,14 @@ const getCompanyDetails = async (companyId) => {
           id: true,
           name: true,
           email: true,
-          role: true,
+          roleId: true,
+          role: {
+            select: {
+              id: true,
+              name: true,
+              displayName: true
+            }
+          },
           status: true,
           lastLogin: true,
           createdAt: true,
@@ -864,7 +921,16 @@ const getTableData = async (tableName, options = {}) => {
         [data, count] = await Promise.all([
           prisma.user.findMany({
             where: userWhere,
-            include: { company: { select: { name: true } } },
+            include: { 
+              company: { select: { name: true } },
+              role: {
+                select: {
+                  id: true,
+                  name: true,
+                  displayName: true
+                }
+              }
+            },
             take: Number(limit),
             skip: (Number(page) - 1) * Number(limit),
             orderBy: { createdAt: 'desc' },

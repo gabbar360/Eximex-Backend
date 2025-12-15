@@ -56,9 +56,9 @@ const seedMenuItems = async () => {
       sortOrder: 7,
     },
     {
-      name: 'Staff Management',
-      slug: 'staff-management',
-      path: '/staff-management',
+      name: 'Task Management',
+      slug: 'task-management',
+      path: '/task-management',
       icon: 'MdSupervisorAccount',
       sortOrder: 8,
     },
