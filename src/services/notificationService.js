@@ -157,6 +157,13 @@ export const notificationService = {
     });
   },
 
+  // Delete notification
+  async deleteNotification(notificationId, userId) {
+    return await prisma.notification.delete({
+      where: { id: notificationId, receiverId: userId }
+    });
+  },
+
   // Mark all notifications as read
   async markAllAsRead(userId) {
     return await prisma.notification.deleteMany({
