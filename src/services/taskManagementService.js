@@ -48,7 +48,6 @@ export const taskManagementService = {
       }
     });
 
-    // Create notification for task assignment
     await notificationService.createTaskAssignedNotification(task, assignerId);
 
     return task;
@@ -56,8 +55,6 @@ export const taskManagementService = {
 
   // Get tasks (Admin sees all, Staff sees only assigned)
   async getTasks(userId, options = {}) {
-    console.log('🔍 getTasks called with:', { userId, options });
-    
     const {
       page = 1,
       limit = 10,
@@ -66,32 +63,16 @@ export const taskManagementService = {
       search = ''
     } = options;
     
-    console.log('📊 Raw parameters:', { page, limit, status, priority, search });
-    console.log('📊 Parameter types:', { 
-      page: typeof page, 
-      limit: typeof limit, 
-      status: typeof status, 
-      priority: typeof priority, 
-      search: typeof search 
-    });
-    
-    // Convert to integers like category service
     const pageNum = parseInt(page) || 1;
     const limitNum = parseInt(limit) || 10;
-    
-    console.log('🔢 Converted parameters:', { pageNum, limitNum });
-    console.log('🔢 Converted types:', { pageNum: typeof pageNum, limitNum: typeof limitNum });
     
     const user = await prisma.user.findUnique({
       where: { id: userId },
       include: { role: true }
     });
 
-    console.log('👤 User found:', { id: user?.id, role: user?.role?.name, companyId: user?.companyId });
-
     const where = { companyId: user.companyId };
     
-    // Staff can only see their assigned tasks
     if (user.role?.name === 'STAFF') {
       where.assignedTo = userId;
     }
@@ -104,9 +85,6 @@ export const taskManagementService = {
         { description: { contains: search, mode: 'insensitive' } }
       ];
     }
-
-    console.log('🔍 Where clause:', JSON.stringify(where, null, 2));
-    console.log('📄 Pagination params for Prisma:', { skip: (pageNum - 1) * limitNum, take: limitNum });
 
     try {
       const [tasks, total] = await Promise.all([
@@ -124,8 +102,6 @@ export const taskManagementService = {
         prisma.task.count({ where: { ...where, isActive: true } })
       ]);
 
-      console.log('✅ Query successful:', { tasksCount: tasks.length, total });
-
       return {
         data: tasks,
         pagination: {
@@ -138,7 +114,6 @@ export const taskManagementService = {
         }
       };
     } catch (error) {
-      console.error('❌ Prisma query error:', error);
       throw error;
     }
   },
@@ -290,42 +265,16 @@ export const taskManagementService = {
 
   // Get staff list for assignment (Admin only)
   async getStaffList(adminId) {
-    console.log('🔍 getStaffList called with adminId:', adminId);
-    console.log('🌍 Environment:', process.env.NODE_ENV);
-    console.log('📊 Database URL:', process.env.DATABASE_URL?.substring(0, 30) + '...');
-    
     const admin = await prisma.user.findUnique({
       where: { id: adminId },
       include: { role: true }
     });
 
-    console.log('👤 Admin found:', { id: admin?.id, role: admin?.role?.name, companyId: admin?.companyId });
-
     if (!['ADMIN', 'SUPER_ADMIN'].includes(admin.role?.name)) {
       throw new ApiError(403, 'Access denied');
     }
 
-    try {
-      // Check all users in company first
-      console.log('🔍 Querying all users for companyId:', admin.companyId);
-      const allUsers = await prisma.user.findMany({
-        where: { companyId: admin.companyId },
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          status: true,
-          role: { select: { name: true } }
-        }
-      });
-    
-    console.log('👥 All users in company:', JSON.stringify(allUsers, null, 2));
-    
-    // Check all roles in database
-    const allRoles = await prisma.role.findMany();
-    console.log('🎩 All roles in database:', allRoles);
-
-    const staffUsers = await prisma.user.findMany({
+    return await prisma.user.findMany({
       where: {
         companyId: admin.companyId,
         role: { name: 'STAFF' },
@@ -337,15 +286,5 @@ export const taskManagementService = {
         email: true
       }
     });
-    
-    console.log('👨‍💼 Staff users found:', staffUsers);
-    
-    return staffUsers;
-    
-    } catch (error) {
-      console.error('❌ Error in getStaffList:', error);
-      console.error('❌ Error message:', error.message);
-      throw error;
-    }
   }
 };
