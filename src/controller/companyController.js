@@ -17,18 +17,12 @@ export const createCompany = asyncHandler(async (req, res) => {
 });
 
 export const updateCompany = asyncHandler(async (req, res) => {
-  console.log('Update company request - ID:', req.params.id);
-  console.log('Update company request - Body:', req.body);
-  console.log('Update company request - Files:', req.files);
-
   const updated = await CompanyService.updateCompany(
     req.params.id,
     req.body,
     req.files?.logo?.[0] || null,
     req.files?.signature?.[0] || null
   );
-
-  console.log('Company updated successfully:', updated);
 
   return res
     .status(200)

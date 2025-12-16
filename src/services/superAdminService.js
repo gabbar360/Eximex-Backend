@@ -376,7 +376,7 @@ const getAllCompanies = async (options = {}) => {
     };
 };
 
-const createCompany = async (data) => {
+const createCompany = async (data, logoFile = null, signatureFile = null) => {
     const {
       name,
       email,
@@ -410,28 +410,48 @@ const createCompany = async (data) => {
       );
     }
 
-    return await prisma.companyDetails.create({
-      data: {
-        name,
-        email,
-        address,
-        phoneNo,
-        gstNumber,
-        iecNumber,
-        currencies: [defaultCurrency],
-        defaultCurrency,
-        allowedUnits: ['sqm', 'kg', 'pcs', 'box'],
-        bankName,
-        accountNumber,
-        ifscCode,
-        bankAddress,
-        swiftCode,
-        planId: 'trial',
-      },
+    const companyData = {
+      name,
+      email,
+      address,
+      phoneNo,
+      gstNumber,
+      iecNumber,
+      currencies: [defaultCurrency],
+      defaultCurrency,
+      allowedUnits: ['sqm', 'kg', 'pcs', 'box'],
+      bankName,
+      accountNumber,
+      ifscCode,
+      bankAddress,
+      swiftCode,
+      planId: 'trial',
+    };
+
+    // Handle file uploads
+    if (logoFile) {
+      companyData.logo = `/uploads/logos/${logoFile.filename}`;
+    }
+    if (signatureFile) {
+      companyData.signature = `/uploads/signatures/${signatureFile.filename}`;
+    }
+
+    const company = await prisma.companyDetails.create({
+      data: companyData,
     });
+
+    // Format URLs
+    if (company.logo && !company.logo.startsWith('/uploads')) {
+      company.logo = `/uploads/logos/${company.logo}`;
+    }
+    if (company.signature && !company.signature.startsWith('/uploads')) {
+      company.signature = `/uploads/signatures/${company.signature}`;
+    }
+
+    return company;
 };
 
-const updateCompany = async (id, data) => {
+const updateCompany = async (id, data, logoFile = null, signatureFile = null) => {
     const company = await prisma.companyDetails.findUnique({
       where: { id: parseInt(id) },
     });
@@ -440,10 +460,29 @@ const updateCompany = async (id, data) => {
       throw new ApiError(404, 'Company not found');
     }
 
-    return await prisma.companyDetails.update({
+    // Handle file uploads
+    if (logoFile) {
+      data.logo = `/uploads/logos/${logoFile.filename}`;
+    }
+
+    if (signatureFile) {
+      data.signature = `/uploads/signatures/${signatureFile.filename}`;
+    }
+
+    const updatedCompany = await prisma.companyDetails.update({
       where: { id: parseInt(id) },
       data,
     });
+
+    // Ensure URLs are properly formatted
+    if (updatedCompany.logo && !updatedCompany.logo.startsWith('/uploads')) {
+      updatedCompany.logo = `/uploads/logos/${updatedCompany.logo}`;
+    }
+    if (updatedCompany.signature && !updatedCompany.signature.startsWith('/uploads')) {
+      updatedCompany.signature = `/uploads/signatures/${updatedCompany.signature}`;
+    }
+
+    return updatedCompany;
 };
 
 const deleteCompany = async (id) => {

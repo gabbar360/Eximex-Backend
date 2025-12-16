@@ -114,7 +114,11 @@ export const getAllCompanies = asyncHandler(async (req, res) => {
 });
 
 export const createCompany = asyncHandler(async (req, res) => {
-  const company = await SuperAdminService.createCompany(req.body);
+  const company = await SuperAdminService.createCompany(
+    req.body,
+    req.files?.logo?.[0] || null,
+    req.files?.signature?.[0] || null
+  );
 
   return res
     .status(201)
@@ -123,7 +127,13 @@ export const createCompany = asyncHandler(async (req, res) => {
 
 export const updateCompany = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const company = await SuperAdminService.updateCompany(id, req.body);
+  
+  const company = await SuperAdminService.updateCompany(
+    id, 
+    req.body,
+    req.files?.logo?.[0] || null,
+    req.files?.signature?.[0] || null
+  );
 
   return res
     .status(200)

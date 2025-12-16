@@ -41,6 +41,7 @@ import { companyValidation } from '../validations/company.validation.js';
 import {
   uploadLogo,
   uploadSignature,
+  uploadLogoAndSignature,
   handleMulterError,
 } from '../config/multer.js';
 
@@ -60,7 +61,7 @@ router.post(
 router.put(
   '/update/company/:id',
   verifyJWT,
-  uploadLogo,
+  uploadLogoAndSignature,
   handleMulterError,
   validate(companyValidation.update),
   updateCompany
