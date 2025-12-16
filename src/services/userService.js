@@ -181,7 +181,7 @@ const createUser = async (userData, creatingUser = null) => {
 };
 
 const updateUser = async (userId, updateData, updatingUser = null) => {
-  const { name, email, mobileNum, roleId, status } = updateData;
+  const { name, email, mobileNum, roleId, status, companyId } = updateData;
 
   const existingUser = await getUserById(userId);
   if (!existingUser) throw new ApiError(404, 'User not found');
@@ -215,6 +215,11 @@ const updateUser = async (userId, updateData, updatingUser = null) => {
   if (mobileNum) updateFields.mobileNum = mobileNum.trim();
   if (roleId) updateFields.roleId = Number(roleId);
   if (status) updateFields.status = status;
+  
+  // Only SUPER_ADMIN can update companyId
+  if (companyId && updatingUser?.role?.name === 'SUPER_ADMIN') {
+    updateFields.companyId = Number(companyId);
+  }
 
   const updatedUser = await prisma.user.update({
     where: { id: Number(userId) },
