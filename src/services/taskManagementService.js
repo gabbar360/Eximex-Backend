@@ -290,16 +290,41 @@ export const taskManagementService = {
 
   // Get staff list for assignment (Admin only)
   async getStaffList(adminId) {
+    console.log('🔍 getStaffList called with adminId:', adminId);
+    console.log('🌍 Environment:', process.env.NODE_ENV);
+    console.log('📊 Database URL:', process.env.DATABASE_URL?.substring(0, 30) + '...');
+    
     const admin = await prisma.user.findUnique({
       where: { id: adminId },
       include: { role: true }
     });
 
+    console.log('👤 Admin found:', { id: admin?.id, role: admin?.role?.name, companyId: admin?.companyId });
+
     if (!['ADMIN', 'SUPER_ADMIN'].includes(admin.role?.name)) {
       throw new ApiError(403, 'Access denied');
     }
 
-    return await prisma.user.findMany({
+    // Check all users in company first
+    const allUsers = await prisma.user.findMany({
+      where: { companyId: admin.companyId },
+      include: { role: true },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        status: true,
+        role: { select: { name: true } }
+      }
+    });
+    
+    console.log('👥 All users in company:', JSON.stringify(allUsers, null, 2));
+    
+    // Check all roles in database
+    const allRoles = await prisma.role.findMany();
+    console.log('🎩 All roles in database:', allRoles);
+
+    const staffUsers = await prisma.user.findMany({
       where: {
         companyId: admin.companyId,
         role: { name: 'STAFF' },
@@ -311,5 +336,9 @@ export const taskManagementService = {
         email: true
       }
     });
+    
+    console.log('👨‍💼 Staff users found:', staffUsers);
+    
+    return staffUsers;
   }
 };
