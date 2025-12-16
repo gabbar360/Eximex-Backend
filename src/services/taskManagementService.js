@@ -309,16 +309,15 @@ export const taskManagementService = {
       // Check all users in company first
       console.log('🔍 Querying all users for companyId:', admin.companyId);
       const allUsers = await prisma.user.findMany({
-      where: { companyId: admin.companyId },
-      include: { role: true },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        status: true,
-        role: { select: { name: true } }
-      }
-    });
+        where: { companyId: admin.companyId },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          status: true,
+          role: { select: { name: true } }
+        }
+      });
     
     console.log('👥 All users in company:', JSON.stringify(allUsers, null, 2));
     
