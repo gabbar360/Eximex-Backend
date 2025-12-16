@@ -305,8 +305,10 @@ export const taskManagementService = {
       throw new ApiError(403, 'Access denied');
     }
 
-    // Check all users in company first
-    const allUsers = await prisma.user.findMany({
+    try {
+      // Check all users in company first
+      console.log('🔍 Querying all users for companyId:', admin.companyId);
+      const allUsers = await prisma.user.findMany({
       where: { companyId: admin.companyId },
       include: { role: true },
       select: {
@@ -340,5 +342,11 @@ export const taskManagementService = {
     console.log('👨‍💼 Staff users found:', staffUsers);
     
     return staffUsers;
+    
+    } catch (error) {
+      console.error('❌ Error in getStaffList:', error);
+      console.error('❌ Error message:', error.message);
+      throw error;
+    }
   }
 };
