@@ -47,12 +47,12 @@ const signatureStorage = multer.diskStorage({
 
 // File filter
 const fileFilter = (req, file, cb) => {
-  const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+  const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif', 'image/bmp'];
 
   if (allowedTypes.includes(file.mimetype)) {
     cb(null, true);
   } else {
-    cb(new Error('Only JPEG, PNG, and WebP images are allowed'), false);
+    cb(new Error('Only JPEG, JPG, PNG, WebP, GIF, and BMP images are allowed'), false);
   }
 };
 
@@ -75,6 +75,38 @@ export const uploadSignature = multer({
     files: 1,
   },
 }).single('signature');
+
+// Combined multer configuration for both logo and signature
+export const uploadLogoAndSignature = multer({
+  storage: multer.diskStorage({
+    destination: (req, file, cb) => {
+      if (file.fieldname === 'logo') {
+        cb(null, logoDir);
+      } else if (file.fieldname === 'signature') {
+        cb(null, signatureDir);
+      } else {
+        cb(new Error('Invalid field name'), false);
+      }
+    },
+    filename: (req, file, cb) => {
+      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+      const ext = path.extname(file.originalname);
+      if (file.fieldname === 'logo') {
+        cb(null, `logo-${uniqueSuffix}${ext}`);
+      } else if (file.fieldname === 'signature') {
+        cb(null, `signature-${uniqueSuffix}${ext}`);
+      }
+    },
+  }),
+  fileFilter,
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5MB limit
+    files: 2, // Allow both logo and signature
+  },
+}).fields([
+  { name: 'logo', maxCount: 1 },
+  { name: 'signature', maxCount: 1 }
+]);
 
 // Excel file filter for bulk upload
 const excelFileFilter = (req, file, cb) => {
@@ -117,7 +149,7 @@ export const handleMulterError = (error, req, res, next) => {
     }
   }
 
-  if (error.message === 'Only JPEG, PNG, and WebP images are allowed') {
+  if (error.message.includes('Only JPEG, JPG, PNG, WebP, GIF, and BMP images are allowed')) {
     return res.status(400).json({
       success: false,
       message: error.message,
