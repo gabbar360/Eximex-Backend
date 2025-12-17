@@ -30,6 +30,11 @@ const getCompanyById = async (companyId, includeRelations = false) => {
     company.logo = `/uploads/logos/${company.logo}`;
   }
 
+  // Ensure signature URL is properly formatted
+  if (company.signature && !company.signature.startsWith('/uploads')) {
+    company.signature = `/uploads/signatures/${company.signature}`;
+  }
+
   cacheManager.set(cacheKey, company, 10 * 60 * 1000);
   return company;
 };
@@ -77,11 +82,14 @@ const getAllCompanies = async (options = {}) => {
     include: { users: true, parties: true },
   });
 
-  // Format logo URLs for all companies
+  // Format logo and signature URLs for all companies
   if (result.data) {
     result.data = result.data.map((company) => {
       if (company.logo && !company.logo.startsWith('/uploads')) {
         company.logo = `/uploads/logos/${company.logo}`;
+      }
+      if (company.signature && !company.signature.startsWith('/uploads')) {
+        company.signature = `/uploads/signatures/${company.signature}`;
       }
       return company;
     });
@@ -168,9 +176,12 @@ const createCompany = async (
     });
   }
 
-  // Ensure logo URL is properly formatted in response
+  // Ensure logo and signature URLs are properly formatted in response
   if (company.logo && !company.logo.startsWith('/uploads')) {
     company.logo = `/uploads/logos/${company.logo}`;
+  }
+  if (company.signature && !company.signature.startsWith('/uploads')) {
+    company.signature = `/uploads/signatures/${company.signature}`;
   }
 
   // Invalidate cache
@@ -284,9 +295,12 @@ const updateCompany = async (
     transformedData
   );
 
-  // Ensure logo URL is properly formatted in response
+  // Ensure logo and signature URLs are properly formatted in response
   if (updatedCompany.logo && !updatedCompany.logo.startsWith('/uploads')) {
     updatedCompany.logo = `/uploads/logos/${updatedCompany.logo}`;
+  }
+  if (updatedCompany.signature && !updatedCompany.signature.startsWith('/uploads')) {
+    updatedCompany.signature = `/uploads/signatures/${updatedCompany.signature}`;
   }
 
   // Clear cache

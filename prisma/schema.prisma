@@ -48,6 +48,11 @@ model User {
   createdShipments      Shipment[]             @relation("ShipmentCreator")
   updatedShipments      Shipment[]             @relation("ShipmentUpdater")
   userPermissions       UserPermission[]
+  assignedTasks         Task[]                 @relation("TaskAssignee")
+  assignerTasks         Task[]                 @relation("TaskAssigner")
+  createdTasks          Task[]                 @relation("TaskCreator")
+  sentNotifications     Notification[]         @relation("NotificationSender")
+  receivedNotifications Notification[]         @relation("NotificationReceiver")
 
 }
 
@@ -87,6 +92,8 @@ model CompanyDetails {
   payments        Payment[]
 
   shipments       Shipment[]
+  tasks           Task[]
+  notifications   Notification[]
 
 }
 
@@ -113,6 +120,7 @@ model PartyList {
   pincode       String?
   state         String?
   status        Boolean        @default(true)
+  stage         ContactStage   @default(NEW) @map("stage")
   company       CompanyDetails @relation(fields: [companyId], references: [id], onDelete: Cascade)
   user          User?          @relation("UserToParty", fields: [userId], references: [id])
   creator       User           @relation("PartyCreator", fields: [createdBy], references: [id])
@@ -300,6 +308,15 @@ enum PartyRole {
   Supplier
 }
 
+enum ContactStage {
+  NEW
+  QUALIFIED
+  NEGOTIATION
+  QUOTATION_SENT
+  WON
+  LOST
+}
+
 enum PackingUnit {
   sqm
   kg
@@ -413,6 +430,9 @@ model PiInvoice {
 
   // Terms & Container Info
   paymentTerm          String  @map("payment_term")
+  advancePercentage    String? @map("advance_percentage")
+  balancePaymentTerm   String? @map("balance_payment_term")
+  showToTheOrder       Boolean @default(false) @map("show_to_the_order")
   deliveryTerm         String  @map("delivery_term")
   containerType        String? @map("container_type")
   capacityBasis        String? @map("capacity_basis")
@@ -444,6 +464,9 @@ model PiInvoice {
   totalBoxes         Int    @default(0) @map("total_boxes")
   totalPallets       Int    @default(0) @map("total_pallets")
   requiredContainers Int    @default(1) @map("required_containers")
+  
+  // Notes
+  notes              String? @map("notes")
 
   // Timestamps
   createdAt DateTime @default(now()) @map("created_at")
@@ -495,6 +518,9 @@ model PiProduct {
   calculatedPallets Int?   @map("calculated_pallets")
   totalCBM          Float? @map("total_cbm")
   packingBreakdown  Json?  @map("packing_breakdown")
+
+  // Container assignment
+  containerNumber Int? @default(1) @map("container_number")
 
   // Order in PI
   lineNumber Int @default(1) @map("line_number")
@@ -629,6 +655,7 @@ model PackingList {
   containerNumber String?           @map("container_number") // Container number for this packaging step
   sealType        String?           @map("seal_type") // Seal type for this packaging step (self seal, line seal)
   sealNumber      String?           @map("seal_number") // Seal number for this packaging step
+  showToTheOrder  Boolean           @default(false) @map("show_to_the_order") // Show "TO THE ORDER" instead of customer details
   notes           Json?             @map("notes") // Additional notes as JSON object
   isActive        Boolean           @default(true) @map("is_active")
   createdAt       DateTime          @default(now()) @map("created_at")
@@ -891,6 +918,108 @@ model UserPermission {
 
   @@unique([userId, menuId, submenuId])
   @@map("user_permissions")
+}
+
+model Task {
+  id            Int           @id @default(autoincrement())
+
+  // Basic Info
+  title         String
+  description   String?
+  type          TaskType
+  priority      TaskPriority  @default(MEDIUM)
+  status        TaskStatus    @default(PENDING)
+
+  // Dates
+  dueDate       DateTime?     @map("due_date")
+  completedAt   DateTime?     @map("completed_at")
+
+  // Assignment
+  createdBy     Int           @map("created_by")
+  assignedBy    Int           @map("assigned_by")
+  assignedTo    Int           @map("assigned_to")
+
+  // Business References
+  companyId     Int           @map("company_id")
+  leadId        Int?          @map("lead_id")
+  projectId     Int?          @map("project_id")
+
+  // SLA / Escalation
+  slaHours      Int?          @map("sla_hours")
+  escalated     Boolean       @default(false)
+
+  // Soft Delete
+  isActive      Boolean       @default(true)
+
+  // Timestamps
+  createdAt     DateTime      @default(now()) @map("created_at")
+  updatedAt     DateTime      @updatedAt @map("updated_at")
+
+  // Relations
+  creator       User          @relation("TaskCreator", fields: [createdBy], references: [id])
+  assigner      User          @relation("TaskAssigner", fields: [assignedBy], references: [id])
+  assignee      User          @relation("TaskAssignee", fields: [assignedTo], references: [id])
+  company       CompanyDetails @relation(fields: [companyId], references: [id])
+  // lead          Lead?         @relation(fields: [leadId], references: [id])
+  // project       Project?      @relation(fields: [projectId], references: [id])
+
+  @@map("tasks")
+}
+
+enum TaskType {
+  LEAD_FOLLOW_UP
+  QUOTATION
+  DOCUMENTATION
+  SHIPMENT
+  PAYMENT
+  INTERNAL
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum TaskStatus {
+  PENDING
+  IN_PROGRESS
+  ON_HOLD
+  COMPLETED
+  CANCELLED
+  OVERDUE
+}
+
+model Notification {
+  id          Int                @id @default(autoincrement())
+  companyId   Int                @map("company_id")
+  senderId    Int?               @map("sender_id")
+  receiverId  Int                @map("receiver_id")
+  type        NotificationType
+  title       String
+  message     String
+  data        Json?              // Additional data (task details, etc.)
+  isRead      Boolean            @default(false) @map("is_read")
+  readAt      DateTime?          @map("read_at")
+  createdAt   DateTime           @default(now()) @map("created_at")
+  updatedAt   DateTime           @updatedAt @map("updated_at")
+
+  // Relations
+  company     CompanyDetails     @relation(fields: [companyId], references: [id])
+  sender      User?              @relation("NotificationSender", fields: [senderId], references: [id])
+  receiver    User               @relation("NotificationReceiver", fields: [receiverId], references: [id])
+
+  @@map("notifications")
+}
+
+enum NotificationType {
+  TASK_ASSIGNED
+  TASK_STATUS_UPDATED
+  TASK_OVERDUE
+  TASK_COMPLETED
+  TASK_CANCELLED
+  SYSTEM_ALERT
 }
 
 

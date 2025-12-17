@@ -1,4 +1,4 @@
-import shipmentService from '../services/shipmentService.js';
+import { ShipmentService } from '../services/shipmentService.js';
 import { ApiResponse } from '../utils/ApiResponse.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import {
@@ -15,7 +15,7 @@ const createShipment = asyncHandler(async (req, res) => {
       .json(new ApiResponse(400, null, error.details[0].message));
   }
 
-  const shipment = await shipmentService.createShipment(
+  const shipment = await ShipmentService.createShipment(
     value,
     req.user.id,
     req.user.companyId
@@ -29,7 +29,7 @@ const createShipment = asyncHandler(async (req, res) => {
 // Get shipment by ID
 const getShipmentById = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const shipment = await shipmentService.getShipmentById(
+  const shipment = await ShipmentService.getShipmentById(
     parseInt(id),
     req.user.companyId
   );
@@ -42,7 +42,7 @@ const getShipmentById = asyncHandler(async (req, res) => {
 // Get shipment by order ID
 const getShipmentByOrderId = asyncHandler(async (req, res) => {
   const { orderId } = req.params;
-  const shipment = await shipmentService.getShipmentByOrderId(
+  const shipment = await ShipmentService.getShipmentByOrderId(
     parseInt(orderId),
     req.user.companyId
   );
@@ -62,7 +62,7 @@ const updateShipment = asyncHandler(async (req, res) => {
   }
 
   const { id } = req.params;
-  const shipment = await shipmentService.updateShipment(
+  const shipment = await ShipmentService.updateShipment(
     parseInt(id),
     value,
     req.user.id,
@@ -82,7 +82,7 @@ const getShipments = asyncHandler(async (req, res) => {
   if (status) filters.status = status;
   if (orderId) filters.orderId = parseInt(orderId);
 
-  const result = await shipmentService.getShipments(
+  const result = await ShipmentService.getShipments(
     req.user.companyId,
     parseInt(page),
     parseInt(limit),
@@ -97,7 +97,7 @@ const getShipments = asyncHandler(async (req, res) => {
 // Delete shipment
 const deleteShipment = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const result = await shipmentService.deleteShipment(
+  const result = await ShipmentService.deleteShipment(
     parseInt(id),
     req.user.companyId
   );

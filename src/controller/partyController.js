@@ -49,3 +49,11 @@ export const getPartyStats = asyncHandler(async (req, res) => {
     .status(200)
     .json(new ApiResponse(200, stats, 'Party stats fetched successfully'));
 });
+
+export const updatePartyStage = asyncHandler(async (req, res) => {
+  const { stage } = req.body;
+  const updated = await PartyService.updatePartyStage(req.params.id, stage);
+  return res
+    .status(200)
+    .json(new ApiResponse(200, updated, 'Party stage updated successfully'));
+});

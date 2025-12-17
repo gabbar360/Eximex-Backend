@@ -15,7 +15,7 @@ import { logger } from './config/logger.js';
 // import { generalLimiter } from './middleware/rateLimiter.js';
 import { errorHandler, notFound } from './middleware/errorHandler.js';
 import { checkPermissions } from './middleware/auth.js';
-import socketManager from './socket/socket.js';
+import { initializeSocket } from './socket/socket.js';
 import { createServer } from 'http';
 
 const PORT = process.env.PORT || 8000;
@@ -149,7 +149,7 @@ const startServer = async () => {
       logger.info(`🚀 Server running on port ${PORT}`);
 
       // Initialize Socket.io after server starts
-      socketManager.initialize(server);
+      initializeSocket(server);
       logger.info('🔌 Socket.io ready');
     });
 

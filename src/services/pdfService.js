@@ -6,8 +6,7 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-class PDFService {
-  async generatePurchaseOrderPDF(purchaseOrderData) {
+const generatePurchaseOrderPDF = async (purchaseOrderData) => {
     let browser;
     try {
       browser = await puppeteer.launch({
@@ -45,7 +44,8 @@ class PDFService {
         await browser.close();
       }
     }
-  }
-}
+};
 
-export default new PDFService();
+export const PDFService = {
+  generatePurchaseOrderPDF,
+};

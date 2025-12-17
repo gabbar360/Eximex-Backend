@@ -1,4 +1,4 @@
-import purchaseOrderService from '../services/purchaseOrderService.js';
+import { PurchaseOrderService } from '../services/purchaseOrderService.js';
 import { ApiResponse } from '../utils/ApiResponse.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import fs from 'fs';
@@ -11,7 +11,7 @@ const __dirname = dirname(__filename);
 
 // Create Purchase Order
 const createPurchaseOrder = asyncHandler(async (req, res) => {
-  const purchaseOrder = await purchaseOrderService.createPurchaseOrder(
+  const purchaseOrder = await PurchaseOrderService.createPurchaseOrder(
     req.body,
     req.user.id,
     req.user.companyId
@@ -26,7 +26,7 @@ const createPurchaseOrder = asyncHandler(async (req, res) => {
 
 // Get Purchase Orders
 const getPurchaseOrders = asyncHandler(async (req, res) => {
-  const result = await purchaseOrderService.getPurchaseOrders(
+  const result = await PurchaseOrderService.getPurchaseOrders(
     req.user.companyId,
     req.query,
     req.roleFilter || {}
@@ -41,7 +41,7 @@ const getPurchaseOrders = asyncHandler(async (req, res) => {
 
 // Get Purchase Order by ID
 const getPurchaseOrderById = asyncHandler(async (req, res) => {
-  const purchaseOrder = await purchaseOrderService.getPurchaseOrderById(
+  const purchaseOrder = await PurchaseOrderService.getPurchaseOrderById(
     req.params.id,
     req.user.companyId
   );
@@ -59,7 +59,7 @@ const getPurchaseOrderById = asyncHandler(async (req, res) => {
 
 // Update Purchase Order
 const updatePurchaseOrder = asyncHandler(async (req, res) => {
-  const purchaseOrder = await purchaseOrderService.updatePurchaseOrder(
+  const purchaseOrder = await PurchaseOrderService.updatePurchaseOrder(
     req.params.id,
     req.body,
     req.user.id,
@@ -75,7 +75,7 @@ const updatePurchaseOrder = asyncHandler(async (req, res) => {
 
 // Delete Purchase Order
 const deletePurchaseOrder = asyncHandler(async (req, res) => {
-  const result = await purchaseOrderService.deletePurchaseOrder(
+  const result = await PurchaseOrderService.deletePurchaseOrder(
     req.params.id,
     req.user.companyId
   );
@@ -87,7 +87,7 @@ const deletePurchaseOrder = asyncHandler(async (req, res) => {
 
 // Get Form Data (Company and Vendors)
 const getFormData = asyncHandler(async (req, res) => {
-  const formData = await purchaseOrderService.getFormData(req.user.companyId);
+  const formData = await PurchaseOrderService.getFormData(req.user.companyId);
 
   res
     .status(200)
@@ -96,7 +96,7 @@ const getFormData = asyncHandler(async (req, res) => {
 
 // Generate Purchase Order PDF
 const generatePurchaseOrderPDF = asyncHandler(async (req, res) => {
-  const purchaseOrder = await purchaseOrderService.getPurchaseOrderById(
+  const purchaseOrder = await PurchaseOrderService.getPurchaseOrderById(
     req.params.id,
     req.user.companyId
   );
@@ -116,7 +116,7 @@ const generatePurchaseOrderPDF = asyncHandler(async (req, res) => {
     console.error('Error reading company logo file:', error);
   }
 
-  const pdf = await purchaseOrderService.generatePurchaseOrderPDF(
+  const pdf = await PurchaseOrderService.generatePurchaseOrderPDF(
     req.params.id,
     req.user.companyId,
     logoBase64

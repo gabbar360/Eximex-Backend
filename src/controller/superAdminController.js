@@ -1,11 +1,11 @@
 import { ApiResponse } from '../utils/ApiResponse.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
-import { superAdminService } from '../services/superAdminService.js';
+import { SuperAdminService } from '../services/superAdminService.js';
 import { prisma } from '../config/dbConfig.js';
 import { ApiError } from '../utils/ApiError.js';
 
 export const getAllUsers = asyncHandler(async (req, res) => {
-  const users = await superAdminService.getAllUsers(req.query);
+  const users = await SuperAdminService.getAllUsers(req.query);
 
   return res
     .status(200)
@@ -14,7 +14,7 @@ export const getAllUsers = asyncHandler(async (req, res) => {
 
 export const getUserById = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const user = await superAdminService.getUserById(id);
+  const user = await SuperAdminService.getUserById(id);
 
   return res
     .status(200)
@@ -22,7 +22,7 @@ export const getUserById = asyncHandler(async (req, res) => {
 });
 
 export const createUser = asyncHandler(async (req, res) => {
-  const user = await superAdminService.createUser(req.body);
+  const user = await SuperAdminService.createUser(req.body);
 
   return res
     .status(201)
@@ -38,7 +38,7 @@ export const createUser = asyncHandler(async (req, res) => {
 export const setInvitedUserPassword = asyncHandler(async (req, res) => {
   const { token, password } = req.body;
 
-  const user = await superAdminService.setInvitedUserPassword(token, password);
+  const user = await SuperAdminService.setInvitedUserPassword(token, password);
 
   return res
     .status(200)
@@ -53,7 +53,7 @@ export const setInvitedUserPassword = asyncHandler(async (req, res) => {
 
 export const updateUser = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const user = await superAdminService.updateUser(id, req.body);
+  const user = await SuperAdminService.updateUser(id, req.body);
 
   return res
     .status(200)
@@ -62,7 +62,7 @@ export const updateUser = asyncHandler(async (req, res) => {
 
 export const deleteUser = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  await superAdminService.deleteUser(id);
+  await SuperAdminService.deleteUser(id);
 
   return res
     .status(200)
@@ -98,7 +98,7 @@ export const validateInvitationToken = asyncHandler(async (req, res) => {
 
 export const assignCompanyToUser = asyncHandler(async (req, res) => {
   const { userId, companyId } = req.body;
-  const user = await superAdminService.assignCompanyToUser(userId, companyId);
+  const user = await SuperAdminService.assignCompanyToUser(userId, companyId);
 
   return res
     .status(200)
@@ -106,7 +106,7 @@ export const assignCompanyToUser = asyncHandler(async (req, res) => {
 });
 
 export const getAllCompanies = asyncHandler(async (req, res) => {
-  const companies = await superAdminService.getAllCompanies(req.query);
+  const companies = await SuperAdminService.getAllCompanies(req.query);
 
   return res
     .status(200)
@@ -114,7 +114,11 @@ export const getAllCompanies = asyncHandler(async (req, res) => {
 });
 
 export const createCompany = asyncHandler(async (req, res) => {
-  const company = await superAdminService.createCompany(req.body);
+  const company = await SuperAdminService.createCompany(
+    req.body,
+    req.files?.logo?.[0] || null,
+    req.files?.signature?.[0] || null
+  );
 
   return res
     .status(201)
@@ -123,7 +127,13 @@ export const createCompany = asyncHandler(async (req, res) => {
 
 export const updateCompany = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const company = await superAdminService.updateCompany(id, req.body);
+  
+  const company = await SuperAdminService.updateCompany(
+    id, 
+    req.body,
+    req.files?.logo?.[0] || null,
+    req.files?.signature?.[0] || null
+  );
 
   return res
     .status(200)
@@ -132,7 +142,7 @@ export const updateCompany = asyncHandler(async (req, res) => {
 
 export const deleteCompany = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  await superAdminService.deleteCompany(id);
+  await SuperAdminService.deleteCompany(id);
 
   return res
     .status(200)

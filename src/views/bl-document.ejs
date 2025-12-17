@@ -192,54 +192,43 @@
                         <strong><%= containerCount.toString().padStart(2, '0') %>X <%= containerSize %> CONTAINER</strong><br>
                         <strong>SAID TO CONTAIN</strong><br><br>
                         
-                        <% if (piInvoice.products && piInvoice.products.length > 0) { %>
+                        <% if (piInvoice.packingLists && piInvoice.packingLists.length > 0 && piInvoice.packingLists[0].notes && piInvoice.packingLists[0].notes.containers) { %>
                             <% 
-                            // Group products by HSN code and get individual box counts
+                            // Group packing list products by HSN code
                             const productsByHsn = {};
                             
-                            // First, collect all products with their box counts from containers
-                            const productBoxCounts = {};
-                            if (piInvoice.packingLists && piInvoice.packingLists.length > 0 && piInvoice.packingLists[0].notes && piInvoice.packingLists[0].notes.containers) {
-                                piInvoice.packingLists[0].notes.containers.forEach(container => {
-                                    if (container.products) {
-                                        container.products.forEach(containerProduct => {
-                                            if (containerProduct.productData) {
-                                                const productId = containerProduct.productData._id || containerProduct.productData.productName;
-                                                if (!productBoxCounts[productId]) {
-                                                    productBoxCounts[productId] = 0;
-                                                }
-                                                productBoxCounts[productId] += parseInt(containerProduct.noOfBoxes) || 0;
-                                            }
+                            piInvoice.packingLists[0].notes.containers.forEach(container => {
+                                if (container.products) {
+                                    container.products.forEach(containerProduct => {
+                                        const productName = containerProduct.productName;
+                                        const hsnCode = containerProduct.hsnCode || (containerProduct.productData && containerProduct.productData.product && containerProduct.productData.product.category && containerProduct.productData.product.category.hsnCode) || 'N/A';
+                                        
+                                        if (!productsByHsn[hsnCode]) {
+                                            productsByHsn[hsnCode] = [];
+                                        }
+                                        
+                                        productsByHsn[hsnCode].push({
+                                            productName: productName,
+                                            boxCount: parseInt(containerProduct.noOfBoxes) || 0
                                         });
-                                    }
-                                });
-                            }
-                            
-                            // Group products by HSN
-                            piInvoice.products.forEach(product => {
-                                const hsn = product.hsCode || 'NO_HSN';
-                                if (!productsByHsn[hsn]) {
-                                    productsByHsn[hsn] = [];
+                                    });
                                 }
-                                
-                                const productId = product._id || product.productName;
-                                const boxCount = productBoxCounts[productId] || 0;
-                                
-                                productsByHsn[hsn].push({
-                                    ...product,
-                                    boxCount: boxCount
-                                });
                             });
                             %>
                             
                             <% Object.keys(productsByHsn).forEach(hsn => { %>
-                                <% if (hsn !== 'NO_HSN') { %>HS CODE: <%= hsn %><br><% } %>
+                                HS CODE: <%= hsn %><br>
                                 <% productsByHsn[hsn].forEach(product => { %>
-                                    <%= product.productName %>
-                                    <% if (product.boxCount > 0) { %> - <%= product.boxCount %> BOXES<% } %>
-                                    <br>
+                                    <%= product.productName %> - <%= product.boxCount %> BOXES<br>
                                 <% }) %>
                                 <br>
+                            <% }) %>
+                        <% } else if (piInvoice.products && piInvoice.products.length > 0) { %>
+                            <% // Fallback to PI products if no packing list %>
+                            <% piInvoice.products.forEach(product => { %>
+                                <% const hsn = (product.category && product.category.hsnCode) || 'N/A'; %>
+                                HS CODE: <%= hsn %><br>
+                                <%= product.productName %> - <%= product.calculatedBoxes || 0 %> BOXES<br><br>
                             <% }) %>
                         <% } %>
                         
@@ -313,7 +302,23 @@
                         <tr>
                             <td style="border: 2px solid #000; border-top: none; padding: 6px; font-size: 9px; text-align: center;"><%= container.containerNumber %></td>
                             <td style="border: 2px solid #000; border-top: none; border-left: none; padding: 6px; font-size: 9px; text-align: center;"><%= container.sealNumber %></td>
-                            <td style="border: 2px solid #000; border-top: none; border-left: none; padding: 6px; font-size: 9px; text-align: center;"><%= container.products && container.products.length > 0 && container.products[0].productData && container.products[0].productData.category ? (container.products[0].productData.category.secondary_unit || 'BOXES').toUpperCase() : 'BOXES' %></td>
+                            <td style="border: 2px solid #000; border-top: none; border-left: none; padding: 6px; font-size: 9px; text-align: center;"><%
+                                // Dynamic unit based on product type
+                                let unit = 'BOXES'; // default
+                                if (container.products && container.products.length > 0) {
+                                    const firstProduct = container.products[0];
+                                    if (firstProduct.productData && firstProduct.productData.product && firstProduct.productData.product.category) {
+                                        const category = firstProduct.productData.product.category;
+                                        // For tiles/pavers, use BOXES
+                                        if (category.name && (category.name.toLowerCase().includes('paver') || category.name.toLowerCase().includes('tile'))) {
+                                            unit = 'BOXES';
+                                        } else {
+                                            // For other products like bagasse, use secondary_unit
+                                            unit = (category.secondary_unit || 'BOXES').toUpperCase();
+                                        }
+                                    }
+                                }
+                            %><%= unit %></td>
                             <td style="border: 2px solid #000; border-top: none; border-left: none; padding: 6px; font-size: 9px; text-align: center;"><%= container.totalNoOfBoxes %></td>
                             <td style="border: 2px solid #000; border-top: none; border-left: none; padding: 6px; font-size: 9px; text-align: center;"><%= parseFloat(container.totalGrossWeight).toFixed(2) %></td>
                             <td style="border: 2px solid #000; border-top: none; border-left: none; padding: 6px; font-size: 9px; text-align: center;"><%= parseFloat(container.totalNetWeight).toFixed(2) %></td>
