@@ -94,3 +94,23 @@ export const getAllUsersWithPermissions = asyncHandler(async (req, res) => {
       )
     );
 });
+
+export const bulkUpdateUserPermissions = asyncHandler(async (req, res) => {
+  const { userId } = req.params;
+  const { enableAll } = req.body;
+
+  const result = await userPermissionService.bulkUpdateUserPermissions(
+    parseInt(userId),
+    Boolean(enableAll)
+  );
+  
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        result,
+        result.message
+      )
+    );
+});
