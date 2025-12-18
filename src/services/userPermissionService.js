@@ -448,4 +448,61 @@ export const userPermissionService = {
       },
     };
   },
+
+  async bulkUpdateUserPermissions(userId, enableAll = false) {
+    // Get all menus and submenus
+    const allMenus = await prisma.menu.findMany({
+      where: { isActive: true },
+      include: {
+        submenus: {
+          where: { isActive: true },
+        },
+      },
+    });
+
+    // Delete existing permissions
+    await prisma.userPermission.deleteMany({
+      where: { userId },
+    });
+
+    if (!enableAll) {
+      return { message: 'All permissions disabled successfully' };
+    }
+
+    const permissionData = [];
+
+    // Add menu permissions
+    allMenus.forEach((menu) => {
+      permissionData.push({
+        userId,
+        menuId: menu.id,
+        submenuId: null,
+        canView: true,
+        canCreate: true,
+        canUpdate: true,
+        canDelete: true,
+      });
+
+      // Add submenu permissions
+      menu.submenus.forEach((submenu) => {
+        permissionData.push({
+          userId,
+          menuId: null,
+          submenuId: submenu.id,
+          canView: true,
+          canCreate: true,
+          canUpdate: true,
+          canDelete: true,
+        });
+      });
+    });
+
+    if (permissionData.length > 0) {
+      await prisma.userPermission.createMany({
+        data: permissionData,
+      });
+    }
+
+    return { message: 'All permissions enabled successfully' };
+  },
 };
