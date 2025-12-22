@@ -207,6 +207,10 @@ const buildPackingListResponse = (piInvoice) => {
     totalGrossWeight:
       packingListData.totalGrossWeight || piInvoice.totalWeight || 0,
     totalVolume: packingListData.totalVolume || piInvoice.totalVolume || 0,
+    totalSquareMeters:
+      packingListData.totalSquareMeters || piInvoice.totalSquareMeters || 0,
+    totalPallets:
+      packingListData.totalPallets || piInvoice.totalPallets || 0,
     totalContainers:
       packingListData.totalContainers || piInvoice.requiredContainers || 1,
     dateOfIssue:
@@ -266,6 +270,8 @@ const buildPackingListData = (data, existingPI) => {
     totalNetWeight: parseFloat(data.totalNetWeight) || 0,
     totalGrossWeight: parseFloat(data.totalGrossWeight) || 0,
     totalVolume: parseFloat(data.totalVolume) || 0,
+    totalSquareMeters: parseFloat(data.totalSquareMeters) || 0,
+    totalPallets: parseInt(data.totalPallets) || 0,
     totalContainers: parseInt(data.totalContainers) || 0,
     dateOfIssue: data.dateOfIssue || new Date().toISOString().split('T')[0],
     status: data.status || 'draft',
@@ -382,6 +388,9 @@ const createPackingListTransaction = async (data, userId) => {
       }
     }
 
+    // Calculate totals from containers data
+    const totals = calculateTotalsFromContainers(data.containers || []);
+
     // Update PI invoice
     const updatedPI = await tx.piInvoice.update({
       where: { id: data.piId },
@@ -391,6 +400,8 @@ const createPackingListTransaction = async (data, userId) => {
         totalBoxes: data.totalBoxes || data.existingPI.totalBoxes,
         totalWeight: data.totalGrossWeight || data.existingPI.totalWeight,
         totalVolume: data.totalVolume || data.existingPI.totalVolume,
+        totalSquareMeters: totals.totalSquareMeters || data.existingPI.totalSquareMeters,
+        totalPallets: totals.totalPallets || data.existingPI.totalPallets,
         requiredContainers:
           data.totalContainers || data.existingPI.requiredContainers,
         updatedBy: userId,
@@ -536,6 +547,14 @@ const mergePackingListData = (existingData, updateData) => {
       updateData.totalContainers !== undefined
         ? parseInt(updateData.totalContainers) || 0
         : existingData.totalContainers,
+    totalSquareMeters:
+      updateData.totalSquareMeters !== undefined
+        ? parseFloat(updateData.totalSquareMeters) || 0
+        : existingData.totalSquareMeters,
+    totalPallets:
+      updateData.totalPallets !== undefined
+        ? parseInt(updateData.totalPallets) || 0
+        : existingData.totalPallets,
     dateOfIssue:
       updateData.dateOfIssue !== undefined
         ? updateData.dateOfIssue
@@ -581,6 +600,8 @@ const updatePiInvoice = async (piId, data, userId) => {
       totalBoxes: data.totalBoxes,
       totalWeight: data.totalGrossWeight,
       totalVolume: data.totalVolume,
+      totalSquareMeters: data.totalSquareMeters,
+      totalPallets: data.totalPallets,
       requiredContainers: data.totalContainers,
       updatedBy: userId,
     },
@@ -740,6 +761,29 @@ const addContainerInfoToProducts = (products, packingListData, packagingSteps) =
   return products;
 };
 
+// Helper function to calculate totals from containers
+const calculateTotalsFromContainers = (containers) => {
+  let totalSquareMeters = 0;
+  let totalPallets = 0;
+
+  containers.forEach(container => {
+    if (container.products && Array.isArray(container.products)) {
+      container.products.forEach(product => {
+        // Check if product unit is square meter or sqm
+        if (product.unit && (product.unit.toLowerCase() === 'square meter' || product.unit.toLowerCase() === 'sqm')) {
+          totalSquareMeters += parseFloat(product.packedQuantity) || 0;
+          totalPallets += parseFloat(product.noOfPallets) || 0;
+        }
+      });
+    }
+  });
+
+  return {
+    totalSquareMeters,
+    totalPallets
+  };
+};
+
 export const PackagingStepsService = {
   getPackingListsWithPagination,
   transformPackingLists,
@@ -760,4 +804,5 @@ export const PackagingStepsService = {
   getPackingListForPDF,
   groupPackagingStepsByProduct,
   addContainerInfoToProducts,
+  calculateTotalsFromContainers,
 };
