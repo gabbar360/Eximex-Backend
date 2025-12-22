@@ -291,6 +291,9 @@ const updatePackingList = async (req, res) => {
         req.user.id
       );
 
+    // Calculate totals from containers data
+    const totals = PackagingStepsService.calculateTotalsFromContainers(updateData.containers || []);
+
     // Update PI invoice with relevant data
     const updatedPI = await PackagingStepsService.updatePiInvoice(
       packingListEntry.piInvoiceId,
@@ -309,6 +312,12 @@ const updatePackingList = async (req, res) => {
         totalVolume:
           parseFloat(updateData.totalVolume) ||
           packingListEntry.piInvoice.totalVolume,
+        totalSquareMeters:
+          totals.totalSquareMeters ||
+          packingListEntry.piInvoice.totalSquareMeters,
+        totalPallets:
+          totals.totalPallets ||
+          packingListEntry.piInvoice.totalPallets,
         totalContainers:
           parseInt(updateData.totalContainers) ||
           packingListEntry.piInvoice.requiredContainers,

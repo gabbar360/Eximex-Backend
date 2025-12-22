@@ -461,6 +461,7 @@ model PiInvoice {
   totalWeight        Float  @default(0) @map("total_weight")
   totalGrossWeight   Float  @default(0) @map("total_gross_weight")
   totalVolume        Float  @default(0) @map("total_volume")
+  totalSquareMeters  Float  @default(0) @map("total_square_meters")
   totalBoxes         Int    @default(0) @map("total_boxes")
   totalPallets       Int    @default(0) @map("total_pallets")
   requiredContainers Int    @default(1) @map("required_containers")

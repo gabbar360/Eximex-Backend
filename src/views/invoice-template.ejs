@@ -1,645 +1,432 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>COMMERCIAL INVOICE - <%= order?.orderNumber || 'N/A' %>
-  </title>
-  <style>
-    :root {
-      --border-outer: 2px solid #000;
-      --border-inner: 1px solid #000;
-      --grey: #e0e0e0;
-      --text: #000;
-      --small: 11px;
-    }
+    <meta charset="UTF-8">
+    <title>Commercial Invoice</title>
+    <style>
+        :root {
+            --outer: 2px solid #000;
+            --inner: 1px solid #000;
+            --grey: #e0e0e0;
+        }
 
-    * {
-      box-sizing: border-box;
-    }
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 10px;
+            margin: 10px;
+        }
 
-    body {
-      font-family: Arial, Helvetica, sans-serif;
-      margin: 0;
-      padding: 10px;
-      background: #fff;
-      color: var(--text);
-      font-size: var(--small);
-      line-height: 1.35;
-    }
+        .page {
+            border: var(--outer);
+        }
 
-    .page {
-      max-width: 210mm;
-      margin: 0 auto;
-      border: var(--border-outer);
-    }
+        .title {
+            background: var(--grey);
+            text-align: center;
+            font-weight: 700;
+            font-size: 16px;
+            padding: 6px 8px;
+            border-bottom: var(--inner);
+        }
 
-    .bar-title {
-      text-align: center;
-      background: var(--grey);
-      border-bottom: var(--border-inner);
-      font-weight: bold;
-      font-size: 18px;
-      padding: 6px 8px;
-    }
+        .subtitle {
+            text-align: center;
+            padding: 6px 8px;
+            border-bottom: var(--inner);
+            font-size: 10px;
+        }
 
-    .bar-subtitle {
-      text-align: center;
-      border-bottom: var(--border-inner);
-      padding: 6px 8px;
-      font-size: var(--small);
-    }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
 
-    .grid {
-      display: grid;
-      width: 100%;
-    }
+        th, td {
+            border: var(--inner);
+            padding: 6px;
+            vertical-align: top;
+        }
 
-    .cell {
-      border-right: var(--border-inner);
-      border-bottom: var(--border-inner);
-      padding: 8px;
-      vertical-align: top;
-    }
+        .header {
+            background: var(--grey);
+            font-weight: bold;
+        }
 
-    .cell:last-child {
-      border-right: none;
-    }
+        .center {
+            text-align: center;
+        }
 
-    .header {
-      background: var(--grey);
-      font-weight: bold;
-    }
+        .right {
+            text-align: right;
+        }
 
-    .label {
-      font-weight: bold;
-    }
+        .bold {
+            font-weight: bold;
+        }
 
-    .text-center {
-      text-align: center;
-    }
-
-    .text-right {
-      text-align: right;
-    }
-
-    .grid-2 {
-      grid-template-columns: 3fr 2fr;
-    }
-
-    .grid-3 {
-      grid-template-columns: 2fr 1fr 1fr;
-    }
-
-    .grid-4 {
-      grid-template-columns: 1fr 1fr 1fr 1fr;
-    }
-
-    .grid-rows {
-      grid-template-rows: auto auto;
-    }
-
-    table {
-      border-collapse: collapse;
-      width: 100%;
-    }
-
-    th,
-    td {
-      border: var(--border-inner);
-      padding: 6px 4px;
-      vertical-align: top;
-    }
-
-    thead th {
-      background: var(--grey);
-      font-size: 11px;
-    }
-
-    .table-title {
-      text-align: center;
-      border-left: var(--border-inner);
-      border-right: var(--border-inner);
-      border-bottom: var(--border-inner);
-      background: var(--grey);
-      padding: 6px 4px;
-      font-weight: bold;
-    }
-
-    .no-border {
-      border: none !important;
-    }
-
-    .bank-title {
-      text-align: center;
-      background: var(--grey);
-      border-bottom: var(--border-inner);
-      padding: 5px 4px;
-      font-weight: bold;
-    }
-
-    .footer-grid {
-      grid-template-columns: 3fr 1fr;
-    }
-
-    .stamp-box {
-      text-align: center;
-      padding: 8px 12px;
-    }
-
-    .stamp-img {
-      max-width: 200px;
-      max-height: 120px;
-      opacity: 0.95;
-      border-radius: 50%;
-      object-fit: contain;
-      border: 1px solid #ddd;
-      padding: 4px;
-    }
-
-    /* Logo header styling for COMMERCIAL INVOICE */
-    .logo-header {
-      text-align: center;
-      padding: 8px;
-      border-bottom: var(--border-inner);
-    }
-
-    .logo-header img {
-      max-width: 120px;
-      max-height: 70px;
-      object-fit: contain;
-      border-radius: 8px;
-      border: none;
-      padding: 4px;
-    }
-  </style>
+        .table-title {
+            text-align: center;
+            border-left: var(--inner);
+            border-right: var(--inner);
+            border-bottom: var(--inner);
+            background: var(--grey);
+            padding: 6px 4px;
+            font-weight: bold;
+        }
+    </style>
 </head>
 
 <body>
-  <div class="page">
-    <!-- Logo Header -->
-    <div class="logo-header">
-      <% const logoUrl = order?.company?.logo; %>
-      <% const fullLogoUrl = logoUrl ? (logoUrl.startsWith('http') ? logoUrl : `http://localhost:8000${logoUrl}`) : null; %>
-      <% if (typeof logoBase64 !== 'undefined' && logoBase64) { %>
-        <img src="data:image/*;base64,<%= logoBase64 %>" alt="Company Logo">
-      <% } else if (fullLogoUrl) { %>
-        <img src="<%= fullLogoUrl %>" alt="Company Logo">
-      <% } %>
-    </div>
-    
-    <div class="bar-title">COMMERCIAL INVOICE</div>
-    <!-- <div class="bar-subtitle">SUPPLY MEANT FOR EXPORT UNDER BOND &amp; LUT - LETTER OF UNDERTAKING WITHOUT PAYMENT OF
-      INTEGRATED TAX</div> -->
+    <div class="page">
+        <div class="title">COMMERCIAL INVOICE</div>
+        <div class="subtitle">SUPPLY MEANT FOR EXPORT UNDER BOND & LUT - LETTER OF UNDERTAKING WITHOUT PAYMENT OF INTEGRATED TAX</div>
 
-    <!-- Top block: Exporter + Invoice Meta -->
-    <div class="grid" style="grid-template-columns: 1fr 1fr 1fr 1fr;">
-      <div class="cell" style="grid-row: 1 / 4;">
-        <div class="label">EXPORTER:</div>
-        <div style="font-weight:bold; margin-top:4px; font-size: 14px;">
-          <%= order?.company?.name || 'N/A' %>
-        </div>
-        <div style="margin-top:4px;">
-          <%= order?.company?.address || '' %>
-        </div>
-      </div>
-      <div class="cell" style="grid-row: 1 / 4;">
-        <div class="label">EXPORTER REF:-</div>
-        <div style="margin-top:8px;">
-          <div><strong>IEC NO:-</strong>
-            <%= order?.company?.iecNumber || '' %>
-          </div>
-          <div><strong>PAN NO:-</strong>
-            <%= order?.company?.panNumber || '' %>
-          </div>
-          <div><strong>GST NO:-</strong>
-            <%= order?.company?.gstNumber || '' %>
-          </div>
-        </div>
-      </div>
-      <div class="cell text-center">
-        <div class="label">Invoice No:</div>
-        <div style="font-weight:bold; font-size:14px; margin-top:4px;">
-          <%= order?.piInvoice?.piNumber || order?.orderNumber || 'N/A' %>
-        </div>
-      </div>
-      <div class="cell text-center">
-        <div class="label">Date:</div>
-        <div style="font-weight:bold; font-size:14px; margin-top:4px;">
-          <%= order?.piInvoice?.invoiceDate ? new Date(order.piInvoice.invoiceDate).toLocaleDateString('en-GB', {
-            day:'2-digit', month:'short', year:'numeric' }) : 'N/A' %>
-        </div>
-      </div>
-      <div class="cell" style="grid-column: 3 / 5;">
-        <div class="label">Buyer's Ref No. &amp; Date :-</div>
-        <div style="margin-top:4px;">
-          <%= order?.buyersRef || order?.buyersRefNumber || '' %>
-        </div>
-      </div>
-      <div class="cell" style="grid-column: 3 / 5; border-top: none;">
-        <div class="label">Terms &amp; Conditions :-</div>
-        <div style="margin-top:4px;">
-          <% if (order?.piInvoice?.deliveryTerm || order?.deliveryTerms) { %>
-            <div>1) TRADE TERM : <%= order?.piInvoice?.deliveryTerm || order?.deliveryTerms %>
-            </div>
-            <% } %>
-              <% if (order?.piInvoice?.paymentTerm || order?.paymentTerms) { %>
-                <div>2) PAYMENT TERM: <%= order?.piInvoice?.paymentTerm || order?.paymentTerms %>
-                </div>
+        <table>
+            <tr>
+                <td rowspan="3" style="width: 60%;">
+                    <div style="display: flex; align-items: flex-start; gap: 10px;">
+                        <div style="flex: 1;">
+                            <div class="bold" style="text-decoration: underline;">EXPORTER:</div>
+                            <div class="bold" style="margin-top: 4px; font-size: 12px;">
+                                <%= order?.company?.name || 'COMPANY NAME' %>
+                            </div>
+                            <div><%= order?.company?.address || 'Company Address' %></div>
+                            <div>
+                                <%= order?.company.city || '' %>
+                                <%= order?.company.state ? ', ' + order?.company.state : '' %>
+                                <%= order?.company.pincode ? ', ' + order?.company.pincode : '' %>
+                            </div>
+                            <div>Phone: <%= order?.company.phoneNo || '+91-XXXXXXXXXX' %></div>
+                            <div>Email: <%= order?.company.email || 'email@company.com' %></div>
+                        </div>
+                        <div style="text-align:right;">
+                            <% const logoUrl = order?.company?.logo; %>
+                            <% const fullLogoUrl = logoUrl ? (logoUrl.startsWith('http') ? logoUrl : `http://localhost:8000${logoUrl}`) : null; %>
+                            <% if (typeof logoBase64 !== 'undefined' && logoBase64) { %>
+                                <img src="data:image/*;base64,<%= logoBase64 %>" alt="Company Logo" style="max-height: 80px; max-width: 200px; object-fit: contain; border-radius: 8px; border: none; padding: 4px;">
+                            <% } else if (fullLogoUrl) { %>
+                                <img src="<%= fullLogoUrl %>" alt="Company Logo" style="max-height: 80px; max-width: 200px; object-fit: contain; border-radius: 8px; border: none; padding: 4px;">
+                            <% } %>
+                        </div>
+                    </div>
+                </td>
+                <td style="width: 20%;" class="center">
+                    <div class="bold">Invoice No:</div>
+                    <div class="bold" style="font-size: 12px; margin-top: 2px;">
+                        <%= order?.piInvoice?.piNumber || order?.orderNumber || 'N/A' %>
+                    </div>
+                </td>
+                <td style="width: 20%;" class="center">
+                    <div class="bold">Date:</div>
+                    <div class="bold" style="font-size: 12px; margin-top: 2px;">
+                        <%= order?.piInvoice?.invoiceDate ? new Date(order.piInvoice.invoiceDate).toLocaleDateString('en-GB', { day:'2-digit', month:'long', year:'numeric' }) : 'N/A' %>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2" class="bold">Buyer's Ref No. & Date :-</td>
+            </tr>
+            <tr>
+                <td colspan="2">
+                    <div class="bold">Terms & Conditions :-</div>
+                    <ol style="margin: 4px 0 0 16px; padding: 0;">
+                        <% if (order?.piInvoice?.deliveryTerm || order?.deliveryTerms) { %>
+                            <li>TRADE TERM: <%= (order?.piInvoice?.deliveryTerm || order?.deliveryTerms).toUpperCase() %></li>
+                        <% } %>
+                        <% if (order?.piInvoice?.paymentTerm || order?.paymentTerms) { %>
+                            <% 
+                                // Format payment term based on advance percentage and balance term
+                                let formattedPaymentTerm = order?.piInvoice?.paymentTerm || order?.paymentTerms;
+                                if ((order?.piInvoice?.paymentTerm === 'advance' || order?.paymentTerms === 'advance') && order?.piInvoice?.advancePercentage) {
+                                    const advance = parseInt(order.piInvoice.advancePercentage);
+                                    const balance = 100 - advance;
+                                    if (balance > 0 && order?.piInvoice?.balancePaymentTerm) {
+                                        formattedPaymentTerm = `${advance}% ADVANCE. ${balance}% ${order.piInvoice.balancePaymentTerm}`;
+                                    } else {
+                                        formattedPaymentTerm = `${advance}% ADVANCE`;
+                                    }
+                                } else {
+                                    formattedPaymentTerm = formattedPaymentTerm.toUpperCase();
+                                }
+                            %>
+                            <li>PAYMENT TERM: <%= formattedPaymentTerm %></li>
+                        <% } %>
+                    </ol>
+                </td>
+            </tr>
+        </table>
+
+        <table>
+            <tr>
+                <td class="header">CONSIGNEE:</td>
+                <td class="header">BUYER</td>
+                <td class="header">NOTIFY PARTY (Other then Buyer)</td>
+            </tr>
+            <tr>
+                <td style="width: 40%;">
+                    <div class="bold" style="margin-top:2px;">
+                        <%= order?.piInvoice?.partyName || order?.piInvoice?.party?.companyName || 'N/A' %>
+                    </div>
+                    <div>Address: <%= order?.piInvoice?.address || order?.piInvoice?.party?.address || '' %></div>
+                    <div><%= order?.piInvoice?.country || order?.piInvoice?.party?.country || '' %></div>
+                    <% if (order?.piInvoice?.phone || order?.piInvoice?.party?.phone) { %>
+                        <div>Phone: <%= order?.piInvoice?.phone || order?.piInvoice?.party?.phone %></div>
+                    <% } %>
+                    <% if (order?.piInvoice?.email || order?.piInvoice?.party?.email) { %>
+                        <div>Email: <%= order?.piInvoice?.email || order?.piInvoice?.party?.email %></div>
+                    <% } %>
+                </td>
+                <td style="width: 40%;">
+                    <div class="bold" style="margin-top:2px;">
+                        <%= order?.buyer?.name || order?.piInvoice?.partyName || order?.piInvoice?.party?.companyName || 'N/A' %>
+                    </div>
+                    <div>Address: <%= order?.buyer?.address || order?.piInvoice?.party?.address || '' %></div>
+                    <% if (order?.buyer?.phone || order?.piInvoice?.party?.phone) { %>
+                        <div>Phone: <%= order?.buyer?.phone || order?.piInvoice?.party?.phone %></div>
+                    <% } %>
+                    <% if (order?.buyer?.email || order?.piInvoice?.party?.email) { %>
+                        <div>Email: <%= order?.buyer?.email || order?.piInvoice?.party?.email %></div>
+                    <% } %>
+                </td>
+                <td style="width: 20%;">
+                    <div>
+                        <%= order?.notifyParty?.name || order?.piInvoice?.notifyParty?.name || '' %>
+                    </div>
+                    <div>
+                        <%= order?.notifyParty?.address || order?.piInvoice?.notifyParty?.address || '' %>
+                    </div>
+                    <% if (order?.notifyParty?.email || order?.piInvoice?.notifyParty?.email) { %>
+                        <div>Email: <%= order?.notifyParty?.email || order?.piInvoice?.notifyParty?.email %></div>
+                    <% } %>
+                </td>
+            </tr>
+        </table>
+
+        <table>
+            <tr class="center header">
+                <td>Pre Carriage By</td>
+                <td>Place of Receipt by Pre-Carrier</td>
+                <td>Country of Origin of Goods</td>
+                <td>Country of Final Destination</td>
+            </tr>
+            <tr class="center">
+                <td><%= order?.piInvoice?.preCarriageBy || 'ROAD' %></td>
+                <td><%= order?.piInvoice?.placeOfReceipt || 'MORBI' %></td>
+                <td><%= order?.piInvoice?.countryOfOrigin || 'INDIA' %></td>
+                <td><%= order?.piInvoice?.countryOfDestination || order?.piInvoice?.country || 'USA' %></td>
+            </tr>
+            <tr class="center header">
+                <td>Vessel/ Flight No</td>
+                <td>Port of Loading</td>
+                <td>Port of Discharge</td>
+                <td>Final Destination</td>
+            </tr>
+            <tr class="center">
+                <td><%= (typeof shipment !== 'undefined' && shipment?.vesselVoyageInfo) || order?.shipment?.vesselVoyageInfo || order?.piInvoice?.vesselFlightNo || '-' %></td>
+                <td><%= order?.piInvoice?.portOfLoading || 'MUNDRA PORT, INDIA' %></td>
+                <td><%= order?.piInvoice?.portOfDischarge || '-' %></td>
+                <td><%= order?.piInvoice?.finalDestination || '-' %></td>
+            </tr>
+        </table>
+
+        <div class="table-title">Description of Goods</div>
+        <table>
+            <thead>
+                <tr class="header center">
+                    <th style="width: 4%;">S.No.</th>
+                    <th style="width: 40%;">Description of Goods</th>
+                    <th style="width: 8%;">HS Code</th>
+                    <th style="width: 10%;">Quantity</th>
+                    <th style="width: 6%;">Unit</th>
+                    <th style="width: 10%;">Rate USD</th>
+                    <th style="width: 10%;">Weight (Kgs)</th>
+                    <th style="width: 12%;">Amount USD</th>
+                </tr>
+            </thead>
+            <tbody>
+
+                <% const products = (order?.piInvoice?.products || []); %>
+                <% let sumAmount = 0, totalNet = 0, totalGross = 0; %>
+                <% products.forEach((product, index) => { %>
+                    <% const lineAmt = Number(product.total || 0) || 0; %>
+                    <% const net = product.totalWeight ? (parseFloat(product.totalWeight) * 0.9) : 0; %>
+                    <% const gross = product.totalWeight ? parseFloat(product.totalWeight) : 0; %>
+                    <% sumAmount += lineAmt; totalNet += net; totalGross += gross; %>
+                    <tr>
+                        <td class="center"><%= index + 1 %></td>
+                        <td>
+                            <strong><%= product.productName || product.productDescription || product.description || 'N/A' %></strong>
+                            <% if (product.productDescription && product.productDescription !== product.productName) { %>
+                                <br><%= product.productDescription %>
+                            <% } %>
+                        </td>
+                        <td class="center"><%= (product.hsCode && product.hsCode !== 'N/A') ? product.hsCode : (product.hsnCode && product.hsnCode !== 'N/A') ? product.hsnCode : product.category?.hsnCode || product.product?.category?.hsnCode || product.product?.hsCode || product.product?.hsnCode || 'N/A' %></td>
+                        <td class="right"><%= product.quantity || 0 %></td>
+                        <td class="center"><%= product.unit || 'PCS' %></td>
+                        <td class="right"><%= (product.rate || 0) %></td>
+                        <td class="right"><%= gross ? gross.toFixed(0) + 'kg' : '0kg' %></td>
+                        <td class="right">$ <%= (product.total || 0).toFixed(2) %></td>
+                    </tr>
+                <% }) %>
+
+                <tr class="bold header">
+                    <td colspan="6" class="center">SUB TOTAL</td>
+                    <td></td>
+                    <td class="right">$ <%= sumAmount.toFixed(2) %></td>
+                </tr>
+                <tr class="bold">
+                    <td colspan="8">
+                        CONTAINER:- <%= order?.piInvoice?.numberOfContainers || 'N/A' %> X <%= (order?.piInvoice?.containerType || 'N/A').toUpperCase() %><br>
+                        <% 
+                            // Check if this is tiles (has totalPallets and totalVolume) or bagasse (only totalBoxes)
+                            const hasPallets = order?.piInvoice?.totalPallets && order?.piInvoice?.totalPallets > 0;
+                            const hasVolume = order?.piInvoice?.totalVolume && order?.piInvoice?.totalVolume > 0;
+                        %>
+                        <% if (hasPallets && hasVolume) { %>
+                            TOTAL PALLETS:- <%= order.piInvoice.totalPallets %> | TOTAL BOXES:- <%= order?.piInvoice?.totalBoxes || 'N/A' %> | TOTAL SQM:- <%= order.piInvoice.totalVolume.toFixed(2) %><br>
+                        <% } else { %>
+                            TOTAL BOXES:- <%= order?.piInvoice?.totalBoxes || 'N/A' %><br>
+                        <% } %>
+                        NET WEIGHT:- <%= (order?.piInvoice?.totalWeight || totalNet).toFixed(1) %> KG<br>
+                        GROSS WEIGHT:- <%= (order?.piInvoice?.totalGrossWeight || totalGross).toFixed(1) %> KG
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+        <% let charges = 0; %>
+        <% if (order?.charges) { %>
+            <% Object.entries(order.charges).forEach(([key, value]) => { %>
+                <% if (key === 'otherCharges' && Array.isArray(value)) { %>
+                    <% value.forEach((charge) => { charges += parseFloat(charge.amount || 0); }); %>
+                <% } else if (key !== 'noOtherCharges') { %>
+                    <% charges += parseFloat(value || 0); %>
                 <% } %>
+            <% }); %>
+        <% } %>
+        <% const totalAmount = sumAmount + charges; %>
 
-        </div>
-      </div>
-    </div>
+        <table>
+            <tr>
+                <td style="width: 70%;">
+                    <div class="bold">AMOUNT IN WORDS (USD) :-</div>
+                    <% 
+                        const finalAmount = order?.piInvoice?.totalAmount || totalAmount;
+                        function numberToWords(num) {
+                            const ones = ['', 'ONE', 'TWO', 'THREE', 'FOUR', 'FIVE', 'SIX', 'SEVEN', 'EIGHT', 'NINE', 'TEN', 'ELEVEN', 'TWELVE', 'THIRTEEN', 'FOURTEEN', 'FIFTEEN', 'SIXTEEN', 'SEVENTEEN', 'EIGHTEEN', 'NINETEEN'];
+                            const tens = ['', '', 'TWENTY', 'THIRTY', 'FORTY', 'FIFTY', 'SIXTY', 'SEVENTY', 'EIGHTY', 'NINETY'];
+                            
+                            if (num === 0) return 'ZERO';
+                            if (num < 20) return ones[num];
+                            if (num < 100) return tens[Math.floor(num/10)] + (num%10 ? ' ' + ones[num%10] : '');
+                            if (num < 1000) return ones[Math.floor(num/100)] + ' HUNDRED' + (num%100 ? ' ' + numberToWords(num%100) : '');
+                            if (num < 1000000) return numberToWords(Math.floor(num/1000)) + ' THOUSAND' + (num%1000 ? ' ' + numberToWords(num%1000) : '');
+                            return numberToWords(Math.floor(num/1000000)) + ' MILLION' + (num%1000000 ? ' ' + numberToWords(num%1000000) : '');
+                        }
+                        const amountInWords = finalAmount ? numberToWords(Math.floor(finalAmount)) + ' DOLLARS ONLY' : '';
+                    %>
+                    <%= amountInWords %>
+                </td>
+                <td style="width: 30%;">
+                    <table style="width:100%; border-collapse:collapse;">
+                        <% if (order?.charges && Object.keys(order.charges).length > 0) { %>
+                            <% Object.entries(order.charges).forEach(([key, value]) => { %>
+                                <% if (key === 'otherCharges' && Array.isArray(value)) { %>
+                                    <% value.forEach((charge) => { %>
+                                        <tr>
+                                            <td style="border: var(--inner); padding:8px 6px; font-weight:bold;">
+                                                <%= charge.name.toUpperCase() %>:-
+                                            </td>
+                                            <td class="right" style="border: var(--inner); padding:8px 6px; font-weight:bold;">
+                                                <%= charge.amount && !isNaN(parseFloat(charge.amount)) ? '$' + parseFloat(charge.amount).toFixed(2) : '-' %>
+                                            </td>
+                                        </tr>
+                                    <% }) %>
+                                <% } else { %>
+                                    <tr>
+                                        <td style="border: var(--inner); padding:8px 6px; font-weight:bold;">
+                                            <%= key.toUpperCase() %>:-
+                                        </td>
+                                        <td class="right" style="border: var(--inner); padding:8px 6px; font-weight:bold;">
+                                            <%= value && !isNaN(parseFloat(value)) ? '$' + parseFloat(value).toFixed(2) : '-' %>
+                                        </td>
+                                    </tr>
+                                <% } %>
+                            <% }) %>
+                        <% } %>
+                        <tr>
+                            <td style="border: var(--inner); padding:8px 6px; font-weight:bold;">TOTAL AMOUNT:-</td>
+                            <td class="right" style="border: var(--inner); padding:8px 6px; font-weight:bold;">
+                                $ <%= (order?.piInvoice?.totalAmount || totalAmount).toFixed(2) %>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
 
-    <!-- Consignee / Buyer / Notify -->
-    <div class="grid grid-3">
-      <div class="cell header">CONSIGNEE:</div>
-      <div class="cell header">BUYER</div>
-      <div class="cell header">NOTIFY PARTY (Other then Buyer)</div>
-    </div>
-    <div class="grid grid-3">
-      <div class="cell">
-        <div style="font-weight:bold; margin-top:2px;">
-          <%= order?.piInvoice?.partyName || order?.piInvoice?.party?.companyName || 'N/A' %>
-        </div>
-        <div>Address: <%= order?.piInvoice?.address || order?.piInvoice?.party?.address || '' %>
-        </div>
-        <% if (order?.piInvoice?.buildingName || order?.piInvoice?.party?.buildingName) { %>
-          <div>Building Name: <%= order?.piInvoice?.buildingName || order?.piInvoice?.party?.buildingName %>
-          </div>
-          <% } %>
-            <div>
-              <%= order?.piInvoice?.city || order?.piInvoice?.party?.city || '' %>
-                <%= (order?.piInvoice?.state || order?.piInvoice?.party?.state) ? ', ' + (order?.piInvoice?.state ||
-                  order?.piInvoice?.party?.state) : '' %>
-                  <%= (order?.piInvoice?.zip || order?.piInvoice?.party?.zip) ? ' ' + (order?.piInvoice?.zip ||
-                    order?.piInvoice?.party?.zip) : '' %>
-            </div>
-            <% if (order?.piInvoice?.phone || order?.piInvoice?.party?.phone) { %>
-              <div>Phone: <%= order?.piInvoice?.phone || order?.piInvoice?.party?.phone %>
-              </div>
-              <% } %>
-                <% if (order?.piInvoice?.email || order?.piInvoice?.party?.email) { %>
-                  <div>Email: <%= order?.piInvoice?.email || order?.piInvoice?.party?.email %>
-                  </div>
-                  <% } %>
-      </div>
-      <div class="cell">
-        <div style="font-weight:bold; margin-top:2px;">
-          <%= order?.buyer?.name || order?.piInvoice?.partyName || order?.piInvoice?.party?.companyName || 'N/A' %>
-        </div>
-        <div>Address: <%= order?.buyer?.address || order?.piInvoice?.party?.address || '' %>
-        </div>
-        <% if (order?.buyer?.phone || order?.piInvoice?.party?.phone) { %>
-          <div>Phone: <%= order?.buyer?.phone || order?.piInvoice?.party?.phone %>
-          </div>
-          <% } %>
-            <% if (order?.buyer?.email || order?.piInvoice?.party?.email) { %>
-              <div>Email: <%= order?.buyer?.email || order?.piInvoice?.party?.email %>
-              </div>
-              <% } %>
-      </div>
-      <div class="cell">
-        <div>
-          <%= order?.notifyParty?.name || order?.piInvoice?.notifyParty?.name || '' %>
-        </div>
-        <div>
-          <%= order?.notifyParty?.address || order?.piInvoice?.notifyParty?.address || '' %>
-        </div>
-        <% if (order?.notifyParty?.email || order?.piInvoice?.notifyParty?.email) { %>
-          <div>Email: <%= order?.notifyParty?.email || order?.piInvoice?.notifyParty?.email %>
-          </div>
-          <% } %>
-      </div>
-    </div>
+        <table>
+            <tr>
+                <td class="header" colspan="2">BANK DETAILS :-</td>
+            </tr>
+            <tr>
+                <td style="width: 80%; padding: 10px; vertical-align: top;">
+                    <div style="font-size: 10px; margin-bottom: 2px;"><strong>BANK NAME :-</strong> <%= order?.company?.bankName || 'N/A' %></div>
+                    <div style="font-size: 10px; margin-bottom: 2px;"><strong>BANK ADDRESS :-</strong> <%= order?.company?.bankAddress || '' %></div>
+                    <div style="font-size: 10px; margin-bottom: 2px;"><strong>ACCOUNT NUMBER :-</strong> <%= order?.company?.accountNumber || 'N/A' %></div>
+                    <div style="font-size: 10px; margin-bottom: 2px;"><strong>IFSC CODE :-</strong> <%= order?.company?.ifscCode || 'N/A' %></div>
+                    <div style="font-size: 10px;"><strong>SWIFT CODE :-</strong> <%= order?.company?.swiftCode || 'N/A' %></div>
+                </td>
+                <td style="width: 20%; text-align: center; vertical-align: top; padding: 10px;">
+                    <div style="margin-bottom: 10px;">
+                        <strong>For, <%= order?.company?.name || 'COMPANY NAME' %></strong>
+                    </div>
+                    <div style="height: 60px; display: flex; align-items: center; justify-content: center;">
+                        <% const signatureUrl = order?.company?.signature; %>
+                        <% const fullSignatureUrl = signatureUrl ? (signatureUrl.startsWith('http') ? signatureUrl : `http://localhost:8000${signatureUrl}`) : null; %>
+                        <% if (typeof signatureBase64 !== 'undefined' && signatureBase64) { %>
+                            <img src="data:image/*;base64,<%= signatureBase64 %>" alt="Signature" style="max-height: 50px; max-width: 80px; object-fit: contain;">
+                        <% } else if (fullSignatureUrl) { %>
+                            <img src="<%= fullSignatureUrl %>" alt="Signature" style="max-height: 50px; max-width: 80px; object-fit: contain;">
+                        <% } else { %>
+                            <div style="width: 80px; height: 50px; border: 1px dashed #ccc; display: flex; align-items: center; justify-content: center; font-size: 8px; color: #999;">
+                                SIGNATURE
+                            </div>
+                        <% } %>
+                    </div>
+                    <div style="margin-top: 8px;">
+                        <div style="border-bottom: 1px solid #000; width: 80px; margin: 0 auto;"></div>
+                        <div style="font-size: 8px; margin-top: 2px;">Authorised Signatory</div>
+                    </div>
+                </td>
+            </tr>
+        </table>
 
-    <!-- Shipment info -->
-    <div class="grid grid-4">
-      <div class="cell header text-center">Pre Carriage By</div>
-      <div class="cell header text-center">Place of Receipt by Pre-Carrier</div>
-      <div class="cell header text-center">Country of Origin of Goods</div>
-      <div class="cell header text-center">Country of Final Destination</div>
-    </div>
-    <div class="grid grid-4">
-      <div class="cell text-center">
-        <%= order?.piInvoice?.preCarriageBy || 'ROAD' %>
-      </div>
-      <div class="cell text-center">
-        <%= order?.piInvoice?.placeOfReceipt || 'MORBI' %>
-      </div>
-      <div class="cell text-center">
-        <%= order?.piInvoice?.countryOfOrigin || 'INDIA' %>
-      </div>
-      <div class="cell text-center">
-        <%= order?.piInvoice?.countryOfDestination || order?.piInvoice?.country || 'USA' %>
-      </div>
-    </div>
-
-    <div class="grid grid-4">
-      <div class="cell header text-center">Vessel/ Flight No</div>
-      <div class="cell header text-center">Port of Loading</div>
-      <div class="cell header text-center">Port of Discharge</div>
-      <div class="cell header text-center">Final Destination</div>
-    </div>
-    <div class="grid grid-4">
-      <div class="cell text-center">
-        <%= order?.piInvoice?.packagingSteps?.[0]?.notes?.vesselVoyageNo || order?.piInvoice?.vesselFlightNo || '' %>
-      </div>
-      <div class="cell text-center">
-        <%= order?.piInvoice?.portOfLoading || 'MUNDRA PORT, INDIA' %>
-      </div>
-      <div class="cell text-center">
-        <%= order?.piInvoice?.portOfDischarge || '' %>
-      </div>
-      <div class="cell text-center">
-        <%= order?.piInvoice?.finalDestination || '' %>
-      </div>
-    </div>
-
-    <!-- Description of Goods table EXACTLY like latest screenshot: 6 columns -->
-    <div class="table-title">Description of Goods</div>
-    <table>
-      <thead>
-        <tr>
-          <th style="width: 15%;">No &amp; Kind of Pckgs</th>
-          <th style="width: 45%;">Description of Goods</th>
-          <th style="width: 10%;">HS Code</th>
-          <th style="width: 10%;">Quantity [in SQM]</th>
-          <th style="width: 10%;">Rate/SQM USD</th>
-          <th style="width: 10%;">Amount USD</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td class="text-center" colspan="6" style="font-weight:bold;">POLISHED GLAZED VITRIFIED TILES</td>
-        </tr>
-
-        <% const products=(order?.piInvoice?.products || []); %>
-        <% const packagingSteps=(order?.piInvoice?.packagingSteps || []); %>
-        <% const allContainers = packagingSteps.length > 0 && packagingSteps[0].notes && packagingSteps[0].notes.containers ? packagingSteps[0].notes.containers : []; %>
-        <% let sumQtySqm=0, sumAmount=0, totalPallets=0, totalBoxes=0, totalNet=0, totalGross=0, totalContainers=0; %>
-        
-        <% // Calculate totals from packaging steps data %>
-        <% if (allContainers.length > 0) { %>
-          <% totalContainers = allContainers.length; %>
-          <% allContainers.forEach(container => { %>
-            <% if (container.products && Array.isArray(container.products)) { %>
-              <% container.products.forEach(p => { %>
-                <% totalBoxes += Number(p.noOfBoxes || 0); %>
-                <% totalNet += Number(p.netWeight || 0); %>
-                <% totalGross += Number(p.grossWeight || 0); %>
-                <% sumQtySqm += Number(p.measurement || 0); %>
-                <% totalPallets += Math.ceil(Number(p.noOfBoxes || 0) / 50); %>
-              <% }); %>
-            <% } else { %>
-              <% totalBoxes += Number(container.totalNoOfBoxes || 0); %>
-              <% totalNet += Number(container.totalNetWeight || 0); %>
-              <% totalGross += Number(container.totalGrossWeight || 0); %>
-              <% sumQtySqm += Number(container.totalMeasurement || 0); %>
-              <% totalPallets += Math.ceil(Number(container.totalNoOfBoxes || 0) / 50); %>
-            <% } %>
-          <% }); %>
+        <% if (order?.notes && order.notes.trim()) { %>
+        <table>
+            <tr>
+                <td class="header" style="background: var(--grey); font-weight: bold; padding: 6px;">NOTES:</td>
+            </tr>
+            <tr>
+                <td style="padding: 6px; vertical-align: top; font-size: 10px; line-height: 1.3; border: var(--inner); white-space: pre-line;">
+                    <%= order.notes %>
+                </td>
+            </tr>
+        </table>
         <% } %>
 
-            <% products.forEach((p, idx)=> { %>
-              <% const pallets=Number(p.totalPallets || p.pallets || 0) || 0; %>
-                <% const boxes=Number(p.quantity || p.boxes || p.noOfBoxes || 0) || 0; %>
-                  <% const qtySqm=Number(p.quantitySqm || p.quantityInSqm || p.sqm || 0) || 0; %>
-                    <% const rate=Number(p.rate || 0) || 0; %>
-                      <% const lineAmt=Number(p.total || 0) || 0; %>
-                        <% const net=(p.netWeight !=null) ? Number(p.netWeight) : (p.totalWeight ? Number(p.totalWeight)
-                          * 0.9 : 0); %>
-                          <% const gross=(p.grossWeight !=null) ? Number(p.grossWeight) : (p.totalWeight ?
-                            Number(p.totalWeight) : 0); %>
-                            <% const pkg=p.packageLabel || p.packageRange || (boxes ? (boxes + ' ' + (p.unit || 'BOXES'
-                              )) : '-' ); %>
-                              <% const size=p.size || (p.product && p.product.size) || p.dimensions || '' ; %>
-                                <% const design=p.productDescription || p.productName || p.description || (p.product ?
-                                  p.product.name : '' ) || 'N/A' ; %>
-                                  <% const finish=p.finish || (p.product && p.product.finish) || '' ; %>
-                                    <% const pcsPerBox=p.pcsPerBox || p.piecesPerBox || p.pcs_box || '' ; %>
-                                      <% const sqmPerBox=p.sqmPerBox || p.squareMeterPerBox || p.sqm_box || '' ; %>
-                                        <% const hs=p.hsCode || p.hsnCode || p.category?.hsnCode ||
-                                          p.subcategory?.hsnCode || '' ; %>
-                                          <% sumQtySqm +=qtySqm; sumAmount +=lineAmt; totalPallets +=pallets; totalBoxes
-                                            +=boxes; totalNet +=net; totalGross +=gross; %>
-
-                                            <tr>
-                                              <td class="text-center">
-                                                <%= pkg %>
-                                              </td>
-                                              <td>
-                                                <% if (size) { %>
-                                                  <div>
-                                                    <%= size %>
-                                                  </div>
-                                                  <% } %>
-                                                    <div>PGVT | <%= design %>
-                                                        <%= finish ? '(' + finish + ')' : '' %>
-                                                    </div>
-                                                    <% if (pcsPerBox || sqmPerBox || boxes) { %>
-                                                      <div>
-                                                        <%= pcsPerBox ? (pcsPerBox + ' PC / BOX' ) : '' %>
-                                                          <%= sqmPerBox ? (' - ' + sqmPerBox + ' SQM / BOX') : '' %>
-                                                            <%= boxes ? (' - ' + boxes + ' BOXES') : '' %>
-                                                      </div>
-                                                      <% } %>
-                                              </td>
-                                              <td class="text-center">
-                                                <%= hs %>
-                                              </td>
-                                              <td class="text-right">
-                                                <%= boxes || '' %>
-                                              </td>
-                                              <td class="text-right">
-                                                <%= rate ? rate.toFixed(3) : '' %>
-                                              </td>
-                                              <td class="text-right">$ <%= lineAmt ? lineAmt.toFixed(2) : '0.00' %>
-                                              </td>
-                                            </tr>
-                                            <% }) %>
-
-                                              <!-- Left totals box occupying first two columns -->
-                                              <tr>
-                                                <td colspan="2" style="padding:0;">
-                                                  <table style="width:100%; border:none; border-collapse:collapse;">
-                                                    <tr>
-                                                      <td class="no-border"
-                                                        style="width:45%; border-right: var(--border-inner) !important; padding:6px 4px; font-weight:bold;">
-                                                        TOTAL CONTAINERS :-</td>
-                                                      <td class="no-border"
-                                                        style="padding:6px 4px; border-right: var(--border-inner) !important;">
-                                                        <%= totalContainers > 0 ? (totalContainers + ' X ' + (order?.piInvoice?.containerType || "20'FCL")) : 
-                                                            (order?.piInvoice?.numberOfContainers ? (order.piInvoice.numberOfContainers + ' X ' + (order.piInvoice.containerType || "20'FCL")) : '') %>
-                                                      </td>
-                                                    </tr>
-                                                    <tr>
-                                                      <td class="no-border"
-                                                        style="border-right: var(--border-inner) !important; padding:6px 4px; font-weight:bold;">
-                                                        TOTAL PALLETS :-</td>
-                                                      <td class="no-border"
-                                                        style="padding:6px 4px; border-right: var(--border-inner) !important;">
-                                                        <%= totalPallets > 0 ? (totalPallets + ' PALLETS') : (order?.piInvoice?.totalPallets ? (order.piInvoice.totalPallets + ' PALLETS') : '') %>
-                                                      </td>
-                                                    </tr>
-                                                    <tr>
-                                                      <td class="no-border"
-                                                        style="border-right: var(--border-inner) !important; padding:6px 4px; font-weight:bold;">
-                                                        TOTAL SQM :-</td>
-                                                      <td class="no-border"
-                                                        style="padding:6px 4px; border-right: var(--border-inner) !important;">
-                                                        <%= sumQtySqm > 0 ? (sumQtySqm.toFixed(2) + ' SQM') : (order?.piInvoice?.totalVolume ? (order.piInvoice.totalVolume + ' CBM') : '') %>
-                                                      </td>
-                                                    </tr>
-                                                    <tr>
-                                                      <td class="no-border"
-                                                        style="border-right: var(--border-inner) !important; padding:6px 4px; font-weight:bold;">
-                                                        TOTAL BOXES :-</td>
-                                                      <td class="no-border"
-                                                        style="padding:6px 4px; border-right: var(--border-inner) !important;">
-                                                        <%= totalBoxes > 0 ? (totalBoxes + ' BOXES') : (order?.piInvoice?.totalBoxes ? (order.piInvoice.totalBoxes + ' BOXES') : '') %>
-                                                      </td>
-                                                    </tr>
-                                                    <tr>
-                                                      <td class="no-border"
-                                                        style="border-right: var(--border-inner) !important; padding:6px 4px; font-weight:bold;">
-                                                        NET WEIGHT :-</td>
-                                                      <td class="no-border"
-                                                        style="padding:6px 4px; border-right: var(--border-inner) !important;">
-                                                        <%= totalNet > 0 ? (totalNet.toFixed(2) + ' KGS') : (order?.piInvoice?.totalWeight ? ((order.piInvoice.totalWeight * 0.9).toFixed(2) + ' KGS') : '') %>
-                                                      </td>
-                                                    </tr>
-                                                    <tr>
-                                                      <td class="no-border"
-                                                        style="border-right: var(--border-inner) !important; padding:6px 4px; font-weight:bold;">
-                                                        GROSS WEIGHT :-</td>
-                                                      <td class="no-border"
-                                                        style="padding:6px 4px; border-right: var(--border-inner) !important;">
-                                                        <%= totalGross > 0 ? (totalGross.toFixed(2) + ' KGS') : (order?.piInvoice?.totalWeight ? (order.piInvoice.totalWeight.toFixed(2) + ' KGS') : '') %>
-                                                      </td>
-                                                    </tr>
-                                                  </table>
-                                                </td>
-                                                <td></td>
-                                                <td class="text-right" style="font-weight:bold;"></td>
-                                                <td></td>
-                                                <td class="text-right" style="font-weight:bold;"></td>
-                                              </tr>
-
-                                              <!-- ORIGIN row -->
-                                              <tr>
-                                                <td class="text-center" colspan="4"><strong>ORIGIN : <%=
-                                                      order?.piInvoice?.countryOfOrigin || 'INDIA' %></strong></td>
-                                                <td colspan="2"></td>
-                                              </tr>
-
-                                              <!-- SUB TOTAL / FOB VALUE row -->
-                                              <% const fobValue=order?.piInvoice?.subtotal ||
-                                                order?.piInvoice?.totalAmount || 0; %>
-                                                <tr>
-                                                  <td colspan="4" class="text-center" style="font-weight:bold;">SUB
-                                                    TOTAL</td>
-                                                  <td class="text-right" style="font-weight:bold;">FOB VALUE:</td>
-                                                  <td class="text-right" style="font-weight:bold;">$ <%=
-                                                      fobValue.toFixed(2) %>
-                                                  </td>
-                                                </tr>
-      </tbody>
-    </table>
-
-    <!-- Amount in words + Charges/Total as per screenshot -->
-    <% const oceanFreight=Number(order?.charges?.oceanFreight || order?.oceanFreight || 0) || 0; %>
-      <% const duty=Number(order?.charges?.duty || order?.duty || 0) || 0; %>
-        <% const otherCharges=Number(order?.charges?.other || order?.otherCharges || 0) || 0; %>
-          <% const rightCharges=oceanFreight + duty + otherCharges; %>
-            <% const totalAmount=fobValue + rightCharges; %>
-
-              <div class="grid" style="grid-template-columns: 2fr 1fr;">
-                <!-- Left: Amount in words with a small label cell like screenshot -->
-                <div class="cell" style="padding:0;">
-                  <div class="grid" style="grid-template-columns: 1fr 3fr;">
-                    <div class="cell" style="font-weight:bold;">AMOUNT IN WORDS (USD) :-</div>
-                    <div class="cell">
-                      <%= order?.amountInWords || '' %>
+        <table>
+            <tr>
+                <td style="padding: 10px; vertical-align: top;">
+                    <div>
+                        We Declare that this Invoice shows the Actual prices of the goods described and that particulars are true and correct.
                     </div>
-                  </div>
-                </div>
-                <!-- Right: charges/total table -->
-                <div class="cell" style="padding:0;">
-                  <table style="width:100%; border-collapse:collapse;">
-                    <tr>
-                      <td style="border: var(--border-inner); padding:8px 6px; font-weight:bold;">OCEAN FREIGHT
-                        +<br />DUTY<br />+ OTHER CHARGES:-</td>
-                      <td class="text-right" style="border: var(--border-inner); padding:8px 6px; font-weight:bold;">$
-                        <%= rightCharges.toFixed(2) %>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td style="border: var(--border-inner); padding:8px 6px; font-weight:bold;">TOTAL AMOUNT:-</td>
-                      <td class="text-right" style="border: var(--border-inner); padding:8px 6px; font-weight:bold;">$
-                        <%= totalAmount.toFixed(2) %>
-                      </td>
-                    </tr>
-                  </table>
-                </div>
-              </div>
-
-              <!-- Bank details header row -->
-              <div class="grid" style="grid-template-columns: 2fr 1fr;">
-                <div class="cell" style="padding:0;">
-                  <div class="bank-title">BANK DETAILS :-</div>
-                </div>
-                <div class="cell"></div>
-              </div>
-
-              <!-- Bank details + Stamp/Signature -->
-              <div class="grid" style="grid-template-columns: 2fr 1fr;">
-                <div class="cell">
-                  <div><strong>BANK NAME :-</strong>
-                    <%= order?.company?.bankName || 'BANK OF INDIA' %>
-                  </div>
-                  <div><strong>BANK ADDRESS :-</strong>
-                    <%= order?.company?.bankAddress || '' %>
-                  </div>
-                  <div><strong>ACCOUNT NUMBER :-</strong>
-                    <%= order?.company?.accountNumber || '' %>
-                  </div>
-                  <div><strong>IFSC CODE :-</strong>
-                    <%= order?.company?.ifscCode || '' %>
-                  </div>
-                  <div><strong>SWIFT CODE :-</strong>
-                    <%= order?.company?.swiftCode || '' %>
-                  </div>
-                </div>
-                <div class="cell"
-                  style="display:flex; flex-direction:column; align-items:center; justify-content:center;">
-                  <div style="height: 80px; display: flex; align-items: center; justify-content: center;">
-                    <% const signatureUrl = order?.company?.signature; %>
-                    <% const fullSignatureUrl = signatureUrl ? (signatureUrl.startsWith('http') ? signatureUrl : `http://localhost:8000${signatureUrl}`) : null; %>
-                    <% if (typeof signatureBase64 !== 'undefined' && signatureBase64) { %>
-                      <img src="data:image/*;base64,<%= signatureBase64 %>" alt="Signature" style="max-height: 60px; max-width: 120px; object-fit: contain;">
-                    <% } else if (fullSignatureUrl) { %>
-                      <img src="<%= fullSignatureUrl %>" alt="Signature" style="max-height: 60px; max-width: 120px; object-fit: contain;">
-                    <% } %>
-                  </div>
-                  <div style="margin-top: 10px;">
-                    <div style="border-bottom: 1px solid #000; width: 120px; margin: 0 auto;"></div>
-                    <div style="font-size: 9px; margin-top: 2px;">Authorised Signatory</div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Declaration Block -->
-              <div class="cell" style="border-left: none;">
-                <div style="font-weight:bold; margin:8px 0; font-size: 14px;">Merchandise to be of India Origin.</div>
-                <div><span class="label">Declaration:-</span></div>
-                <div style="margin-top:6px;">We Declare that this Invoice shows the Actual prices of the goods described
-                  and that particulars are true and correct.</div>
-              </div>
-
-  </div>
+                </td>
+            </tr>
+        </table>
+    </div>
 </body>
 
 </html>
+
