@@ -284,7 +284,7 @@
                             const hasVolume = order?.piInvoice?.totalVolume && order?.piInvoice?.totalVolume > 0;
                         %>
                         <% if (hasPallets && hasVolume) { %>
-                            TOTAL PALLETS:- <%= order.piInvoice.totalPallets %> | TOTAL BOXES:- <%= order?.piInvoice?.totalBoxes || 'N/A' %> | TOTAL SQM:- <%= order.piInvoice.totalVolume.toFixed(2) %><br>
+                            TOTAL PALLETS:- <%= order.piInvoice.totalPallets %> | TOTAL BOXES:- <%= order?.piInvoice?.totalBoxes || 'N/A' %> | TOTAL SQM:- <%= order.piInvoice.totalSquareMeters.toFixed(2) %><br>
                         <% } else { %>
                             TOTAL BOXES:- <%= order?.piInvoice?.totalBoxes || 'N/A' %><br>
                         <% } %>
