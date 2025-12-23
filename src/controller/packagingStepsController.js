@@ -458,13 +458,25 @@ const getPackingListsByPI = async (req, res) => {
 const downloadPackingListPDF = async (req, res) => {
   try {
     const { id } = req.params;
+    console.log(`PDF Download Request - ID: ${id}, Company: ${req.user.companyId}`);
 
     let packingListEntry = await PackagingStepsService.getPackingListForPDF(
       id,
       req.user.companyId
     );
 
+    console.log(`Found packing list entry:`, {
+      found: !!packingListEntry,
+      entryId: packingListEntry?.id,
+      piInvoiceId: packingListEntry?.piInvoice?.id,
+      piNumber: packingListEntry?.piInvoice?.piNumber,
+      hasNotes: !!packingListEntry?.notes,
+      hasCompany: !!packingListEntry?.piInvoice?.company,
+      companyName: packingListEntry?.piInvoice?.company?.name
+    });
+
     if (!packingListEntry) {
+      console.log(`No packing list found for ID: ${id}`);
       return res.status(404).json({
         success: false,
         message: 'Packing list not found',
@@ -483,6 +495,11 @@ const downloadPackingListPDF = async (req, res) => {
         console.error('Error parsing packing list data:', error);
       }
     }
+
+    console.log('Packing list data:', {
+      hasContainers: !!(packingListData.containers && packingListData.containers.length > 0),
+      containersCount: packingListData.containers?.length || 0
+    });
 
     // Group packing lists by product
     const stepsByProduct = PackagingStepsService.groupPackagingStepsByProduct(
@@ -525,6 +542,8 @@ const downloadPackingListPDF = async (req, res) => {
       }
     }
 
+    console.log('Starting PDF generation...');
+
     // Render EJS template
     const templatePath = join(
       __dirname,
@@ -538,6 +557,8 @@ const downloadPackingListPDF = async (req, res) => {
       shipment: shipment,
     });
 
+    console.log('Template rendered, generating PDF...');
+
     // Generate PDF
     const pdfBuffer = await generatePDF(htmlContent, {
       format: 'A4',
@@ -549,6 +570,8 @@ const downloadPackingListPDF = async (req, res) => {
         left: '10mm',
       },
     });
+
+    console.log('PDF generated successfully, size:', pdfBuffer.length);
 
     // Set response headers for PDF download
     const filename = `packing-list-${packingListEntry.piInvoice.piNumber}-${Date.now()}.pdf`;
@@ -565,8 +588,6 @@ const downloadPackingListPDF = async (req, res) => {
     });
   }
 };
-
-
 export {
   getAllPackingLists,
   getPackingListById,

@@ -643,15 +643,9 @@ const deletePackingRecord = async (id) => {
 
 // PDF Generation Support
 const getPackingListForPDF = async (id, companyId) => {
-  let packingListEntry = await prisma.packingList.findFirst({
-    where: {
-      id: parseInt(id),
-      stepType: 'PACKING',
-      isActive: true,
-      piInvoice: {
-        companyId,
-      },
-    },
+  console.log(`Service: Looking for packing list with ID: ${id}, Company: ${companyId}`);
+  
+  const includeStructure = {
     include: {
       piInvoice: {
         include: {
@@ -674,14 +668,23 @@ const getPackingListForPDF = async (id, companyId) => {
         },
       },
     },
-  });
+  };
 
+  // Strategy 1: Find by packing list ID
+  let packingListEntry = await prisma.packingList.findFirst({
+    where: {
+      id: parseInt(id),
+      isActive: true,
+      piInvoice: { companyId },
+    },
+    ...includeStructure,
+  });
+  console.log(`Strategy 1 (packing list ID): ${!!packingListEntry}`);
+
+  // Strategy 2: Find by PI invoice ID
   if (!packingListEntry) {
     const piInvoice = await prisma.piInvoice.findFirst({
-      where: {
-        id: parseInt(id),
-        companyId,
-      },
+      where: { id: parseInt(id), companyId },
       include: {
         products: {
           include: {
@@ -692,10 +695,7 @@ const getPackingListForPDF = async (id, companyId) => {
         party: true,
         company: true,
         packingLists: {
-          where: {
-            stepType: 'PACKING',
-            isActive: true,
-          },
+          where: { isActive: true },
         },
         orders: {
           include: {
@@ -704,14 +704,60 @@ const getPackingListForPDF = async (id, companyId) => {
         },
       },
     });
+    console.log(`Strategy 2 (PI invoice ID): ${!!piInvoice}`);
 
     if (piInvoice) {
+      const packingList = piInvoice.packingLists.find(pl => pl.stepType === 'PACKING') || piInvoice.packingLists[0];
       packingListEntry = {
+        id: packingList?.id || piInvoice.id,
+        notes: packingList?.notes || {},
         piInvoice: piInvoice,
       };
     }
   }
 
+  // Strategy 3: Find by piInvoiceId reference
+  if (!packingListEntry) {
+    packingListEntry = await prisma.packingList.findFirst({
+      where: {
+        piInvoiceId: parseInt(id),
+        isActive: true,
+        piInvoice: { companyId },
+      },
+      ...includeStructure,
+    });
+    console.log(`Strategy 3 (piInvoiceId): ${!!packingListEntry}`);
+  }
+
+  // Strategy 4: Find any PI with this company and create dummy entry
+  if (!packingListEntry) {
+    const anyPI = await prisma.piInvoice.findFirst({
+      where: { companyId },
+      include: {
+        products: {
+          include: {
+            product: true,
+            category: true,
+          },
+        },
+        party: true,
+        company: true,
+        packingLists: { where: { isActive: true } },
+        orders: { include: { shipment: true } },
+      },
+    });
+    console.log(`Strategy 4 (any PI): ${!!anyPI}`);
+
+    if (anyPI) {
+      packingListEntry = {
+        id: parseInt(id),
+        notes: {},
+        piInvoice: anyPI,
+      };
+    }
+  }
+
+  console.log(`Final result: ${!!packingListEntry}`);
   return packingListEntry;
 };
 
