@@ -739,7 +739,7 @@ model VgmDocument {
 
   // Relations
   company              CompanyDetails         @relation(fields: [companyId], references: [id])
-  piInvoice            PiInvoice              @relation(fields: [piInvoiceId], references: [id])
+  piInvoice            PiInvoice              @relation(fields: [piInvoiceId], references: [id], onDelete: Cascade)
   packingList PackingList? @relation(fields: [productPackagingStepId], references: [id])
   creator              User                   @relation("VgmCreator", fields: [createdBy], references: [id])
   updater              User?                  @relation("VgmUpdater", fields: [updatedBy], references: [id])
