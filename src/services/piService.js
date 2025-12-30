@@ -660,6 +660,11 @@ const deletePiInvoice = async (id, companyId, userId, req = {}) => {
         },
       });
 
+      // Delete related VGM documents first (to handle foreign key constraint)
+      await tx.vgmDocument.deleteMany({
+        where: { piInvoiceId: id },
+      });
+
       // Delete the invoice
       await tx.piInvoice.delete({
         where: { id },
