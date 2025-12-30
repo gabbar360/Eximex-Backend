@@ -627,10 +627,22 @@ const deletePiInvoice = async (id, companyId, userId, req = {}) => {
     );
   }
 
+  // Check if PI has related VGM documents
+  const relatedVgmDocuments = await prisma.vgmDocument.findMany({
+    where: { piInvoiceId: id },
+  });
+
   try {
     await prisma.$transaction(async (tx) => {
       // Get current status
       const currentStatus = piInvoice.status || 'Unknown';
+
+      // Delete related VGM documents first
+      if (relatedVgmDocuments.length > 0) {
+        await tx.vgmDocument.deleteMany({
+          where: { piInvoiceId: id },
+        });
+      }
 
       // Create history record before deletion with enhanced details
       await tx.piInvoiceHistory.create({
