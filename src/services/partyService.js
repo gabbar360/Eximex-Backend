@@ -27,8 +27,6 @@ const getPartyById = async (partyId, includeRelations = false) => {
 
 const getAllParties = async (companyId, options = {}, dataFilters = {}) => {
   const {
-    page = 1,
-    limit = 10,
     search = '',
     role = '',
     partyType = '',
@@ -93,15 +91,24 @@ const getAllParties = async (companyId, options = {}, dataFilters = {}) => {
   const orderBy = { [sortBy]: sortOrder };
 
   try {
-    const result = await DatabaseUtils.findMany('partyList', {
+    const data = await DatabaseUtils.findManyWithoutPagination('partyList', {
       where,
       orderBy,
-      page: parseInt(page),
-      limit: parseInt(limit),
       include: { company: true, user: true },
     });
 
-    return result;
+    // Return in the same format as findMany for compatibility
+    return {
+      data,
+      pagination: {
+        page: 1,
+        limit: data.length,
+        total: data.length,
+        totalPages: 1,
+        hasNext: false,
+        hasPrev: false,
+      },
+    };
   } catch (error) {
     console.error('Party service error:', error);
     console.error('Query where clause:', JSON.stringify(where, null, 2));
