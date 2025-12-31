@@ -348,45 +348,8 @@ const createPackingListTransaction = async (data, userId) => {
       },
     });
 
-    // Create additional container entries
-    const additionalEntries = [];
-    if (data.containers && data.containers.length > 1) {
-      for (let i = 1; i < data.containers.length; i++) {
-        const container = data.containers[i];
-        const containerMaterial =
-          container.products && container.products.length > 0
-            ? container.products.map((p) => p.productName).join(', ')
-            : 'Container Items';
-
-        const containerEntry = await tx.packingList.create({
-          data: {
-            productId: null,
-            piInvoiceId: data.piId,
-            categoryId: null,
-            packagingUnitId: null,
-            stepNumber: i + 1,
-            stepType: 'CONTAINERIZING',
-            description: `Container ${i + 1} for PI ${data.piNumber}`,
-            quantity: container.totalNoOfBoxes
-              ? parseInt(container.totalNoOfBoxes)
-              : 0,
-            material: containerMaterial,
-            weight: container.totalGrossWeight
-              ? parseFloat(container.totalGrossWeight)
-              : 0,
-            weightUnit: 'kg',
-            dimensions: container.totalMeasurement
-              ? { measurement: container.totalMeasurement }
-              : null,
-            containerNumber: container.containerNumber || null,
-            sealNumber: container.sealNumber || null,
-            sealType: container.sealType || null,
-            createdBy: userId,
-          },
-        });
-        additionalEntries.push(containerEntry);
-      }
-    }
+    // All container information is stored in the main entry's notes field
+    // No need to create separate database entries for each container
 
     // Calculate totals from containers data
     const totals = calculateTotalsFromContainers(data.containers || []);
@@ -412,7 +375,7 @@ const createPackingListTransaction = async (data, userId) => {
       },
     });
 
-    return { packingListEntry, additionalEntries, updatedPI };
+    return { packingListEntry, updatedPI };
   });
 };
 
