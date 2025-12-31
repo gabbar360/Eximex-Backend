@@ -66,6 +66,34 @@ export class DatabaseUtils {
   }
 
   /**
+   * Generic find many without pagination - returns all records
+   */
+  static async findManyWithoutPagination(model, options = {}) {
+    try {
+      const {
+        where = {},
+        select = null,
+        orderBy = { createdAt: 'desc' },
+        include = null,
+      } = options;
+
+      const queryOptions = {
+        where,
+        orderBy,
+      };
+
+      if (select) queryOptions.select = select;
+      if (include) queryOptions.include = include;
+
+      const data = await prisma[model].findMany(queryOptions);
+
+      return data;
+    } catch (error) {
+      throw new ApiError(500, `Database error while finding ${model}`);
+    }
+  }
+
+  /**
    * Generic create with error handling
    */
   static async create(model, data) {
