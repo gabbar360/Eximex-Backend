@@ -27,6 +27,8 @@ const getPartyById = async (partyId, includeRelations = false) => {
 
 const getAllParties = async (companyId, options = {}, dataFilters = {}) => {
   const {
+    page = 1,
+    limit = 10,
     search = '',
     role = '',
     partyType = '',
@@ -35,12 +37,16 @@ const getAllParties = async (companyId, options = {}, dataFilters = {}) => {
     sortOrder = 'desc',
   } = options;
 
+  // Convert to integers
+  const pageNum = parseInt(page) || 1;
+  const limitNum = parseInt(limit) || 10;
+
   const where = {
-    companyId: Number(companyId), // ✅ Always filter by company first
-    ...dataFilters, // Then apply role-based filters (createdBy for staff)
+    companyId: Number(companyId),
+    ...dataFilters,
   };
 
-  // Handle search with proper null checks - only use existing fields from PartyList schema
+  // Handle search with proper null checks
   if (search && search.trim() && search.trim().length > 0) {
     const searchTerm = search.trim();
     const searchConditions = [
@@ -55,7 +61,7 @@ const getAllParties = async (companyId, options = {}, dataFilters = {}) => {
       { partyType: { contains: searchTerm, mode: 'insensitive' } },
     ];
 
-    // Handle Role enum search (exact match for enum values)
+    // Handle Role enum search
     const roleValues = ['Customer', 'Lead', 'Freight_Forwarder', 'Vendor', 'Agent', 'CHA', 'Transporter', 'Supplier'];
     const matchingRoles = roleValues.filter(role => 
       role.toLowerCase().includes(searchTerm.toLowerCase())
@@ -64,8 +70,8 @@ const getAllParties = async (companyId, options = {}, dataFilters = {}) => {
       searchConditions.push({ role: { in: matchingRoles } });
     }
 
-    // Handle Stage enum search (exact match for enum values)
-    const stageValues = ['NEW', 'QUALIFIED', 'NEGOTIATION', 'QUOTATION_SENT', 'WON', 'LOST'];
+    // Handle Stage enum search
+    const stageValues = ['NEW', 'QUALIFIED', 'NEGOTIATION', 'QUOTATION_SENT', 'WON'];
     const matchingStages = stageValues.filter(stage => 
       stage.toLowerCase().includes(searchTerm.toLowerCase())
     );
@@ -91,27 +97,17 @@ const getAllParties = async (companyId, options = {}, dataFilters = {}) => {
   const orderBy = { [sortBy]: sortOrder };
 
   try {
-    const data = await DatabaseUtils.findManyWithoutPagination('partyList', {
+    const result = await DatabaseUtils.findMany('partyList', {
       where,
       orderBy,
+      page: pageNum,
+      limit: limitNum,
       include: { company: true, user: true },
     });
 
-    // Return in the same format as findMany for compatibility
-    return {
-      data,
-      pagination: {
-        page: 1,
-        limit: data.length,
-        total: data.length,
-        totalPages: 1,
-        hasNext: false,
-        hasPrev: false,
-      },
-    };
+    return result;
   } catch (error) {
     console.error('Party service error:', error);
-    console.error('Query where clause:', JSON.stringify(where, null, 2));
     throw error;
   }
 };
@@ -319,6 +315,7 @@ const getPartyStats = async (companyId) => {
   cacheManager.set(cacheKey, stats, 5 * 60 * 1000);
   return stats;
 };
+
 
 const updatePartyStage = async (partyId, stage) => {
   const validStages = ['NEW', 'QUALIFIED', 'NEGOTIATION', 'QUOTATION_SENT', 'WON', 'LOST'];

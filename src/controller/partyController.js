@@ -57,3 +57,4 @@ export const updatePartyStage = asyncHandler(async (req, res) => {
     .status(200)
     .json(new ApiResponse(200, updated, 'Party stage updated successfully'));
 });
+

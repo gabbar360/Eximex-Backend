@@ -32,4 +32,5 @@ router.delete('/delete/party/:id', verifyJWT, requireCompany, deleteParty);
 
 router.put('/update/party/:id/stage', verifyJWT, requireCompany, updatePartyStage);
 
+
 export default router;
