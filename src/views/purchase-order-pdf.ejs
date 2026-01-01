@@ -292,12 +292,7 @@
       <div style="flex: 1; padding: 15px; border-right: 2px solid #000;">
         <div style="font-weight: bold; margin-bottom: 10px;">Terms & Conditions</div>
         <div style="font-size: 11px; line-height: 1.4;">
-          1. Goods/Services that must be meet agreed Quality / Specifications, will be replace, reject & return to supplier at their expenses.<br>
-          2. Any liabilities arises due to GST Act due to mismatch of GST credit related to you will be charged on with Interest and Penalty.<br>
-          3. We'll execute the particular work, process, inspection or testing followed by our service providers at our premises as per decided terms & conditions regarding quality, environment & health safety.<br>
-          4. Supplier has to make sure the all material must have the branding of "Vegnar". Any other branding on product or on packing details will not be accepted.<br>
-          5. Payment terms will be against the delivery of the consignment to shipping address.<br>
-          6. Subject to Rajkot Jurisdiction "E&OE"
+          <%- (purchaseOrder.termsConditions || '').replace(/\n/g, '<br>') %>
         </div>
       </div>
 

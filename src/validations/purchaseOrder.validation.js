@@ -50,6 +50,7 @@ const createPurchaseOrderSchema = Joi.object({
       Joi.object({
         itemDescription: Joi.string().required(),
         hsnSac: Joi.string().optional(),
+        unit: Joi.string().optional().allow('', null),
         quantity: Joi.number().min(0).required(),
         rate: Joi.number().min(0).required(),
         amount: Joi.number().min(0).optional(),
@@ -115,6 +116,7 @@ const updatePurchaseOrderSchema = Joi.object({
         id: Joi.number().integer().optional(),
         itemDescription: Joi.string().required(),
         hsnSac: Joi.string().optional(),
+        unit: Joi.string().optional().allow('', null),
         quantity: Joi.number().min(0).required(),
         rate: Joi.number().min(0).required(),
         amount: Joi.number().min(0).optional(),

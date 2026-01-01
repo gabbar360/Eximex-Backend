@@ -817,6 +817,7 @@ model PurchaseOrderItem {
   purchaseOrderId  Int    @map("purchase_order_id")
   itemDescription  String @map("item_description")
   hsnSac          String? @map("hsn_sac")
+  unit            String?
   quantity        Float
   rate            Float
   amount          Float
