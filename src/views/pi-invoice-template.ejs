@@ -112,7 +112,7 @@
                     </div>
                 </td>
                 <td style="width: 20%;" class="center">
-                    <div class="bold">Invoice No:</div>
+                    <div class="bold">Performa Invoice No:</div>
                     <div class="bold" style="font-size: 12px; margin-top: 2px;">
                         <%= piInvoice.piNumber %>
                     </div>
@@ -269,6 +269,12 @@
             <tbody>
                 <% let sumAmount=0, totalNet=0, totalGross=0; %>
                 <% 
+                    // Number formatting function for Indian format
+                    function formatNumber(num) {
+                        if (!num || isNaN(num)) return '0.00';
+                        return parseFloat(num).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                    }
+                    
                     // Group products by container number for rowspan
                     const containerGroups = {};
                     piInvoice.products.forEach((product, index) => {
@@ -323,9 +329,9 @@
                                         -
                                     <% } %>
                                 </td>
-                                <td class="right"><%= (product.rate || 0) %></td>
+                                <td class="right"><%= formatNumber(product.rate || 0) %></td>
                                 <td class="right"><%= gross ? gross.toFixed(0) + 'kg' : '0kg' %></td>
-                                <td class="right"><%= piInvoice.currency === 'INR' ? '₹' : piInvoice.currency === 'EUR' ? '€' : '$' %> <%= (product.total || 0).toFixed(2) %></td>
+                                <td class="right"><%= piInvoice.currency === 'INR' ? '₹' : piInvoice.currency === 'EUR' ? '€' : '$' %> <%= formatNumber(product.total || 0) %></td>
                             </tr>
                         <% } else { %>
                             <tr>
@@ -339,9 +345,9 @@
                                 <td class="center"><%= (product.hsCode && product.hsCode !== 'N/A') ? product.hsCode : (product.hsnCode && product.hsnCode !== 'N/A') ? product.hsnCode : product.category?.hsnCode || product.product?.category?.hsnCode || product.product?.hsCode || product.product?.hsnCode || 'N/A' %></td>
                                 <td class="right"><%= product.quantity || 0 %></td>
                                 <td class="center"><%= product.unit || 'PCS' %></td>
-                                <td class="right"><%= (product.rate || 0) %></td>
+                                <td class="right"><%= formatNumber(product.rate || 0) %></td>
                                 <td class="right"><%= gross ? gross.toFixed(0) + 'kg' : '0kg' %></td>
-                                <td class="right"><%= piInvoice.currency === 'INR' ? '₹' : piInvoice.currency === 'EUR' ? '€' : '$' %> <%= (product.total || 0).toFixed(2) %></td>
+                                <td class="right"><%= piInvoice.currency === 'INR' ? '₹' : piInvoice.currency === 'EUR' ? '€' : '$' %> <%= formatNumber(product.total || 0) %></td>
                             </tr>
                         <% } %>
                         <% globalIndex++; %>
@@ -351,13 +357,13 @@
                     <tr class="bold header">
                         <td colspan="9" class="center">SUB TOTAL</td>
                         <td></td>
-                        <td class="right"><%= piInvoice.currency === 'INR' ? '₹' : piInvoice.currency === 'EUR' ? '€' : '$' %> <%= sumAmount.toFixed(2) %></td>
+                        <td class="right"><%= piInvoice.currency === 'INR' ? '₹' : piInvoice.currency === 'EUR' ? '€' : '$' %> <%= formatNumber(sumAmount) %></td>
                     </tr>
                 <% } else { %>
                     <tr class="bold header">
                         <td colspan="6" class="center">SUB TOTAL</td>
                         <td></td>
-                        <td class="right"><%= piInvoice.currency === 'INR' ? '₹' : piInvoice.currency === 'EUR' ? '€' : '$' %> <%= sumAmount.toFixed(2) %></td>
+                        <td class="right"><%= piInvoice.currency === 'INR' ? '₹' : piInvoice.currency === 'EUR' ? '€' : '$' %> <%= formatNumber(sumAmount) %></td>
                     </tr>
                 <% } %>
                 <% if (hasTilesProducts) { %>
@@ -423,7 +429,7 @@
                                                 <%= charge.name.toUpperCase() %>:-
                                             </td>
                                             <td class="right" style="border: var(--inner); padding:8px 6px; font-weight:bold;">
-                                                <%= charge.amount && !isNaN(parseFloat(charge.amount)) ? (piInvoice.currency === 'INR' ? '₹' : piInvoice.currency === 'EUR' ? '€' : '$') + parseFloat(charge.amount).toFixed(2) : '-' %>
+                                                <%= charge.amount && !isNaN(parseFloat(charge.amount)) ? (piInvoice.currency === 'INR' ? '₹' : piInvoice.currency === 'EUR' ? '€' : '$') + formatNumber(charge.amount) : '-' %>
                                             </td>
                                         </tr>
                                     <% }) %>
@@ -433,7 +439,7 @@
                                             <%= key.toUpperCase() %>:-
                                         </td>
                                         <td class="right" style="border: var(--inner); padding:8px 6px; font-weight:bold;">
-                                            <%= value && !isNaN(parseFloat(value)) ? (piInvoice.currency === 'INR' ? '₹' : piInvoice.currency === 'EUR' ? '€' : '$') + parseFloat(value).toFixed(2) : '-' %>
+                                            <%= value && !isNaN(parseFloat(value)) ? (piInvoice.currency === 'INR' ? '₹' : piInvoice.currency === 'EUR' ? '€' : '$') + formatNumber(value) : '-' %>
                                         </td>
                                     </tr>
                                 <% } %>
@@ -442,7 +448,7 @@
                         <tr>
                             <td style="border: var(--inner); padding:8px 6px; font-weight:bold;">TOTAL AMOUNT:-</td>
                             <td class="right" style="border: var(--inner); padding:8px 6px; font-weight:bold;">
-                                <%= piInvoice.currency === 'INR' ? '₹' : piInvoice.currency === 'EUR' ? '€' : '$' %> <%= (piInvoice.totalAmount || totalAmount).toFixed(2) %>
+                                <%= piInvoice.currency === 'INR' ? '₹' : piInvoice.currency === 'EUR' ? '€' : '$' %> <%= formatNumber(piInvoice.totalAmount || totalAmount) %>
                             </td>
                         </tr>
                     </table>
