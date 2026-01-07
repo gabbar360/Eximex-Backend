@@ -53,6 +53,7 @@ model User {
   createdTasks          Task[]                 @relation("TaskCreator")
   sentNotifications     Notification[]         @relation("NotificationSender")
   receivedNotifications Notification[]         @relation("NotificationReceiver")
+  createdAccountingEntries AccountingEntry[]   @relation("AccountingEntryCreator")
 
 }
 
@@ -94,6 +95,7 @@ model CompanyDetails {
   shipments       Shipment[]
   tasks           Task[]
   notifications   Notification[]
+  accountingEntries AccountingEntry[]
 
 }
 
@@ -1022,6 +1024,28 @@ enum NotificationType {
   TASK_COMPLETED
   TASK_CANCELLED
   SYSTEM_ALERT
+}
+
+// Accounting Models
+model AccountingEntry {
+  id            Int      @id @default(autoincrement())
+  companyId     Int      @map("company_id")
+  entryType     String   @map("entry_type") // SALES, PURCHASE, PAYMENT, RECEIPT
+  amount        Float
+  description   String?
+  referenceType String?  @map("reference_type") // PI_INVOICE, ORDER, PAYMENT, PURCHASE_ORDER
+  referenceId   Int?     @map("reference_id")
+  referenceNumber String? @map("reference_number")
+  partyName     String?  @map("party_name")
+  date          DateTime
+  createdAt     DateTime @default(now()) @map("created_at")
+  createdBy     Int?     @map("created_by")
+  
+  // Relations
+  company       CompanyDetails @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  creator       User?          @relation("AccountingEntryCreator", fields: [createdBy], references: [id])
+  
+  @@map("accounting_entries")
 }
 
 

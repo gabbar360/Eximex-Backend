@@ -1,6 +1,7 @@
 import { PurchaseOrderService } from '../services/purchaseOrderService.js';
 import { ApiResponse } from '../utils/ApiResponse.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
+import { handlePurchaseOrderCreation } from '../hooks/accountingHooks.js';
 import fs from 'fs';
 import { join } from 'path';
 import { fileURLToPath } from 'url';
@@ -16,6 +17,9 @@ const createPurchaseOrder = asyncHandler(async (req, res) => {
     req.user.id,
     req.user.companyId
   );
+
+  // Auto-create accounting entry
+  await handlePurchaseOrderCreation(purchaseOrder.id);
 
   res
     .status(201)

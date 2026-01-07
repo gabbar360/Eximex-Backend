@@ -267,26 +267,138 @@ const deleteUser = async (userId) => {
   const user = await getUserById(userId);
   if (!user) throw new ApiError(404, 'User not found');
 
+  // Prevent deletion of SUPER_ADMIN
+  if (user.role?.name === 'SUPER_ADMIN') {
+    throw new ApiError(403, 'Cannot delete super admin user');
+  }
+
   await DatabaseUtils.transaction(async (tx) => {
-    // Hard delete all products created by this user
-    await tx.product.deleteMany({
+    // Delete all user permissions
+    await tx.userPermission.deleteMany({
+      where: { userId: Number(userId) },
+    });
+
+    // Delete all accounting entries created by this user
+    await tx.accountingEntry.deleteMany({
+      where: { createdBy: Number(userId) },
+    });
+
+    // Delete all notifications sent/received by this user
+    await tx.notification.deleteMany({
       where: {
-        createdBy: Number(userId),
-        companyId: user.companyId,
+        OR: [
+          { senderId: Number(userId) },
+          { receiverId: Number(userId) },
+        ],
       },
     });
 
-    // Mark user as deleted
-    await tx.user.update({
+    // Delete all tasks assigned to/by/created by this user
+    await tx.task.deleteMany({
+      where: {
+        OR: [
+          { assignedTo: Number(userId) },
+          { assignedBy: Number(userId) },
+          { createdBy: Number(userId) },
+        ],
+      },
+    });
+
+    // Delete all VGM documents created/updated by this user
+    await tx.vgmDocument.deleteMany({
+      where: {
+        OR: [
+          { createdBy: Number(userId) },
+          { updatedBy: Number(userId) },
+        ],
+      },
+    });
+
+    // Delete all packing lists created/updated by this user
+    await tx.packingList.deleteMany({
+      where: {
+        OR: [
+          { createdBy: Number(userId) },
+          { updatedBy: Number(userId) },
+        ],
+      },
+    });
+
+    // Delete all shipments created/updated by this user
+    await tx.shipment.deleteMany({
+      where: {
+        OR: [
+          { createdBy: Number(userId) },
+          { updatedBy: Number(userId) },
+        ],
+      },
+    });
+
+    // Delete all purchase orders created/updated by this user
+    await tx.purchaseOrder.deleteMany({
+      where: {
+        OR: [
+          { createdBy: Number(userId) },
+          { updatedBy: Number(userId) },
+        ],
+      },
+    });
+
+    // Delete all payments created by this user
+    await tx.payment.deleteMany({
+      where: { createdBy: Number(userId) },
+    });
+
+    // Delete all orders created/updated by this user
+    await tx.order.deleteMany({
+      where: {
+        OR: [
+          { createdBy: Number(userId) },
+          { updatedBy: Number(userId) },
+        ],
+      },
+    });
+
+    // Delete all PI invoice history entries by this user
+    await tx.piInvoiceHistory.deleteMany({
+      where: { createdBy: Number(userId) },
+    });
+
+    // Delete all PI invoices created/updated by this user
+    await tx.piInvoice.deleteMany({
+      where: {
+        OR: [
+          { createdBy: Number(userId) },
+          { updatedBy: Number(userId) },
+        ],
+      },
+    });
+
+    // Delete all products created by this user
+    await tx.product.deleteMany({
+      where: { createdBy: Number(userId) },
+    });
+
+    // Delete all item categories created by this user
+    await tx.itemCategory.deleteMany({
+      where: { createdBy: Number(userId) },
+    });
+
+    // Delete all parties created by this user
+    await tx.partyList.deleteMany({
+      where: { createdBy: Number(userId) },
+    });
+
+    // Finally, hard delete the user
+    await tx.user.delete({
       where: { id: Number(userId) },
-      data: { status: 'DELETED' },
     });
   });
 
   cacheManager.delete(`user_${userId}_false`);
   cacheManager.delete(`user_${userId}_true`);
 
-  return { message: 'User and associated products deleted successfully' };
+  return { message: 'User and all associated data deleted successfully' };
 };
 
 const updateLastLogin = async (userId) => {
@@ -585,6 +697,145 @@ const toggleUserBlock = async (userId) => {
     user: updatedUser,
     message: `User ${updatedUser.isBlocked ? 'blocked' : 'unblocked'} successfully`,
   };
+};
+
+// Super Admin specific delete function with complete cascade
+const deleteSuperAdminUser = async (userId) => {
+  const user = await getUserById(userId);
+  if (!user) throw new ApiError(404, 'User not found');
+
+  // Prevent deletion of SUPER_ADMIN
+  if (user.role?.name === 'SUPER_ADMIN') {
+    throw new ApiError(403, 'Cannot delete super admin user');
+  }
+
+  await DatabaseUtils.transaction(async (tx) => {
+    // Delete all user permissions
+    await tx.userPermission.deleteMany({
+      where: { userId: Number(userId) },
+    });
+
+    // Delete all accounting entries created by this user
+    await tx.accountingEntry.deleteMany({
+      where: { createdBy: Number(userId) },
+    });
+
+    // Delete all notifications sent/received by this user
+    await tx.notification.deleteMany({
+      where: {
+        OR: [
+          { senderId: Number(userId) },
+          { receiverId: Number(userId) },
+        ],
+      },
+    });
+
+    // Delete all tasks assigned to/by/created by this user
+    await tx.task.deleteMany({
+      where: {
+        OR: [
+          { assignedTo: Number(userId) },
+          { assignedBy: Number(userId) },
+          { createdBy: Number(userId) },
+        ],
+      },
+    });
+
+    // Delete all VGM documents created/updated by this user
+    await tx.vgmDocument.deleteMany({
+      where: {
+        OR: [
+          { createdBy: Number(userId) },
+          { updatedBy: Number(userId) },
+        ],
+      },
+    });
+
+    // Delete all packing lists created/updated by this user
+    await tx.packingList.deleteMany({
+      where: {
+        OR: [
+          { createdBy: Number(userId) },
+          { updatedBy: Number(userId) },
+        ],
+      },
+    });
+
+    // Delete all shipments created/updated by this user
+    await tx.shipment.deleteMany({
+      where: {
+        OR: [
+          { createdBy: Number(userId) },
+          { updatedBy: Number(userId) },
+        ],
+      },
+    });
+
+    // Delete all purchase orders created/updated by this user
+    await tx.purchaseOrder.deleteMany({
+      where: {
+        OR: [
+          { createdBy: Number(userId) },
+          { updatedBy: Number(userId) },
+        ],
+      },
+    });
+
+    // Delete all payments created by this user
+    await tx.payment.deleteMany({
+      where: { createdBy: Number(userId) },
+    });
+
+    // Delete all orders created/updated by this user
+    await tx.order.deleteMany({
+      where: {
+        OR: [
+          { createdBy: Number(userId) },
+          { updatedBy: Number(userId) },
+        ],
+      },
+    });
+
+    // Delete all PI invoice history entries by this user
+    await tx.piInvoiceHistory.deleteMany({
+      where: { createdBy: Number(userId) },
+    });
+
+    // Delete all PI invoices created/updated by this user
+    await tx.piInvoice.deleteMany({
+      where: {
+        OR: [
+          { createdBy: Number(userId) },
+          { updatedBy: Number(userId) },
+        ],
+      },
+    });
+
+    // Delete all products created by this user
+    await tx.product.deleteMany({
+      where: { createdBy: Number(userId) },
+    });
+
+    // Delete all item categories created by this user
+    await tx.itemCategory.deleteMany({
+      where: { createdBy: Number(userId) },
+    });
+
+    // Delete all parties created by this user
+    await tx.partyList.deleteMany({
+      where: { createdBy: Number(userId) },
+    });
+
+    // Finally, hard delete the user
+    await tx.user.delete({
+      where: { id: Number(userId) },
+    });
+  });
+
+  cacheManager.delete(`user_${userId}_false`);
+  cacheManager.delete(`user_${userId}_true`);
+
+  return { message: 'User and all associated data deleted successfully' };
 };
 
 const getSuperAdminDashboardStats = async () => {
@@ -997,6 +1248,7 @@ export const UserService = {
   updateUser,
   changePassword,
   deleteUser,
+  deleteSuperAdminUser,
   updateLastLogin,
   getUserStats,
   bulkUpdateStatus,

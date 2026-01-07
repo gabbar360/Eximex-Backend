@@ -21,6 +21,7 @@ import {
   getCompanyDetails,
   getAllTables,
   getTableData,
+  deleteSuperAdminUser,
 } from '../controller/userController.js';
 import { validate } from '../middleware/validate.js';
 import { userValidation } from '../validations/user.validation.js';
@@ -188,6 +189,14 @@ router.get(
   verifyJWT,
   authorizeRoles('SUPER_ADMIN'),
   getCompanyDetails
+);
+
+router.delete(
+  '/super-admin/users/:id',
+  verifyJWT,
+  authorizeRoles('SUPER_ADMIN'),
+  validate(userValidation.getUser),
+  deleteSuperAdminUser
 );
 
 router.get(

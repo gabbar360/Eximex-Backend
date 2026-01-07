@@ -21,7 +21,8 @@ const loadRoutes = async () => {
     if (
       file.endsWith('Route.js') &&
       file !== 'basicAuthRoute.js' &&
-      file !== 'invitationRoute.js'
+      file !== 'invitationRoute.js' &&
+      file !== 'authRoute.js'
     ) {
       const route = await import(`./routes/${file}`);
       app.use('/api/v1', route.default);

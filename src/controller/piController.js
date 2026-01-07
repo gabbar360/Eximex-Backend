@@ -1,6 +1,7 @@
 import { PiService } from '../services/piService.js';
 import { ApiResponse } from '../utils/ApiResponse.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
+import { handlePiInvoiceStatusChange } from '../hooks/accountingHooks.js';
 import fs from 'fs';
 import { join } from 'path';
 import { fileURLToPath } from 'url';
@@ -103,6 +104,16 @@ export const deletePiProduct = asyncHandler(async (req, res) => {
 });
 
 export const updatePiStatus = asyncHandler(async (req, res) => {
+  const oldPi = await PiService.getPiInvoiceById(parseInt(req.params.id), req.user.companyId);
+  const oldStatus = oldPi.status;
+  
+  console.log('🔄 PI Status Update:', {
+    piId: req.params.id,
+    oldStatus,
+    newStatus: req.body.status,
+    companyId: req.user.companyId
+  });
+  
   const piInvoice = await PiService.updatePiStatus(
     parseInt(req.params.id),
     req.body.status,
@@ -111,6 +122,12 @@ export const updatePiStatus = asyncHandler(async (req, res) => {
     req,
     req.body.paymentAmount || null // Optional payment amount
   );
+  
+  // Auto-create accounting entry when status changes to confirmed
+  console.log('🎯 Triggering accounting hook...');
+  await handlePiInvoiceStatusChange(parseInt(req.params.id), oldStatus, req.body.status);
+  console.log('✅ Accounting hook completed');
+  
   return res
     .status(200)
     .json(
