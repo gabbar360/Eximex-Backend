@@ -209,6 +209,12 @@ export const getAllTables = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, tables, 'Database tables fetched successfully'));
 });
 
+export const deleteSuperAdminUser = asyncHandler(async (req, res) => {
+  const result = await UserService.deleteSuperAdminUser(parseInt(req.params.id));
+
+  return res.status(200).json(new ApiResponse(200, null, result.message));
+});
+
 export const getTableData = asyncHandler(async (req, res) => {
   const data = await UserService.getTableData(req.params.tableName, req.query);
 
