@@ -79,7 +79,7 @@
 
 <body>
     <div class="page">
-        <div class="title">PROFORMA INVOICE</div>
+        <div class="title"><%= piInvoice.isSampleKit ? 'SAMPLE KIT PROFORMA INVOICE' : 'PROFORMA INVOICE' %></div>
         <div class="subtitle">SUPPLY MEANT FOR EXPORT UNDER BOND & LUT - LETTER OF UNDERTAKING WITHOUT PAYMENT OF INTEGRATED TAX</div>
 
         <table>
@@ -90,11 +90,15 @@
                             <div class="bold" style="text-decoration: underline;">EXPORTER:</div>
                             <div class="bold" style="margin-top: 4px; font-size: 12px;">
                                 <%= piInvoice.company?.name || 'COMPANY NAME' %>
-                            </div>
+                     e stock.
+
+       </div>
                             <div><%= piInvoice.company?.address || 'Company Address' %></div>
                             <div>
                                 <%= piInvoice.company.city || '' %>
-                                <%= piInvoice.company.state ? ', ' + piInvoice.company.state : '' %>
+                    e stock.
+
+            <%= piInvoice.company.state ? ', ' + piInvoice.company.state : '' %>
                                 <%= piInvoice.company.pincode ? ', ' + piInvoice.company.pincode : '' %>
                             </div>
                             <div>Phone: <%= piInvoice.company.phoneNo || '+91-XXXXXXXXXX' %></div>
