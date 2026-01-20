@@ -273,6 +273,28 @@ const getExportData = async (companyId, fromDate, toDate, dataFilters = {}) => {
   });
 };
 
+const deleteEntriesByReference = async (referenceType, referenceId) => {
+  return await prisma.accountingEntry.deleteMany({
+    where: {
+      referenceType,
+      referenceId: parseInt(referenceId)
+    }
+  });
+};
+
+const deleteEntriesByMultipleReferences = async (references) => {
+  const deletePromises = references.map(ref => 
+    prisma.accountingEntry.deleteMany({
+      where: {
+        referenceType: ref.type,
+        referenceId: parseInt(ref.id)
+      }
+    })
+  );
+  
+  return await Promise.all(deletePromises);
+};
+
 export const AccountingService = {
   createEntry,
   createFromPiInvoice,
@@ -280,5 +302,7 @@ export const AccountingService = {
   getLedger,
   getProfitLoss,
   getBalanceSheet,
-  getExportData
+  getExportData,
+  deleteEntriesByReference,
+  deleteEntriesByMultipleReferences
 };
