@@ -435,6 +435,7 @@ model PiInvoice {
   advancePercentage    String? @map("advance_percentage")
   balancePaymentTerm   String? @map("balance_payment_term")
   showToTheOrder       Boolean @default(false) @map("show_to_the_order")
+  isSampleKit          Boolean @default(false) @map("is_sample_kit")
   deliveryTerm         String  @map("delivery_term")
   containerType        String? @map("container_type")
   capacityBasis        String? @map("capacity_basis")
