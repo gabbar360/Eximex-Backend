@@ -4,7 +4,7 @@ import { ApiResponse } from '../utils/ApiResponse.js';
 import { AuthService } from '../services/authService.js';
 import { setTokenCookies, clearTokenCookies } from '../utils/tokenUtils.js';
 import { prisma } from '../config/dbConfig.js';
-import jwt from 'jsonwebtoken';
+
 
 // Register User
 export const registerUser = asyncHandler(async (req, res) => {

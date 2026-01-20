@@ -269,6 +269,14 @@ const updatePurchaseOrder = async (id, data, userId, companyId) => {
 const deletePurchaseOrder = async (id, companyId) => {
   const purchaseOrder = await getPurchaseOrderById(id, companyId);
 
+  // Delete related accounting entries first
+  await prisma.accountingEntry.deleteMany({
+    where: {
+      referenceType: 'PURCHASE_ORDER',
+      referenceId: parseInt(id)
+    }
+  });
+
   await prisma.purchaseOrder.delete({
     where: { id: parseInt(id) },
   });
