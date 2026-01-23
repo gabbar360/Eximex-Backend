@@ -393,6 +393,9 @@
             <% Object.entries(piInvoice.charges).forEach(([key, value]) => { %>
                 <% if (key === 'otherCharges' && Array.isArray(value)) { %>
                     <% value.forEach((charge) => { charges += parseFloat(charge.amount || 0); }); %>
+                <% } else if (key === 'dutyPercent') { %>
+                    <% const dutyAmount = (piInvoice.subtotal || sumAmount) * (parseFloat(value || 0) / 100); %>
+                    <% charges += dutyAmount; %>
                 <% } else if (key !== 'noOtherCharges') { %>
                     <% charges += parseFloat(value || 0); %>
                 <% } %>
@@ -405,7 +408,7 @@
                 <td style="width: 70%;">
                     <div class="bold">AMOUNT IN WORDS (<%= piInvoice.currency || 'USD' %>) :-</div>
                     <% 
-                        const finalAmount = piInvoice.totalAmount || totalAmount;
+                        const finalAmount = totalAmount;
                         function numberToWords(num) {
                             const ones = ['', 'ONE', 'TWO', 'THREE', 'FOUR', 'FIVE', 'SIX', 'SEVEN', 'EIGHT', 'NINE', 'TEN', 'ELEVEN', 'TWELVE', 'THIRTEEN', 'FOURTEEN', 'FIFTEEN', 'SIXTEEN', 'SEVENTEEN', 'EIGHTEEN', 'NINETEEN'];
                             const tens = ['', '', 'TWENTY', 'THIRTY', 'FORTY', 'FIFTY', 'SIXTY', 'SEVENTY', 'EIGHTY', 'NINETY'];
@@ -425,34 +428,59 @@
                 <td style="width: 30%;">
                     <table style="width:100%; border-collapse:collapse;">
                         <% if (piInvoice.charges && Object.keys(piInvoice.charges).length > 0) { %>
+                            <% 
+                                // Define proper labels for charges
+                                const chargeLabels = {
+                                    'insurance': 'Insurance',
+                                    'dutyPercent': 'Duty (%)',
+                                    'freightCharge': 'Freight Charge',
+                                    'transportationCharge': 'Transportation Charge',
+                                    'destinationPortHandlingCharge': 'Destination Port Handling Charge'
+                                };
+                            %>
                             <% Object.entries(piInvoice.charges).forEach(([key, value]) => { %>
                                 <% if (key === 'otherCharges' && Array.isArray(value)) { %>
                                     <% value.forEach((charge) => { %>
                                         <tr>
                                             <td style="border: var(--inner); padding:8px 6px; font-weight:bold;">
-                                                <%= charge.name.toUpperCase() %>:-
+                                                <%= charge.name %>:
                                             </td>
                                             <td class="right" style="border: var(--inner); padding:8px 6px; font-weight:bold;">
                                                 <%= charge.amount && !isNaN(parseFloat(charge.amount)) ? (piInvoice.currency === 'INR' ? '₹' : piInvoice.currency === 'EUR' ? '€' : '$') + formatNumber(charge.amount) : '-' %>
                                             </td>
                                         </tr>
                                     <% }) %>
-                                <% } else { %>
+                                <% } else if (key !== 'noOtherCharges') { %>
                                     <tr>
                                         <td style="border: var(--inner); padding:8px 6px; font-weight:bold;">
-                                            <%= key.toUpperCase() %>:-
+                                            <% if (key === 'dutyPercent') { %>
+                                                Duty (<%= value %>%):
+                                            <% } else { %>
+                                                <%= chargeLabels[key] || key %>:
+                                            <% } %>
                                         </td>
                                         <td class="right" style="border: var(--inner); padding:8px 6px; font-weight:bold;">
-                                            <%= value && !isNaN(parseFloat(value)) ? (piInvoice.currency === 'INR' ? '₹' : piInvoice.currency === 'EUR' ? '€' : '$') + formatNumber(value) : '-' %>
+                                            <% if (key === 'dutyPercent') { %>
+                                                <% const dutyAmount = (piInvoice.subtotal || sumAmount) * (parseFloat(value || 0) / 100); %>
+                                                <%= (piInvoice.currency === 'INR' ? '₹' : piInvoice.currency === 'EUR' ? '€' : '$') + formatNumber(dutyAmount) %>
+                                            <% } else { %>
+                                                <%= value && !isNaN(parseFloat(value)) ? (piInvoice.currency === 'INR' ? '₹' : piInvoice.currency === 'EUR' ? '€' : '$') + formatNumber(value) : '-' %>
+                                            <% } %>
                                         </td>
                                     </tr>
                                 <% } %>
                             <% }) %>
                         <% } %>
                         <tr>
-                            <td style="border: var(--inner); padding:8px 6px; font-weight:bold;">TOTAL AMOUNT:-</td>
+                            <td style="border: var(--inner); padding:8px 6px; font-weight:bold;">Total Charges:</td>
                             <td class="right" style="border: var(--inner); padding:8px 6px; font-weight:bold;">
-                                <%= piInvoice.currency === 'INR' ? '₹' : piInvoice.currency === 'EUR' ? '€' : '$' %> <%= formatNumber(piInvoice.totalAmount || totalAmount) %>
+                                <%= piInvoice.currency === 'INR' ? '₹' : piInvoice.currency === 'EUR' ? '€' : '$' %> <%= formatNumber(charges) %>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="border: var(--inner); padding:8px 6px; font-weight:bold;">Total Invoice Amount:</td>
+                            <td class="right" style="border: var(--inner); padding:8px 6px; font-weight:bold;">
+                                <%= piInvoice.currency === 'INR' ? '₹' : piInvoice.currency === 'EUR' ? '€' : '$' %> <%= formatNumber(totalAmount) %>
                             </td>
                         </tr>
                     </table>

@@ -705,6 +705,11 @@ const processProductExcel = async (file, userId, companyId) => {
         // Process unit weight fields
         const unitWeightData = processUnitWeight(row);
         
+        // Add unit weight data to main product data FIRST
+        Object.keys(unitWeightData).forEach(key => {
+          productData[key] = unitWeightData[key];
+        });
+        
         // Combine all dynamic fields
         const dynamicFields = {
           ...hierarchyFields,
@@ -715,11 +720,6 @@ const processProductExcel = async (file, userId, companyId) => {
         Object.keys(packagingMaterialData).forEach(key => {
           dynamicFields[key] = packagingMaterialData[key];
           productData[key] = packagingMaterialData[key];
-        });
-        
-        // Add unit weight data to main product data
-        Object.keys(unitWeightData).forEach(key => {
-          productData[key] = unitWeightData[key];
         });
 
         // Calculate total gross weight if missing but we have packaging hierarchy data
@@ -757,6 +757,160 @@ const processProductExcel = async (file, userId, companyId) => {
         // Calculate total pieces if missing
         if (!productData.totalPieces && productData.totalBoxes && productData.piecePerBox) {
           productData.totalPieces = productData.totalBoxes * productData.piecePerBox;
+        }
+
+        // ADVANCED CALCULATIONS - Same as manual form
+        if (unitWeightData.unitWeight && unitWeightData.weightUnitType && packagingHierarchy.length > 0) {
+          const unitWeight = parseFloat(unitWeightData.unitWeight);
+          const unitWeightUnit = unitWeightData.unitWeightUnit || 'kg';
+          const weightUnitType = unitWeightData.weightUnitType;
+          const totalBoxes = productData.totalBoxes || 1;
+          
+          // Convert unit weight to kg
+          const convertToKg = (weight, unit) => {
+            switch (unit) {
+              case 'g': return weight / 1000;
+              case 'lb': return weight * 0.45359237;
+              case 'oz': return weight * 0.0283495;
+              default: return weight; // kg
+            }
+          };
+          
+          const convertFromKg = (weightInKg, targetUnit) => {
+            switch (targetUnit) {
+              case 'g': return weightInKg * 1000;
+              case 'lb': return weightInKg / 0.45359237;
+              case 'oz': return weightInKg / 0.0283495;
+              default: return weightInKg; // kg
+            }
+          };
+          
+          // Calculate total units based on packaging hierarchy
+          let totalUnits = 1;
+          packagingHierarchy.forEach((level) => {
+            const quantityField = `${level.from}Per${level.to}`;
+            const quantity = parseInt(hierarchyFields[quantityField]) || 0;
+            if (quantity > 0) {
+              totalUnits *= quantity;
+            }
+          });
+          
+          const totalPieces = totalUnits * totalBoxes;
+          productData.totalPieces = totalPieces;
+          
+          // Calculate total weight with proper multiplier
+          const weightInKg = convertToKg(unitWeight, unitWeightUnit);
+          let multiplier = 1;
+          const lastLevel = packagingHierarchy[packagingHierarchy.length - 1];
+          
+          if (weightUnitType === packagingHierarchy[0].from) {
+            // Base unit selected - multiply by total pieces
+            multiplier = totalPieces;
+          } else if (weightUnitType === lastLevel.to) {
+            // Last level selected - multiply by total boxes
+            multiplier = totalBoxes;
+          } else {
+            // Find the selected unit in hierarchy and calculate multiplier
+            let foundUnit = false;
+            for (let i = 0; i < packagingHierarchy.length; i++) {
+              const level = packagingHierarchy[i];
+              if (level.from === weightUnitType || level.to === weightUnitType) {
+                let unitsPerBox = 1;
+                for (let j = i; j < packagingHierarchy.length; j++) {
+                  const nextLevel = packagingHierarchy[j];
+                  const quantityField = `${nextLevel.from}Per${nextLevel.to}`;
+                  const quantity = parseInt(hierarchyFields[quantityField]) || 1;
+                  if (nextLevel.from === weightUnitType) {
+                    unitsPerBox *= quantity;
+                  }
+                }
+                multiplier = unitsPerBox * totalBoxes;
+                foundUnit = true;
+                break;
+              }
+            }
+            if (!foundUnit) {
+              multiplier = totalPieces; // fallback
+            }
+          }
+          
+          const netWeightInKg = weightInKg * multiplier;
+          
+          // Add packaging material weight
+          const packWeight = parseFloat(productData.packagingMaterialWeight) || 0;
+          const packUnit = productData.packagingMaterialWeightUnit || 'kg';
+          const packWeightInKg = convertToKg(packWeight, packUnit) * totalBoxes;
+          
+          const totalWeightInKg = netWeightInKg + packWeightInKg;
+          
+          // Convert to output unit
+          const outputUnit = unitWeightUnit;
+          const totalWeightInSelectedUnit = convertFromKg(totalWeightInKg, outputUnit);
+          
+          productData.totalGrossWeight = parseFloat(totalWeightInSelectedUnit.toFixed(2));
+          productData.totalGrossWeightUnit = outputUnit;
+          
+          // Calculate weights for all levels dynamically
+          const baseWeightInKg = convertToKg(unitWeight, unitWeightUnit);
+          const baseUnit = packagingHierarchy[0].from;
+          
+          let weightPerBaseUnitInKg = baseWeightInKg;
+          
+          // If selected unit type is not the base unit, calculate base unit weight
+          if (weightUnitType !== baseUnit) {
+            let divisionFactor = 1;
+            
+            for (let i = 0; i < packagingHierarchy.length; i++) {
+              const level = packagingHierarchy[i];
+              const quantityField = `${level.from}Per${level.to}`;
+              const quantity = parseInt(hierarchyFields[quantityField]) || 1;
+              
+              if (level.from === weightUnitType) {
+                break;
+              } else if (level.to === weightUnitType) {
+                divisionFactor *= quantity;
+                break;
+              } else {
+                divisionFactor *= quantity;
+              }
+            }
+            
+            weightPerBaseUnitInKg = baseWeightInKg / divisionFactor;
+          }
+          
+          // Store base unit weight
+          const weightPerBaseUnit = convertFromKg(weightPerBaseUnitInKg, outputUnit);
+          const baseFieldName = baseUnit === 'Square Meter' ? 'weightPerSquareMeter' : `weightPer${baseUnit}`;
+          dynamicFields[baseFieldName] = parseFloat(weightPerBaseUnit.toFixed(2));
+          dynamicFields[`${baseFieldName}Unit`] = outputUnit;
+          
+          // Calculate weights for each packaging level
+          let cumulativeMultiplier = 1;
+          packagingHierarchy.forEach((level, index) => {
+            const quantityField = `${level.from}Per${level.to}`;
+            const quantity = parseInt(hierarchyFields[quantityField]) || 1;
+            cumulativeMultiplier *= quantity;
+            
+            const weightForThisLevelInKg = weightPerBaseUnitInKg * cumulativeMultiplier;
+            const weightForThisLevel = convertFromKg(weightForThisLevelInKg, outputUnit);
+            
+            // Special handling for Square Meter
+            if (level.from === 'Square Meter') {
+              const squareMeterPerBox = parseFloat(hierarchyFields['Square MeterPerBox']) || 0;
+              if (squareMeterPerBox > 0) {
+                const boxWeightInKg = convertToKg(unitWeight, unitWeightUnit);
+                const weightPerSquareMeterInKg = boxWeightInKg / squareMeterPerBox;
+                const weightPerSquareMeter = convertFromKg(weightPerSquareMeterInKg, outputUnit);
+                const fieldName = `weightPer${level.from.replace(' ', '')}`;
+                dynamicFields[fieldName] = parseFloat(weightPerSquareMeter.toFixed(2));
+                dynamicFields[`${fieldName}Unit`] = outputUnit;
+              }
+            } else {
+              const fieldName = `weightPer${level.to}`;
+              dynamicFields[fieldName] = parseFloat(weightForThisLevel.toFixed(2));
+              dynamicFields[`${fieldName}Unit`] = outputUnit;
+            }
+          });
         }
 
         // Add packaging hierarchy data if dynamic fields exist
