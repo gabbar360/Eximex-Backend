@@ -433,54 +433,47 @@
                     <table style="width:100%; border-collapse:collapse;">
                         <% if (piInvoice.charges && Object.keys(piInvoice.charges).length > 0) { %>
                             <% 
-                                // Define proper labels for charges
-                                const chargeLabels = {
-                                    'insurance': 'Insurance',
-                                    'dutyPercent': 'Duty (%)',
-                                    'freightCharge': 'Freight Charge',
-                                    'transportationCharge': 'Transportation Charge',
-                                    'destinationPortHandlingCharge': 'Destination Port Handling Charge'
-                                };
+                                // Calculate duty amount and other charges separately
+                                let dutyAmount = 0;
+                                let otherChargesTotal = 0;
+                                let dutyPercent = 0;
+                                
+                                Object.entries(piInvoice.charges).forEach(([key, value]) => {
+                                    if (key === 'dutyPercent') {
+                                        dutyPercent = parseFloat(value || 0);
+                                        dutyAmount = (piInvoice.subtotal || sumAmount) * (dutyPercent / 100);
+                                    } else if (key === 'otherCharges' && Array.isArray(value)) {
+                                        value.forEach((charge) => {
+                                            otherChargesTotal += parseFloat(charge.amount || 0);
+                                        });
+                                    } else if (key !== 'noOtherCharges') {
+                                        otherChargesTotal += parseFloat(value || 0);
+                                    }
+                                });
                             %>
-                            <% Object.entries(piInvoice.charges).forEach(([key, value]) => { %>
-                                <% if (key === 'otherCharges' && Array.isArray(value)) { %>
-                                    <% value.forEach((charge) => { %>
-                                        <tr>
-                                            <td style="border: var(--inner); padding:8px 6px; font-weight:bold;">
-                                                <%= charge.name %>:
-                                            </td>
-                                            <td class="right" style="border: var(--inner); padding:8px 6px; font-weight:bold;">
-                                                <%= charge.amount && !isNaN(parseFloat(charge.amount)) ? (piInvoice.currency === 'INR' ? '₹' : piInvoice.currency === 'EUR' ? '€' : '$') + formatNumber(charge.amount) : '-' %>
-                                            </td>
-                                        </tr>
-                                    <% }) %>
-                                <% } else if (key !== 'noOtherCharges') { %>
-                                    <tr>
-                                        <td style="border: var(--inner); padding:8px 6px; font-weight:bold;">
-                                            <% if (key === 'dutyPercent') { %>
-                                                Duty (<%= value %>%):
-                                            <% } else { %>
-                                                <%= chargeLabels[key] || key %>:
-                                            <% } %>
-                                        </td>
-                                        <td class="right" style="border: var(--inner); padding:8px 6px; font-weight:bold;">
-                                            <% if (key === 'dutyPercent') { %>
-                                                <% const dutyAmount = (piInvoice.subtotal || sumAmount) * (parseFloat(value || 0) / 100); %>
-                                                <%= (piInvoice.currency === 'INR' ? '₹' : piInvoice.currency === 'EUR' ? '€' : '$') + formatNumber(dutyAmount) %>
-                                            <% } else { %>
-                                                <%= value && !isNaN(parseFloat(value)) ? (piInvoice.currency === 'INR' ? '₹' : piInvoice.currency === 'EUR' ? '€' : '$') + formatNumber(value) : '-' %>
-                                            <% } %>
-                                        </td>
-                                    </tr>
-                                <% } %>
-                            <% }) %>
+                            
+                            <% if (dutyAmount > 0) { %>
+                                <tr>
+                                    <td style="border: var(--inner); padding:8px 6px; font-weight:bold;">
+                                        Duty (<%= dutyPercent %>%):
+                                    </td>
+                                    <td class="right" style="border: var(--inner); padding:8px 6px; font-weight:bold;">
+                                        <%= (piInvoice.currency === 'INR' ? '₹' : piInvoice.currency === 'EUR' ? '€' : '$') + formatNumber(dutyAmount) %>
+                                    </td>
+                                </tr>
+                            <% } %>
+                            
+                            <% if (otherChargesTotal > 0) { %>
+                                <tr>
+                                    <td style="border: var(--inner); padding:8px 6px; font-weight:bold;">
+                                        Freight Charges and Other:
+                                    </td>
+                                    <td class="right" style="border: var(--inner); padding:8px 6px; font-weight:bold;">
+                                        <%= (piInvoice.currency === 'INR' ? '₹' : piInvoice.currency === 'EUR' ? '€' : '$') + formatNumber(otherChargesTotal) %>
+                                    </td>
+                                </tr>
+                            <% } %>
                         <% } %>
-                        <tr>
-                            <td style="border: var(--inner); padding:8px 6px; font-weight:bold;">Total Charges:</td>
-                            <td class="right" style="border: var(--inner); padding:8px 6px; font-weight:bold;">
-                                <%= piInvoice.currency === 'INR' ? '₹' : piInvoice.currency === 'EUR' ? '€' : '$' %> <%= formatNumber(charges) %>
-                            </td>
-                        </tr>
                         <tr>
                             <td style="border: var(--inner); padding:8px 6px; font-weight:bold;">Total Invoice Amount:</td>
                             <td class="right" style="border: var(--inner); padding:8px 6px; font-weight:bold;">
