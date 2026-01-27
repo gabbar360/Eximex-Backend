@@ -165,10 +165,18 @@ const calculateTotals = (
 
           return sum + boxes * grossWeightPerBox;
         }, 0);
-  const chargesTotal = Object.values(charges).reduce(
-    (sum, charge) => sum + (parseFloat(charge) || 0),
-    0
-  );
+  let chargesTotal = 0;
+  if (charges) {
+    Object.entries(charges).forEach(([key, value]) => {
+      if (key === 'dutyPercent') {
+        chargesTotal += (subtotal * parseFloat(value || 0)) / 100;
+      } else if (key === 'otherCharges' && Array.isArray(value)) {
+        value.forEach(charge => chargesTotal += parseFloat(charge.amount || 0));
+      } else if (key !== 'noOtherCharges') {
+        chargesTotal += parseFloat(value || 0);
+      }
+    });
+  }
   const totalAmount = subtotal + chargesTotal;
 
   // Enhanced volume calculation

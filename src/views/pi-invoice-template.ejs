@@ -405,14 +405,14 @@
                 <% } %>
             <% }); %>
         <% } %>
-        <% const totalAmount = sumAmount + charges; %>
+        <% const totalAmount = piInvoice.totalAmount || (sumAmount + charges); %>
 
         <table>
             <tr>
                 <td style="width: 70%;">
                     <div class="bold">AMOUNT IN WORDS (<%= piInvoice.currency || 'USD' %>) :-</div>
                     <% 
-                        const finalAmount = totalAmount;
+                        const finalAmount = piInvoice.totalAmount || totalAmount;
                         function numberToWords(num) {
                             const ones = ['', 'ONE', 'TWO', 'THREE', 'FOUR', 'FIVE', 'SIX', 'SEVEN', 'EIGHT', 'NINE', 'TEN', 'ELEVEN', 'TWELVE', 'THIRTEEN', 'FOURTEEN', 'FIFTEEN', 'SIXTEEN', 'SEVENTEEN', 'EIGHTEEN', 'NINETEEN'];
                             const tens = ['', '', 'TWENTY', 'THIRTY', 'FORTY', 'FIFTY', 'SIXTY', 'SEVENTY', 'EIGHTY', 'NINETY'];
@@ -475,9 +475,9 @@
                             <% } %>
                         <% } %>
                         <tr>
-                            <td style="border: var(--inner); padding:8px 6px; font-weight:bold;">Total Invoice Amount:</td>
+                            <td style="border: var(--inner); padding:8px 6px; font-weight:bold;">Total Amount:</td>
                             <td class="right" style="border: var(--inner); padding:8px 6px; font-weight:bold;">
-                                <%= piInvoice.currency === 'INR' ? '₹' : piInvoice.currency === 'EUR' ? '€' : '$' %> <%= formatNumber(totalAmount) %>
+                                <%= piInvoice.currency === 'INR' ? '₹' : piInvoice.currency === 'EUR' ? '€' : '$' %> <%= formatNumber(piInvoice.totalAmount || totalAmount) %>
                             </td>
                         </tr>
                     </table>
