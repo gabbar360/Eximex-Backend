@@ -340,7 +340,13 @@ const updateOrderStatus = async (orderId, status, userId, companyId) => {
 const deleteOrder = async (orderId, companyId) => {
   const order = await prisma.order.findFirst({
     where: { id: orderId, companyId },
-    include: { piInvoice: true },
+    include: { 
+      piInvoice: {
+        include: {
+          products: true
+        }
+      }
+    },
   });
 
   if (!order) {
@@ -353,10 +359,22 @@ const deleteOrder = async (orderId, companyId) => {
       where: { id: orderId },
     });
 
-    // Update PI status back to pending
+    // Get current PI data
+    const currentPi = order.piInvoice;
+    
+    // Calculate original total without advance amount
+    const subtotal = currentPi.products.reduce((sum, product) => sum + product.total, 0);
+    const chargesTotal = currentPi.chargesTotal || 0;
+    const originalTotalAmount = subtotal + chargesTotal;
+
+    // Update PI status back to pending, reset advance amount and recalculate totalAmount
     await tx.piInvoice.update({
       where: { id: order.piInvoiceId },
-      data: { status: 'pending' },
+      data: { 
+        status: 'pending',
+        advanceAmount: 0,
+        totalAmount: originalTotalAmount
+      },
     });
   });
 
