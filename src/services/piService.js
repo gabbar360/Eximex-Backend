@@ -427,6 +427,7 @@ const getPiInvoiceById = async (id, companyId) => {
       },
       company: true,
       party: true,
+      selectedBank: true,
       creator: { select: { id: true, name: true } },
       updater: { select: { id: true, name: true } },
     },
