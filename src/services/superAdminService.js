@@ -341,15 +341,11 @@ const getAllCompanies = async (options = {}) => {
           gstNumber: true,
           iecNumber: true,
           defaultCurrency: true,
-          bankName: true,
-          accountNumber: true,
-          ifscCode: true,
-          bankAddress: true,
-          swiftCode: true,
           logo: true,
           signature: true,
           isActive: true,
           createdAt: true,
+          bankDetails: true,
           _count: {
             select: {
               users: true,
@@ -385,6 +381,8 @@ const createCompany = async (data, logoFile = null, signatureFile = null) => {
       gstNumber,
       iecNumber,
       defaultCurrency = 'USD',
+      bankDetails,
+      // Legacy fields for backward compatibility
       bankName,
       accountNumber,
       ifscCode,
@@ -410,6 +408,30 @@ const createCompany = async (data, logoFile = null, signatureFile = null) => {
       );
     }
 
+    // Handle bank details
+    let bankDetailsData = [];
+    if (bankDetails) {
+      // Parse bank_details if it's a string
+      if (typeof bankDetails === 'string') {
+        try {
+          bankDetailsData = JSON.parse(bankDetails);
+        } catch (e) {
+          throw new ApiError(400, 'Invalid JSON in bankDetails field');
+        }
+      } else {
+        bankDetailsData = bankDetails;
+      }
+    } else if (bankName) {
+      // Legacy support - convert single bank fields to array
+      bankDetailsData = [{
+        bank_name: bankName,
+        bank_address: bankAddress,
+        account_number: accountNumber,
+        ifsc_code: ifscCode,
+        swift_code: swiftCode,
+      }];
+    }
+
     const companyData = {
       name,
       email,
@@ -420,11 +442,6 @@ const createCompany = async (data, logoFile = null, signatureFile = null) => {
       currencies: [defaultCurrency],
       defaultCurrency,
       allowedUnits: ['sqm', 'kg', 'pcs', 'box'],
-      bankName,
-      accountNumber,
-      ifscCode,
-      bankAddress,
-      swiftCode,
       planId: 'trial',
     };
 
@@ -437,7 +454,19 @@ const createCompany = async (data, logoFile = null, signatureFile = null) => {
     }
 
     const company = await prisma.companyDetails.create({
-      data: companyData,
+      data: {
+        ...companyData,
+        bankDetails: {
+          create: bankDetailsData.map(bank => ({
+            bankName: bank.bank_name,
+            bankAddress: bank.bank_address,
+            accountNumber: bank.account_number,
+            ifscCode: bank.ifsc_code,
+            swiftCode: bank.swift_code,
+          }))
+        }
+      },
+      include: { bankDetails: true }
     });
 
     // Format URLs
@@ -454,10 +483,40 @@ const createCompany = async (data, logoFile = null, signatureFile = null) => {
 const updateCompany = async (id, data, logoFile = null, signatureFile = null) => {
     const company = await prisma.companyDetails.findUnique({
       where: { id: parseInt(id) },
+      include: { bankDetails: true }
     });
 
     if (!company) {
       throw new ApiError(404, 'Company not found');
+    }
+
+    // Handle bank details update
+    let bankDetailsUpdate = null;
+    if (data.bankDetails) {
+      let bankDetailsData = data.bankDetails;
+      
+      // Parse bank_details if it's a string
+      if (typeof bankDetailsData === 'string') {
+        try {
+          bankDetailsData = JSON.parse(bankDetailsData);
+        } catch (e) {
+          throw new ApiError(400, 'Invalid JSON in bankDetails field');
+        }
+      }
+      
+      bankDetailsUpdate = {
+        deleteMany: {}, // Delete all existing bank details
+        create: bankDetailsData.map(bank => ({
+          bankName: bank.bank_name,
+          bankAddress: bank.bank_address,
+          accountNumber: bank.account_number,
+          ifscCode: bank.ifsc_code,
+          swiftCode: bank.swift_code,
+        }))
+      };
+      
+      // Remove bankDetails from data to avoid Prisma error
+      delete data.bankDetails;
     }
 
     // Handle file uploads
@@ -469,9 +528,16 @@ const updateCompany = async (id, data, logoFile = null, signatureFile = null) =>
       data.signature = `/uploads/signatures/${signatureFile.filename}`;
     }
 
+    // Prepare update payload
+    const updatePayload = {
+      ...data,
+      ...(bankDetailsUpdate && { bankDetails: bankDetailsUpdate })
+    };
+
     const updatedCompany = await prisma.companyDetails.update({
       where: { id: parseInt(id) },
-      data,
+      data: updatePayload,
+      include: { bankDetails: true }
     });
 
     // Ensure URLs are properly formatted

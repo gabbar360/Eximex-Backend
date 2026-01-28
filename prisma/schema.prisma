@@ -70,11 +70,6 @@ model CompanyDetails {
   currencies      String[]
   defaultCurrency String         @map("default_currency")
   allowedUnits    String[]       @map("allowed_units")
-  bankName        String?        @map("bank_name")
-  bankAddress     String?        @map("bank_address")
-  accountNumber   String?        @map("account_number")
-  ifscCode        String?        @map("ifsc_code")
-  swiftCode       String?        @map("swift_code")
   isActive        Boolean        @default(true) @map("is_active")
   planId          String         @default("trial") @map("plan_id")
   trialEndsAt     DateTime?      @map("trial_ends_at")
@@ -89,6 +84,7 @@ model CompanyDetails {
   orders          Order[]
   vgmDocuments    VgmDocument[]
   purchaseOrders  PurchaseOrder[]
+  bankDetails     BankDetail[]   // New relation to multiple bank details
 
   payments        Payment[]
 
@@ -97,6 +93,25 @@ model CompanyDetails {
   notifications   Notification[]
   accountingEntries AccountingEntry[]
 
+}
+
+model BankDetail {
+  id            Int            @id @default(autoincrement())
+  companyId     Int            @map("company_id")
+  bankName      String         @map("bank_name")
+  bankAddress   String         @map("bank_address")
+  accountNumber String         @map("account_number")
+  ifscCode      String         @map("ifsc_code")
+  swiftCode     String?        @map("swift_code")
+  isActive      Boolean        @default(true) @map("is_active")
+  createdAt     DateTime       @default(now()) @map("created_at")
+  updatedAt     DateTime       @updatedAt @map("updated_at")
+  
+  // Relations
+  company       CompanyDetails @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  piInvoices    PiInvoice[]
+  
+  @@map("bank_details")
 }
 
 model PartyList {
@@ -429,6 +444,7 @@ model PiInvoice {
   country       String?
   email         String?
   phone         String?
+  selectedBankId Int?   @map("selected_bank_id")
 
   // Terms & Container Info
   paymentTerm          String  @map("payment_term")
@@ -481,6 +497,7 @@ model PiInvoice {
   // Relations
   company        CompanyDetails          @relation(fields: [companyId], references: [id])
   party          PartyList?              @relation(fields: [partyId], references: [id])
+  selectedBank   BankDetail?             @relation(fields: [selectedBankId], references: [id])
   creator        User?                   @relation("PiInvoiceCreator", fields: [createdBy], references: [id])
   updater        User?                   @relation("PiInvoiceUpdater", fields: [updatedBy], references: [id])
   products       PiProduct[]

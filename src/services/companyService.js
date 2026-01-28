@@ -10,7 +10,7 @@ const getCompanyById = async (companyId, includeRelations = false) => {
   const cached = cacheManager.get(cacheKey);
   if (cached) return cached;
 
-  const include = includeRelations ? { users: true, parties: true } : undefined;
+  const include = includeRelations ? { users: true, parties: true, bankDetails: true } : { bankDetails: true };
   const company = await DatabaseUtils.findOne(
     'CompanyDetails',
     {
@@ -79,7 +79,7 @@ const getAllCompanies = async (options = {}) => {
     orderBy,
     page,
     limit,
-    include: { users: true, parties: true },
+    include: { users: true, parties: true, bankDetails: true },
   });
 
   // Format logo and signature URLs for all companies
@@ -115,15 +115,34 @@ const createCompany = async (
     currencies: companyData.currencies,
     defaultCurrency: companyData.default_currency,
     allowedUnits: companyData.allowed_units,
-    bankName: companyData.bank_name,
-    bankAddress: companyData.bank_address,
-    accountNumber: companyData.account_number,
-    ifscCode: companyData.ifsc_code,
-    swiftCode: companyData.swift_code,
     isActive: companyData.is_active,
     planId: companyData.plan_id || 'trial',
     trialEndsAt: companyData.trial_ends_at,
   };
+
+  // Handle bank_details array or legacy bank fields
+  let bankDetailsData = [];
+  if (companyData.bank_details) {
+    // Parse bank_details if it's a string
+    if (typeof companyData.bank_details === 'string') {
+      try {
+        bankDetailsData = JSON.parse(companyData.bank_details);
+      } catch (e) {
+        throw new Error('Invalid JSON in bank_details field');
+      }
+    } else {
+      bankDetailsData = companyData.bank_details;
+    }
+  } else if (companyData.bank_name) {
+    // Legacy support - convert single bank fields to array
+    bankDetailsData = [{
+      bank_name: companyData.bank_name,
+      bank_address: companyData.bank_address,
+      account_number: companyData.account_number,
+      ifsc_code: companyData.ifsc_code,
+      swift_code: companyData.swift_code,
+    }];
+  }
 
   // Parse JSON stringified fields if needed
   if (typeof transformedData.currencies === 'string') {
@@ -165,8 +184,24 @@ const createCompany = async (
     transformedData.signature = `/uploads/signatures/${signatureFile.filename}`;
   }
 
-  // Create company
-  const company = await DatabaseUtils.create('CompanyDetails', transformedData);
+  // Create company with bank details
+  const company = await prisma.companyDetails.create({
+    data: {
+      ...transformedData,
+      bankDetails: {
+        create: bankDetailsData.map(bank => ({
+          bankName: bank.bank_name,
+          bankAddress: bank.bank_address,
+          accountNumber: bank.account_number,
+          ifscCode: bank.ifsc_code,
+          swiftCode: bank.swift_code,
+        }))
+      }
+    },
+    include: {
+      bankDetails: true
+    }
+  });
 
   // Link user to company if userEmail provided
   if (userEmail) {
@@ -221,17 +256,31 @@ const updateCompany = async (
   if (updateData.defaultCurrency)
     transformedData.defaultCurrency = updateData.defaultCurrency;
 
-  // Handle banking fields
-  if (updateData.bankName !== undefined)
-    transformedData.bankName = updateData.bankName;
-  if (updateData.bankAddress !== undefined)
-    transformedData.bankAddress = updateData.bankAddress;
-  if (updateData.accountNumber !== undefined)
-    transformedData.accountNumber = updateData.accountNumber;
-  if (updateData.ifscCode !== undefined)
-    transformedData.ifscCode = updateData.ifscCode;
-  if (updateData.swiftCode !== undefined)
-    transformedData.swiftCode = updateData.swiftCode;
+  // Handle bank details update
+  let bankDetailsUpdate = null;
+  if (updateData.bank_details || updateData.bankDetails) {
+    let bankDetailsData = updateData.bank_details || updateData.bankDetails;
+    
+    // Parse bank_details if it's a string
+    if (typeof bankDetailsData === 'string') {
+      try {
+        bankDetailsData = JSON.parse(bankDetailsData);
+      } catch (e) {
+        throw new ApiError(400, 'Invalid JSON in bank_details field');
+      }
+    }
+    
+    bankDetailsUpdate = {
+      deleteMany: {}, // Delete all existing bank details
+      create: bankDetailsData.map(bank => ({
+        bankName: bank.bank_name,
+        bankAddress: bank.bank_address,
+        accountNumber: bank.account_number,
+        ifscCode: bank.ifsc_code,
+        swiftCode: bank.swift_code,
+      }))
+    };
+  }
 
   // Convert stringified JSON arrays to actual arrays
   if (typeof updateData.currencies === 'string') {
@@ -288,12 +337,20 @@ const updateCompany = async (
     }
   }
 
-  // Proceed with update
-  const updatedCompany = await DatabaseUtils.update(
-    'CompanyDetails',
-    { id: companyId },
-    transformedData
-  );
+  // Prepare update data with bank details if provided
+  const updatePayload = {
+    ...transformedData,
+    ...(bankDetailsUpdate && { bankDetails: bankDetailsUpdate })
+  };
+
+  // Proceed with update using Prisma directly for complex nested updates
+  const updatedCompany = await prisma.companyDetails.update({
+    where: { id: companyId },
+    data: updatePayload,
+    include: {
+      bankDetails: true
+    }
+  });
 
   // Ensure logo and signature URLs are properly formatted in response
   if (updatedCompany.logo && !updatedCompany.logo.startsWith('/uploads')) {
