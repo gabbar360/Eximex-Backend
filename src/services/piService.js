@@ -235,6 +235,24 @@ const createPiInvoice = async (data, userId, req = {}) => {
     throw new ApiError(400, 'Company ID is required');
   }
 
+  // Convert string numeric fields to integers/floats for Prisma
+  if (piData.selectedBankId !== undefined && piData.selectedBankId !== null) {
+    piData.selectedBankId = piData.selectedBankId === '' ? null : parseInt(piData.selectedBankId);
+  }
+  if (partyId !== undefined && partyId !== null) {
+    const parsedPartyId = partyId === '' ? null : parseInt(partyId);
+    piData.partyId = parsedPartyId;
+  }
+  if (piData.numberOfContainers !== undefined && piData.numberOfContainers !== null) {
+    piData.numberOfContainers = parseInt(piData.numberOfContainers) || 1;
+  }
+  if (piData.maxPermissibleWeight !== undefined && piData.maxPermissibleWeight !== null) {
+    piData.maxPermissibleWeight = piData.maxPermissibleWeight === '' ? null : parseFloat(piData.maxPermissibleWeight);
+  }
+  if (piData.maxShipmentWeight !== undefined && piData.maxShipmentWeight !== null) {
+    piData.maxShipmentWeight = piData.maxShipmentWeight === '' ? null : parseFloat(piData.maxShipmentWeight);
+  }
+
   // Log the received gross weight from frontend
   console.log('Frontend totalGrossWeight received:', piData.totalGrossWeight);
 
@@ -301,7 +319,6 @@ const createPiInvoice = async (data, userId, req = {}) => {
           ...piData,
           piNumber,
           companyId,
-          ...(partyId && { partyId }),
           ...totals,
           numberOfContainers,
           notes,
@@ -452,6 +469,23 @@ const updatePiInvoice = async (id, data, userId, companyId, req = {}) => {
 
   // Separate products and exclude companyId from update data
   const { products, companyId: _, notes, ...piData } = data;
+
+  // Convert string numeric fields to integers/floats for Prisma
+  if (piData.selectedBankId !== undefined && piData.selectedBankId !== null) {
+    piData.selectedBankId = piData.selectedBankId === '' ? null : parseInt(piData.selectedBankId);
+  }
+  if (piData.partyId !== undefined && piData.partyId !== null) {
+    piData.partyId = piData.partyId === '' ? null : parseInt(piData.partyId);
+  }
+  if (piData.numberOfContainers !== undefined && piData.numberOfContainers !== null) {
+    piData.numberOfContainers = parseInt(piData.numberOfContainers) || 1;
+  }
+  if (piData.maxPermissibleWeight !== undefined && piData.maxPermissibleWeight !== null) {
+    piData.maxPermissibleWeight = piData.maxPermissibleWeight === '' ? null : parseFloat(piData.maxPermissibleWeight);
+  }
+  if (piData.maxShipmentWeight !== undefined && piData.maxShipmentWeight !== null) {
+    piData.maxShipmentWeight = piData.maxShipmentWeight === '' ? null : parseFloat(piData.maxShipmentWeight);
+  }
 
   // Log the received gross weight from frontend
   console.log(
