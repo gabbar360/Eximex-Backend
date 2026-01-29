@@ -473,6 +473,7 @@
                                     </td>
                                 </tr>
                             <% } %>
+                            
                         <% } %>
                         <tr>
                             <td style="border: var(--inner); padding:8px 6px; font-weight:bold;">Total Amount:</td>
@@ -480,6 +481,24 @@
                                 <%= piInvoice.currency === 'INR' ? '₹' : piInvoice.currency === 'EUR' ? '€' : '$' %> <%= formatNumber(piInvoice.totalAmount || totalAmount) %>
                             </td>
                         </tr>
+                        <% if (piInvoice.advanceAmount && piInvoice.advanceAmount > 0) { %>
+                            <tr>
+                                <td style="border: var(--inner); padding:8px 6px; font-weight:bold;">
+                                    Advance Received:
+                                </td>
+                                <td class="right" style="border: var(--inner); padding:8px 6px; font-weight:bold;">
+                                    <%= (piInvoice.currency === 'INR' ? '₹' : piInvoice.currency === 'EUR' ? '€' : '$') + formatNumber(piInvoice.advanceAmount) %>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="border: var(--inner); padding:8px 6px; font-weight:bold; background: #f0f0f0;">
+                                    Balance Due:
+                                </td>
+                                <td class="right" style="border: var(--inner); padding:8px 6px; font-weight:bold; background: #f0f0f0;">
+                                    <%= (piInvoice.currency === 'INR' ? '₹' : piInvoice.currency === 'EUR' ? '€' : '$') + formatNumber((piInvoice.totalAmount || totalAmount) - piInvoice.advanceAmount) %>
+                                </td>
+                            </tr>
+                        <% } %>
                     </table>
                 </td>
             </tr>
