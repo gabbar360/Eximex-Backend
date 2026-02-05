@@ -79,7 +79,7 @@
 
 <body>
     <div class="page">
-        <div class="title">COMMERCIAL INVOICE</div>
+        <div class="title">CUSTOM INVOICE</div>
         <div class="subtitle">SUPPLY MEANT FOR EXPORT UNDER BOND & LUT - LETTER OF UNDERTAKING WITHOUT PAYMENT OF INTEGRATED TAX</div>
 
         <table>
@@ -229,6 +229,50 @@
                 <td><%= order?.piInvoice?.finalDestination || '-' %></td>
             </tr>
         </table>
+        <% const products = order?.piInvoice?.products || []; %>
+<%
+/* ===============================
+   WEIGHT BASED LANDED CALCULATION
+   =============================== */
+
+// 1. Product subtotal
+const productSubtotal = products.reduce(
+  (s, p) => s + Number(p.total || 0),
+  0
+);
+
+// 2. Total extra charges
+let totalExtraCharges = 0;
+const ch = order?.piInvoice?.charges || {};
+
+if (ch.insurance) totalExtraCharges += Number(ch.insurance);
+if (ch.freightCharge) totalExtraCharges += Number(ch.freightCharge);
+if (ch.transportationCharge) totalExtraCharges += Number(ch.transportationCharge);
+if (ch.destinationPortHandlingCharge) totalExtraCharges += Number(ch.destinationPortHandlingCharge);
+
+if (Array.isArray(ch.otherCharges)) {
+  ch.otherCharges.forEach(c => {
+    totalExtraCharges += Number(c.amount || 0);
+  });
+}
+
+// Duty %
+if (ch.dutyPercent) {
+  totalExtraCharges += (productSubtotal * Number(ch.dutyPercent)) / 100;
+}
+
+// 3. Total weight
+const totalWeight = products.reduce(
+  (s, p) => s + Number(p.totalWeight || 0),
+  0
+);
+
+// 4. Per KG charge
+const perKgCharge = totalWeight > 0
+  ? totalExtraCharges / totalWeight
+  : 0;
+%>
+
 
         <div class="table-title">Description of Goods</div>
         <table>
@@ -246,35 +290,54 @@
             </thead>
             <tbody>
 
-                <% const products = (order?.piInvoice?.products || []); %>
-                <% let sumAmount = 0, totalNet = 0, totalGross = 0; %>
-                <% products.forEach((product, index) => { %>
-                    <% const lineAmt = Number(product.total || 0) || 0; %>
-                    <% const net = product.totalWeight ? (parseFloat(product.totalWeight) * 0.9) : 0; %>
-                    <% const gross = product.totalWeight ? parseFloat(product.totalWeight) : 0; %>
-                    <% sumAmount += lineAmt; totalNet += net; totalGross += gross; %>
+<% products.forEach((product, index) => { %>
+<%
+  const qty = Number(product.quantity || 0);
+  const baseTotal = Number(product.total || 0);
+  const weight = Number(product.totalWeight || 0);
+
+  const extraCharge = weight * perKgCharge;
+  const finalTotal = baseTotal + extraCharge;
+  const finalRate = qty > 0 ? finalTotal / qty : 0;
+%>
                     <tr>
-                        <td class="center"><%= index + 1 %></td>
-                        <td>
-                            <strong><%= product.productName || product.productDescription || product.description || 'N/A' %></strong>
-                            <% if (product.productDescription && product.productDescription !== product.productName) { %>
-                                <br><%= product.productDescription %>
-                            <% } %>
-                        </td>
-                        <td class="center"><%= (product.hsCode && product.hsCode !== 'N/A') ? product.hsCode : (product.hsnCode && product.hsnCode !== 'N/A') ? product.hsnCode : product.category?.hsnCode || product.product?.category?.hsnCode || product.product?.hsCode || product.product?.hsnCode || 'N/A' %></td>
-                        <td class="right"><%= product.quantity || 0 %></td>
-                        <td class="center"><%= product.unit || 'PCS' %></td>
-                        <td class="right"><%= (product.rate || 0) %></td>
-                        <td class="right"><%= gross ? gross.toFixed(0) + 'kg' : '0kg' %></td>
-                        <td class="right">$ <%= (product.total || 0).toFixed(2) %></td>
-                    </tr>
+  <!-- 1 -->
+  <td class="center"><%= index + 1 %></td>
+
+  <!-- 2 -->
+  <td>
+    <strong><%= product.productName || 'N/A' %></strong>
+    <% if (product.productDescription && product.productDescription !== product.productName) { %>
+      <br><%= product.productDescription %>
+    <% } %>
+  </td>
+
+  <!-- 3 -->
+  <td class="center"><%= product.hsCode || 'N/A' %></td>
+
+  <!-- 4 : Quantity -->
+  <td class="right"><%= qty %></td>
+
+  <!-- 5 : Unit -->
+  <td class="center"><%= (product.unit || 'Square Meter') %> </td>
+
+  <!-- 6 : Rate -->
+  <td class="right"><%= finalRate.toFixed(4) %></td>
+
+  <!-- 7 : Weight -->
+  <td class="right"><%= weight.toFixed(0) %> kg</td>
+
+  <!-- 8 : Amount -->
+  <td class="right">$ <%= finalTotal.toFixed(2) %></td>
+</tr>
+
                 <% }) %>
 
-                <tr class="bold header">
-                    <td colspan="6" class="center">SUB TOTAL</td>
-                    <td></td>
-                    <td class="right">$ <%= sumAmount.toFixed(2) %></td>
-                </tr>
+             <tr class="bold header">
+    <td colspan="7" class="center">TOTAL</td>
+    <td class="right">$ <%= order.piInvoice.totalAmount.toFixed(2) %></td>
+</tr>
+
                 <tr class="bold">
                     <td colspan="8">
                         CONTAINER:- <%= order?.piInvoice?.numberOfContainers || 'N/A' %> X <%= (order?.piInvoice?.containerType || 'N/A').toUpperCase() %><br>
@@ -295,18 +358,7 @@
             </tbody>
         </table>
 
-        <% let charges = 0; %>
-        <% if (order?.charges) { %>
-            <% Object.entries(order.charges).forEach(([key, value]) => { %>
-                <% if (key === 'otherCharges' && Array.isArray(value)) { %>
-                    <% value.forEach((charge) => { charges += parseFloat(charge.amount || 0); }); %>
-                <% } else if (key !== 'noOtherCharges') { %>
-                    <% charges += parseFloat(value || 0); %>
-                <% } %>
-            <% }); %>
-        <% } %>
-        <% const totalAmount = sumAmount + charges; %>
-
+        
         <table>
             <tr>
                 <td style="width: 70%;">
@@ -361,6 +413,44 @@
                                 $ <%= (order?.piInvoice?.totalAmount || totalAmount).toFixed(2) %>
                             </td>
                         </tr>
+                        <% 
+                            // Calculate duty amount
+                            const dutyPercent = Number(order?.piInvoice?.charges?.dutyPercent || 0);
+                            const dutyAmount = (order?.piInvoice?.subtotal || 0) * dutyPercent / 100;
+                            
+                            // Calculate freight and other charges
+                            const charges = order?.piInvoice?.charges || {};
+                            let freightAndOtherCharges = 0;
+                            if (charges.insurance) freightAndOtherCharges += Number(charges.insurance);
+                            if (charges.freightCharge) freightAndOtherCharges += Number(charges.freightCharge);
+                            if (charges.transportationCharge) freightAndOtherCharges += Number(charges.transportationCharge);
+                            if (charges.destinationPortHandlingCharge) freightAndOtherCharges += Number(charges.destinationPortHandlingCharge);
+                            if (Array.isArray(charges.otherCharges)) {
+                                charges.otherCharges.forEach(c => {
+                                    freightAndOtherCharges += Number(c.amount || 0);
+                                });
+                            }
+                            
+                            // Calculate final amount
+                            const totalChargesSum = dutyAmount + freightAndOtherCharges;
+                            const finalTotalAmount = (order?.piInvoice?.totalAmount || 0) - totalChargesSum;
+                        %>
+                        <% if (totalChargesSum > 0) { %>
+                        <tr>
+                            <td style="border: var(--inner); padding:8px 6px; font-weight:bold;">Duty and Other:-</td>
+                            <td class="right" style="border: var(--inner); padding:8px 6px; font-weight:bold;">
+                                $ <%= totalChargesSum.toFixed(2) %>
+                            </td>
+                        </tr>
+                        <% } %>
+                        <% if (totalChargesSum > 0) { %>
+                        <tr style="background: var(--grey);">
+                            <td style="border: var(--inner); padding:8px 6px; font-weight:bold;">FINAL AMOUNT:-</td>
+                            <td class="right" style="border: var(--inner); padding:8px 6px; font-weight:bold;">
+                                $ <%= finalTotalAmount.toFixed(2) %>
+                            </td>
+                        </tr>
+                        <% } %>
                     </table>
                 </td>
             </tr>
