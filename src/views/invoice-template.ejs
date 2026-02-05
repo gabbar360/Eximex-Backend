@@ -462,11 +462,23 @@ const perKgCharge = totalWeight > 0
             </tr>
             <tr>
                 <td style="width: 80%; padding: 10px; vertical-align: top;">
-                    <div style="font-size: 10px; margin-bottom: 2px;"><strong>BANK NAME :-</strong> <%= order?.company?.bankName || 'N/A' %></div>
-                    <div style="font-size: 10px; margin-bottom: 2px;"><strong>BANK ADDRESS :-</strong> <%= order?.company?.bankAddress || '' %></div>
-                    <div style="font-size: 10px; margin-bottom: 2px;"><strong>ACCOUNT NUMBER :-</strong> <%= order?.company?.accountNumber || 'N/A' %></div>
-                    <div style="font-size: 10px; margin-bottom: 2px;"><strong>IFSC CODE :-</strong> <%= order?.company?.ifscCode || 'N/A' %></div>
-                    <div style="font-size: 10px;"><strong>SWIFT CODE :-</strong> <%= order?.company?.swiftCode || 'N/A' %></div>
+                    <% 
+                        // Try to get bank details from selectedBank or fall back to company bank details
+                        const selectedBank = order?.piInvoice?.selectedBank || {};
+                        const companyBank = order?.company || {};
+                        
+                        // Use selectedBank if available, otherwise fall back to company bank details
+                        const bankName = selectedBank?.bankName || companyBank?.bankName || 'N/A';
+                        const bankAddress = selectedBank?.bankAddress || companyBank?.bankAddress || '';
+                        const accountNumber = selectedBank?.accountNumber || companyBank?.accountNumber || 'N/A';
+                        const ifscCode = selectedBank?.ifscCode || companyBank?.ifscCode || 'N/A';
+                        const swiftCode = selectedBank?.swiftCode || companyBank?.swiftCode || 'N/A';
+                    %>
+                    <div style="font-size: 10px; margin-bottom: 2px;"><strong>BANK NAME :-</strong> <%= bankName %></div>
+                    <div style="font-size: 10px; margin-bottom: 2px;"><strong>BANK ADDRESS :-</strong> <%= bankAddress %></div>
+                    <div style="font-size: 10px; margin-bottom: 2px;"><strong>ACCOUNT NUMBER :-</strong> <%= accountNumber %></div>
+                    <div style="font-size: 10px; margin-bottom: 2px;"><strong>IFSC CODE :-</strong> <%= ifscCode %></div>
+                    <div style="font-size: 10px;"><strong>SWIFT CODE :-</strong> <%= swiftCode %></div>
                 </td>
                 <td style="width: 20%; text-align: center; vertical-align: top; padding: 10px;">
                     <div style="margin-bottom: 10px;">
