@@ -177,6 +177,7 @@ const getOrders = async (companyId, queryParams = {}, dataFilters = {}) => {
         piInvoice: {
           include: {
             party: true,
+            selectedBank: true,
             packingLists: true,
             vgmDocuments: {
               select: {
@@ -238,6 +239,7 @@ const getOrderById = async (orderId, companyId) => {
             },
           },
           party: true,
+          selectedBank: true,
           packingLists: true,
           vgmDocuments: {
             select: {
