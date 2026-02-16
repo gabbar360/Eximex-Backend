@@ -131,7 +131,7 @@ const startServer = async () => {
       './routes/invitationRoute.js'
     );
     const { default: authRoute } = await import('./routes/authRoute.js');
-    
+
     app.use('/api/v1/invitation', invitationRoute);
     app.use('/api/v1', authRoute); // Auth routes without permission check
 

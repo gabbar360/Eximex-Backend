@@ -26,19 +26,31 @@ router.put('/super-admin/update-users/:id', verifyJWT, updateUser);
 router.delete('/super-admin/delete-users/:id', verifyJWT, deleteUser);
 router.post('/super-admin/assign-company', verifyJWT, assignCompanyToUser);
 router.get('/super-admin/companies', verifyJWT, getAllCompanies);
-router.post('/super-admin/create-company', verifyJWT, uploadLogoAndSignature, handleMulterError, createCompany);
+router.post(
+  '/super-admin/create-company',
+  verifyJWT,
+  uploadLogoAndSignature,
+  handleMulterError,
+  createCompany
+);
 // Handle both JSON and multipart requests
-router.put('/super-admin/companies/:id', verifyJWT, (req, res, next) => {
-  // Check if request has files
-  const contentType = req.get('Content-Type');
-  if (contentType && contentType.includes('multipart/form-data')) {
-    // Use multer for multipart requests
-    uploadLogoAndSignature(req, res, next);
-  } else {
-    // Skip multer for JSON requests
-    next();
-  }
-}, handleMulterError, updateCompany);
+router.put(
+  '/super-admin/companies/:id',
+  verifyJWT,
+  (req, res, next) => {
+    // Check if request has files
+    const contentType = req.get('Content-Type');
+    if (contentType && contentType.includes('multipart/form-data')) {
+      // Use multer for multipart requests
+      uploadLogoAndSignature(req, res, next);
+    } else {
+      // Skip multer for JSON requests
+      next();
+    }
+  },
+  handleMulterError,
+  updateCompany
+);
 router.delete('/super-admin/companies/:id', verifyJWT, deleteCompany);
 
 export default router;

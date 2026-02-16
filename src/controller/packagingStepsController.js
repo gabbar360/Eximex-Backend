@@ -292,7 +292,9 @@ const updatePackingList = async (req, res) => {
       );
 
     // Calculate totals from containers data
-    const totals = PackagingStepsService.calculateTotalsFromContainers(updateData.containers || []);
+    const totals = PackagingStepsService.calculateTotalsFromContainers(
+      updateData.containers || []
+    );
 
     // Update PI invoice with relevant data
     const updatedPI = await PackagingStepsService.updatePiInvoice(
@@ -316,8 +318,7 @@ const updatePackingList = async (req, res) => {
           totals.totalSquareMeters ||
           packingListEntry.piInvoice.totalSquareMeters,
         totalPallets:
-          totals.totalPallets ||
-          packingListEntry.piInvoice.totalPallets,
+          totals.totalPallets || packingListEntry.piInvoice.totalPallets,
         totalContainers:
           parseInt(updateData.totalContainers) ||
           packingListEntry.piInvoice.requiredContainers,
@@ -458,7 +459,9 @@ const getPackingListsByPI = async (req, res) => {
 const downloadPackingListPDF = async (req, res) => {
   try {
     const { id } = req.params;
-    console.log(`PDF Download Request - ID: ${id}, Company: ${req.user.companyId}`);
+    console.log(
+      `PDF Download Request - ID: ${id}, Company: ${req.user.companyId}`
+    );
 
     let packingListEntry = await PackagingStepsService.getPackingListForPDF(
       id,
@@ -472,7 +475,7 @@ const downloadPackingListPDF = async (req, res) => {
       piNumber: packingListEntry?.piInvoice?.piNumber,
       hasNotes: !!packingListEntry?.notes,
       hasCompany: !!packingListEntry?.piInvoice?.company,
-      companyName: packingListEntry?.piInvoice?.company?.name
+      companyName: packingListEntry?.piInvoice?.company?.name,
     });
 
     if (!packingListEntry) {
@@ -497,8 +500,10 @@ const downloadPackingListPDF = async (req, res) => {
     }
 
     console.log('Packing list data:', {
-      hasContainers: !!(packingListData.containers && packingListData.containers.length > 0),
-      containersCount: packingListData.containers?.length || 0
+      hasContainers: !!(
+        packingListData.containers && packingListData.containers.length > 0
+      ),
+      containersCount: packingListData.containers?.length || 0,
     });
 
     // Group packing lists by product

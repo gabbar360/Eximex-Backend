@@ -1,7 +1,11 @@
 import { prisma } from '../config/dbConfig.js';
 
 // Packing Lists Operations
-const getPackingListsWithPagination = async (companyId, filters, pagination) => {
+const getPackingListsWithPagination = async (
+  companyId,
+  filters,
+  pagination
+) => {
   const { search, status } = filters;
   const { page = 1, limit = 10 } = pagination;
   const skip = (page - 1) * limit;
@@ -158,7 +162,7 @@ const buildPackingListResponse = (piInvoice) => {
     packingListData = packingListEntry.notes;
     actualNotes = packingListData.notes || '';
   }
-  
+
   // Get showToTheOrder - prioritize notes data over entry data
   if (packingListEntry) {
     // First check notes data, then fallback to entry data
@@ -187,14 +191,11 @@ const buildPackingListResponse = (piInvoice) => {
       `${piInvoice.company?.name || ''}\n${piInvoice.company?.address || ''}`,
     methodOfDispatch:
       packingListData.methodOfDispatch || piInvoice.deliveryTerm || '',
-    shipmentType:
-      packingListData.shipmentType || piInvoice.containerType || '',
+    shipmentType: packingListData.shipmentType || piInvoice.containerType || '',
     countryOfOrigin:
       packingListData.countryOfOrigin || piInvoice.country || 'India',
     finalDestinationCountry:
-      packingListData.finalDestinationCountry ||
-      piInvoice.party?.country ||
-      '',
+      packingListData.finalDestinationCountry || piInvoice.party?.country || '',
     portOfLoading: packingListData.portOfLoading || '',
     portOfDischarge: packingListData.portOfDischarge || '',
     vesselVoyageNo: packingListData.vesselVoyageNo || '',
@@ -209,8 +210,7 @@ const buildPackingListResponse = (piInvoice) => {
     totalVolume: packingListData.totalVolume || piInvoice.totalVolume || 0,
     totalSquareMeters:
       packingListData.totalSquareMeters || piInvoice.totalSquareMeters || 0,
-    totalPallets:
-      packingListData.totalPallets || piInvoice.totalPallets || 0,
+    totalPallets: packingListData.totalPallets || piInvoice.totalPallets || 0,
     totalContainers:
       packingListData.totalContainers || piInvoice.requiredContainers || 1,
     dateOfIssue:
@@ -363,7 +363,8 @@ const createPackingListTransaction = async (data, userId) => {
         totalBoxes: data.totalBoxes || data.existingPI.totalBoxes,
         totalWeight: data.totalGrossWeight || data.existingPI.totalWeight,
         totalVolume: data.totalVolume || data.existingPI.totalVolume,
-        totalSquareMeters: totals.totalSquareMeters || data.existingPI.totalSquareMeters,
+        totalSquareMeters:
+          totals.totalSquareMeters || data.existingPI.totalSquareMeters,
         totalPallets: totals.totalPallets || data.existingPI.totalPallets,
         requiredContainers:
           data.totalContainers || data.existingPI.requiredContainers,
@@ -523,13 +524,11 @@ const mergePackingListData = (existingData, updateData) => {
         ? updateData.dateOfIssue
         : existingData.dateOfIssue,
     status:
-      updateData.status !== undefined
-        ? updateData.status
-        : existingData.status,
+      updateData.status !== undefined ? updateData.status : existingData.status,
     showToTheOrder:
       updateData.showToTheOrder !== undefined
         ? updateData.showToTheOrder
-        : (existingData.showToTheOrder || false),
+        : existingData.showToTheOrder || false,
   };
 };
 
@@ -606,8 +605,10 @@ const deletePackingRecord = async (id) => {
 
 // PDF Generation Support
 const getPackingListForPDF = async (id, companyId) => {
-  console.log(`Service: Looking for packing list with ID: ${id}, Company: ${companyId}`);
-  
+  console.log(
+    `Service: Looking for packing list with ID: ${id}, Company: ${companyId}`
+  );
+
   const includeStructure = {
     include: {
       piInvoice: {
@@ -670,7 +671,9 @@ const getPackingListForPDF = async (id, companyId) => {
     console.log(`Strategy 2 (PI invoice ID): ${!!piInvoice}`);
 
     if (piInvoice) {
-      const packingList = piInvoice.packingLists.find(pl => pl.stepType === 'PACKING') || piInvoice.packingLists[0];
+      const packingList =
+        piInvoice.packingLists.find((pl) => pl.stepType === 'PACKING') ||
+        piInvoice.packingLists[0];
       packingListEntry = {
         id: packingList?.id || piInvoice.id,
         notes: packingList?.notes || {},
@@ -739,14 +742,15 @@ const groupPackagingStepsByProduct = (packagingSteps) => {
   return stepsByProduct;
 };
 
-const addContainerInfoToProducts = (products, packingListData, packagingSteps) => {
+const addContainerInfoToProducts = (
+  products,
+  packingListData,
+  packagingSteps
+) => {
   if (products) {
     products.forEach((product, index) => {
       // First try to get from packingListData.containers
-      if (
-        packingListData.containers &&
-        packingListData.containers.length > 0
-      ) {
+      if (packingListData.containers && packingListData.containers.length > 0) {
         const container =
           packingListData.containers[index] ||
           packingListData.containers[0] ||
@@ -758,8 +762,7 @@ const addContainerInfoToProducts = (products, packingListData, packagingSteps) =
         // Fallback: try to get from packaging steps
         const packingStep = packagingSteps?.find(
           (step) =>
-            step.productId === product.productId ||
-            step.stepType === 'PACKING'
+            step.productId === product.productId || step.stepType === 'PACKING'
         );
         product.containerNumber = packingStep?.containerNumber || '';
         product.sealNumber = packingStep?.sealNumber || '';
@@ -775,11 +778,15 @@ const calculateTotalsFromContainers = (containers) => {
   let totalSquareMeters = 0;
   let totalPallets = 0;
 
-  containers.forEach(container => {
+  containers.forEach((container) => {
     if (container.products && Array.isArray(container.products)) {
-      container.products.forEach(product => {
+      container.products.forEach((product) => {
         // Check if product unit is square meter or sqm
-        if (product.unit && (product.unit.toLowerCase() === 'square meter' || product.unit.toLowerCase() === 'sqm')) {
+        if (
+          product.unit &&
+          (product.unit.toLowerCase() === 'square meter' ||
+            product.unit.toLowerCase() === 'sqm')
+        ) {
           totalSquareMeters += parseFloat(product.packedQuantity) || 0;
           totalPallets += parseFloat(product.noOfPallets) || 0;
         }
@@ -789,7 +796,7 @@ const calculateTotalsFromContainers = (containers) => {
 
   return {
     totalSquareMeters,
-    totalPallets
+    totalPallets,
   };
 };
 

@@ -197,7 +197,7 @@ export const userPermissionService = {
     // Get user with role
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      include: { role: true }
+      include: { role: true },
     });
 
     if (!user) {
@@ -230,9 +230,9 @@ export const userPermissionService = {
     // For STAFF users, automatically add "My Tasks" menu
     if (user.role?.name === 'STAFF') {
       const taskManagementMenu = await prisma.menu.findFirst({
-        where: { slug: 'task-management', isActive: true }
+        where: { slug: 'task-management', isActive: true },
       });
-      
+
       if (taskManagementMenu) {
         menuMap.set(taskManagementMenu.id, {
           id: taskManagementMenu.id,

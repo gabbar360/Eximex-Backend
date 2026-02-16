@@ -115,8 +115,6 @@ export const initializeSocket = (server) => {
     cors: 'all origins allowed',
     transports: ['websocket', 'polling'],
   });
-  
-
 };
 
 // Notification functions
@@ -129,9 +127,9 @@ export const sendNotificationToUser = async (userId, notification) => {
 
 export const sendUnreadNotificationsCount = async (userId) => {
   const count = await prisma.notification.count({
-    where: { receiverId: userId, isRead: false }
+    where: { receiverId: userId, isRead: false },
   });
-  
+
   const socketId = connectedUsers.get(userId);
   if (socketId && io) {
     io.to(socketId).emit('unread_notifications_count', count);
@@ -141,17 +139,17 @@ export const sendUnreadNotificationsCount = async (userId) => {
 export const markNotificationAsRead = async (notificationId, userId) => {
   await prisma.notification.update({
     where: { id: notificationId, receiverId: userId },
-    data: { isRead: true, readAt: new Date() }
+    data: { isRead: true, readAt: new Date() },
   });
-  
+
   sendUnreadNotificationsCount(userId);
 };
 
 export const markAllNotificationsAsRead = async (userId) => {
   await prisma.notification.deleteMany({
-    where: { receiverId: userId }
+    where: { receiverId: userId },
   });
-  
+
   sendUnreadNotificationsCount(userId);
 };
 
@@ -160,12 +158,12 @@ export const createNotification = async (data) => {
     data,
     include: {
       sender: { select: { name: true, email: true } },
-      receiver: { select: { name: true, email: true } }
-    }
+      receiver: { select: { name: true, email: true } },
+    },
   });
 
   await sendNotificationToUser(notification.receiverId, notification);
-  
+
   return notification;
 };
 

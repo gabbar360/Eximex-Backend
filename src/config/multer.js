@@ -47,12 +47,22 @@ const signatureStorage = multer.diskStorage({
 
 // File filter
 const fileFilter = (req, file, cb) => {
-  const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif', 'image/bmp'];
+  const allowedTypes = [
+    'image/jpeg',
+    'image/jpg',
+    'image/png',
+    'image/webp',
+    'image/gif',
+    'image/bmp',
+  ];
 
   if (allowedTypes.includes(file.mimetype)) {
     cb(null, true);
   } else {
-    cb(new Error('Only JPEG, JPG, PNG, WebP, GIF, and BMP images are allowed'), false);
+    cb(
+      new Error('Only JPEG, JPG, PNG, WebP, GIF, and BMP images are allowed'),
+      false
+    );
   }
 };
 
@@ -105,7 +115,7 @@ export const uploadLogoAndSignature = multer({
   },
 }).fields([
   { name: 'logo', maxCount: 1 },
-  { name: 'signature', maxCount: 1 }
+  { name: 'signature', maxCount: 1 },
 ]);
 
 // Excel file filter for bulk upload
@@ -149,7 +159,11 @@ export const handleMulterError = (error, req, res, next) => {
     }
   }
 
-  if (error.message.includes('Only JPEG, JPG, PNG, WebP, GIF, and BMP images are allowed')) {
+  if (
+    error.message.includes(
+      'Only JPEG, JPG, PNG, WebP, GIF, and BMP images are allowed'
+    )
+  ) {
     return res.status(400).json({
       success: false,
       message: error.message,

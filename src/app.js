@@ -28,8 +28,6 @@ const loadRoutes = async () => {
       app.use('/api/v1', route.default);
     }
   }
-
-
 };
 
 export { app, loadRoutes };

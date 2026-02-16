@@ -283,9 +283,7 @@ const validatePackagingLevels = (packagingLevels) => {
 
 const validateConversionInput = (categoryId, fromUnit, toUnit, quantity) => {
   if (!categoryId || !fromUnit || !toUnit || quantity === undefined) {
-    throw new Error(
-      'Category ID, fromUnit, toUnit, and quantity are required'
-    );
+    throw new Error('Category ID, fromUnit, toUnit, and quantity are required');
   }
 
   if (isNaN(quantity) || quantity < 0) {

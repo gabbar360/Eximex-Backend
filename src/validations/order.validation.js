@@ -54,11 +54,8 @@ const updateOrderStatus = {
   }),
 };
 
-
-
 export const orderValidation = {
   createOrder,
   updateOrder,
   updateOrderStatus,
-
 };

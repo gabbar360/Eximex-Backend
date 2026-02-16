@@ -64,8 +64,6 @@ export const updateOrderStatus = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, order, 'Order status updated successfully'));
 });
 
-
-
 export const deleteOrder = asyncHandler(async (req, res) => {
   const result = await OrderService.deleteOrder(
     parseInt(req.params.id),

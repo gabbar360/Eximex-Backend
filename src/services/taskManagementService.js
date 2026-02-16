@@ -5,11 +5,19 @@ import notificationService from './notificationService.js';
 export const taskManagementService = {
   // Create task (Admin only)
   async createTask(taskData, assignerId) {
-    const { title, description, type, priority, dueDate, assignedTo, slaHours } = taskData;
-    
+    const {
+      title,
+      description,
+      type,
+      priority,
+      dueDate,
+      assignedTo,
+      slaHours,
+    } = taskData;
+
     const assigner = await prisma.user.findUnique({
       where: { id: assignerId },
-      include: { role: true }
+      include: { role: true },
     });
 
     if (!['ADMIN', 'SUPER_ADMIN'].includes(assigner.role?.name)) {
@@ -17,11 +25,11 @@ export const taskManagementService = {
     }
 
     const assignee = await prisma.user.findFirst({
-      where: { 
-        id: assignedTo, 
+      where: {
+        id: assignedTo,
         companyId: assigner.companyId,
-        role: { name: 'STAFF' }
-      }
+        role: { name: 'STAFF' },
+      },
     });
 
     if (!assignee) {
@@ -39,13 +47,13 @@ export const taskManagementService = {
         createdBy: assignerId,
         assignedBy: assignerId,
         assignedTo,
-        companyId: assigner.companyId
+        companyId: assigner.companyId,
       },
       include: {
         creator: { select: { name: true, email: true } },
         assigner: { select: { name: true, email: true } },
-        assignee: { select: { name: true, email: true } }
-      }
+        assignee: { select: { name: true, email: true } },
+      },
     });
 
     await notificationService.createTaskAssignedNotification(task, assignerId);
@@ -55,24 +63,18 @@ export const taskManagementService = {
 
   // Get tasks (Admin sees all, Staff sees only assigned)
   async getTasks(userId, options = {}) {
-    const {
-      page = 1,
-      limit = 10,
-      status,
-      priority,
-      search = ''
-    } = options;
-    
+    const { page = 1, limit = 10, status, priority, search = '' } = options;
+
     const pageNum = parseInt(page) || 1;
     const limitNum = parseInt(limit) || 10;
-    
+
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      include: { role: true }
+      include: { role: true },
     });
 
     const where = { companyId: user.companyId };
-    
+
     if (user.role?.name === 'STAFF') {
       where.assignedTo = userId;
     }
@@ -82,7 +84,7 @@ export const taskManagementService = {
     if (search && search !== '') {
       where.OR = [
         { title: { contains: search, mode: 'insensitive' } },
-        { description: { contains: search, mode: 'insensitive' } }
+        { description: { contains: search, mode: 'insensitive' } },
       ];
     }
 
@@ -93,13 +95,13 @@ export const taskManagementService = {
           include: {
             creator: { select: { name: true, email: true } },
             assigner: { select: { name: true, email: true } },
-            assignee: { select: { name: true, email: true } }
+            assignee: { select: { name: true, email: true } },
           },
           orderBy: { createdAt: 'desc' },
           skip: Number((pageNum - 1) * limitNum),
-          take: Number(limitNum)
+          take: Number(limitNum),
         }),
-        prisma.task.count({ where: { ...where, isActive: true } })
+        prisma.task.count({ where: { ...where, isActive: true } }),
       ]);
 
       return {
@@ -110,8 +112,8 @@ export const taskManagementService = {
           total,
           totalPages: Math.ceil(total / limitNum),
           hasNext: pageNum * limitNum < total,
-          hasPrev: pageNum > 1
-        }
+          hasPrev: pageNum > 1,
+        },
       };
     } catch (error) {
       throw error;
@@ -122,18 +124,15 @@ export const taskManagementService = {
   async updateTask(taskId, taskData, userId) {
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      include: { role: true }
+      include: { role: true },
     });
 
     const task = await prisma.task.findFirst({
-      where: { 
+      where: {
         id: taskId,
         companyId: user.companyId,
-        OR: [
-          { assignedTo: userId },
-          { assignedBy: userId }
-        ]
-      }
+        OR: [{ assignedTo: userId }, { assignedBy: userId }],
+      },
     });
 
     if (!task) {
@@ -141,16 +140,26 @@ export const taskManagementService = {
     }
 
     const updateData = {};
-    
+
     // Admin can update all fields
     if (['ADMIN', 'SUPER_ADMIN'].includes(user.role?.name)) {
-      const { title, description, type, priority, dueDate, assignedTo, slaHours, status } = taskData;
-      
+      const {
+        title,
+        description,
+        type,
+        priority,
+        dueDate,
+        assignedTo,
+        slaHours,
+        status,
+      } = taskData;
+
       if (title !== undefined) updateData.title = title;
       if (description !== undefined) updateData.description = description;
       if (type !== undefined) updateData.type = type;
       if (priority !== undefined) updateData.priority = priority;
-      if (dueDate !== undefined) updateData.dueDate = dueDate ? new Date(dueDate) : null;
+      if (dueDate !== undefined)
+        updateData.dueDate = dueDate ? new Date(dueDate) : null;
       if (assignedTo !== undefined) updateData.assignedTo = assignedTo;
       if (slaHours !== undefined) updateData.slaHours = slaHours;
       if (status !== undefined) updateData.status = status;
@@ -169,27 +178,41 @@ export const taskManagementService = {
       include: {
         creator: { select: { name: true, email: true } },
         assigner: { select: { name: true, email: true } },
-        assignee: { select: { name: true, email: true } }
-      }
+        assignee: { select: { name: true, email: true } },
+      },
     });
 
     // Create notifications for updates
     if (updateData.status && updateData.status !== task.status) {
       updatedTask.previousStatus = task.status;
-      
+
       if (updateData.status === 'COMPLETED') {
-        await notificationService.createTaskCompletedNotification(updatedTask, userId);
+        await notificationService.createTaskCompletedNotification(
+          updatedTask,
+          userId
+        );
       } else {
-        await notificationService.createTaskStatusUpdatedNotification(updatedTask, userId);
+        await notificationService.createTaskStatusUpdatedNotification(
+          updatedTask,
+          userId
+        );
       }
     }
-    
+
     // If admin updates task, notify staff (except for status-only updates by staff)
-    if (['ADMIN', 'SUPER_ADMIN'].includes(user.role?.name) && Object.keys(updateData).length > 0) {
+    if (
+      ['ADMIN', 'SUPER_ADMIN'].includes(user.role?.name) &&
+      Object.keys(updateData).length > 0
+    ) {
       // Only notify if there are actual changes and it's not just a status update
-      const hasNonStatusUpdates = Object.keys(updateData).some(key => key !== 'status' && key !== 'completedAt');
+      const hasNonStatusUpdates = Object.keys(updateData).some(
+        (key) => key !== 'status' && key !== 'completedAt'
+      );
       if (hasNonStatusUpdates || updateData.status) {
-        await notificationService.createTaskUpdatedNotification(updatedTask, userId);
+        await notificationService.createTaskUpdatedNotification(
+          updatedTask,
+          userId
+        );
       }
     }
 
@@ -200,11 +223,11 @@ export const taskManagementService = {
   async getTaskById(taskId, userId) {
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      include: { role: true }
+      include: { role: true },
     });
 
     const where = { id: taskId, companyId: user.companyId };
-    
+
     // Staff can only see their assigned tasks
     if (user.role?.name === 'STAFF') {
       where.assignedTo = userId;
@@ -214,8 +237,8 @@ export const taskManagementService = {
       where,
       include: {
         assigner: { select: { name: true, email: true } },
-        assignee: { select: { name: true, email: true } }
-      }
+        assignee: { select: { name: true, email: true } },
+      },
     });
 
     if (!task) {
@@ -229,7 +252,7 @@ export const taskManagementService = {
   async deleteTask(taskId, userId) {
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      include: { role: true }
+      include: { role: true },
     });
 
     if (!['ADMIN', 'SUPER_ADMIN'].includes(user.role?.name)) {
@@ -237,14 +260,14 @@ export const taskManagementService = {
     }
 
     const task = await prisma.task.findFirst({
-      where: { 
-        id: taskId, 
-        companyId: user.companyId 
+      where: {
+        id: taskId,
+        companyId: user.companyId,
       },
       include: {
         assigner: { select: { name: true, email: true } },
-        assignee: { select: { name: true, email: true } }
-      }
+        assignee: { select: { name: true, email: true } },
+      },
     });
 
     if (!task) {
@@ -257,7 +280,7 @@ export const taskManagementService = {
     }
 
     await prisma.task.delete({
-      where: { id: taskId }
+      where: { id: taskId },
     });
 
     return { message: 'Task deleted successfully...' };
@@ -267,7 +290,7 @@ export const taskManagementService = {
   async getStaffList(adminId) {
     const admin = await prisma.user.findUnique({
       where: { id: adminId },
-      include: { role: true }
+      include: { role: true },
     });
 
     if (!['ADMIN', 'SUPER_ADMIN'].includes(admin.role?.name)) {
@@ -278,13 +301,13 @@ export const taskManagementService = {
       where: {
         companyId: admin.companyId,
         role: { name: 'STAFF' },
-        status: 'ACTIVE'
+        status: 'ACTIVE',
       },
       select: {
         id: true,
         name: true,
-        email: true
-      }
+        email: true,
+      },
     });
-  }
+  },
 };

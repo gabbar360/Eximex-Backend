@@ -81,8 +81,6 @@ const createOrder = async (orderData, userId) => {
       data: { status: 'confirmed' },
     });
 
-
-
     return newOrder;
   });
 
@@ -337,17 +335,15 @@ const updateOrderStatus = async (orderId, status, userId, companyId) => {
   return updatedOrder;
 };
 
-
-
 const deleteOrder = async (orderId, companyId) => {
   const order = await prisma.order.findFirst({
     where: { id: orderId, companyId },
-    include: { 
+    include: {
       piInvoice: {
         include: {
-          products: true
-        }
-      }
+          products: true,
+        },
+      },
     },
   });
 
@@ -363,19 +359,22 @@ const deleteOrder = async (orderId, companyId) => {
 
     // Get current PI data
     const currentPi = order.piInvoice;
-    
+
     // Calculate original total without advance amount
-    const subtotal = currentPi.products.reduce((sum, product) => sum + product.total, 0);
+    const subtotal = currentPi.products.reduce(
+      (sum, product) => sum + product.total,
+      0
+    );
     const chargesTotal = currentPi.chargesTotal || 0;
     const originalTotalAmount = subtotal + chargesTotal;
 
     // Update PI status back to pending, reset advance amount and recalculate totalAmount
     await tx.piInvoice.update({
       where: { id: order.piInvoiceId },
-      data: { 
+      data: {
         status: 'pending',
         advanceAmount: 0,
-        totalAmount: originalTotalAmount
+        totalAmount: originalTotalAmount,
       },
     });
   });
@@ -412,7 +411,11 @@ const generateOrderNumber = async () => {
   return `ORD-${dateStr}-${String(sequence).padStart(4, '0')}`;
 };
 
-const generateOrderInvoicePdf = async (orderId, companyId, logoBase64 = null) => {
+const generateOrderInvoicePdf = async (
+  orderId,
+  companyId,
+  logoBase64 = null
+) => {
   const order = await getOrderById(orderId, companyId);
 
   const templatePath = join(__dirname, '../views/invoice-template.ejs');

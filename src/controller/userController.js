@@ -210,7 +210,9 @@ export const getAllTables = asyncHandler(async (req, res) => {
 });
 
 export const deleteSuperAdminUser = asyncHandler(async (req, res) => {
-  const result = await UserService.deleteSuperAdminUser(parseInt(req.params.id));
+  const result = await UserService.deleteSuperAdminUser(
+    parseInt(req.params.id)
+  );
 
   return res.status(200).json(new ApiResponse(200, null, result.message));
 });

@@ -5,7 +5,6 @@ import { AuthService } from '../services/authService.js';
 import { setTokenCookies, clearTokenCookies } from '../utils/tokenUtils.js';
 import { prisma } from '../config/dbConfig.js';
 
-
 // Register User
 export const registerUser = asyncHandler(async (req, res) => {
   const userData = req.body;

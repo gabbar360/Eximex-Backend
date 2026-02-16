@@ -10,7 +10,9 @@ const getCompanyById = async (companyId, includeRelations = false) => {
   const cached = cacheManager.get(cacheKey);
   if (cached) return cached;
 
-  const include = includeRelations ? { users: true, parties: true, bankDetails: true } : { bankDetails: true };
+  const include = includeRelations
+    ? { users: true, parties: true, bankDetails: true }
+    : { bankDetails: true };
   const company = await DatabaseUtils.findOne(
     'CompanyDetails',
     {
@@ -135,13 +137,15 @@ const createCompany = async (
     }
   } else if (companyData.bank_name) {
     // Legacy support - convert single bank fields to array
-    bankDetailsData = [{
-      bank_name: companyData.bank_name,
-      bank_address: companyData.bank_address,
-      account_number: companyData.account_number,
-      ifsc_code: companyData.ifsc_code,
-      swift_code: companyData.swift_code,
-    }];
+    bankDetailsData = [
+      {
+        bank_name: companyData.bank_name,
+        bank_address: companyData.bank_address,
+        account_number: companyData.account_number,
+        ifsc_code: companyData.ifsc_code,
+        swift_code: companyData.swift_code,
+      },
+    ];
   }
 
   // Parse JSON stringified fields if needed
@@ -189,18 +193,18 @@ const createCompany = async (
     data: {
       ...transformedData,
       bankDetails: {
-        create: bankDetailsData.map(bank => ({
+        create: bankDetailsData.map((bank) => ({
           bankName: bank.bank_name,
           bankAddress: bank.bank_address,
           accountNumber: bank.account_number,
           ifscCode: bank.ifsc_code,
           swiftCode: bank.swift_code,
-        }))
-      }
+        })),
+      },
     },
     include: {
-      bankDetails: true
-    }
+      bankDetails: true,
+    },
   });
 
   // Link user to company if userEmail provided
@@ -260,7 +264,7 @@ const updateCompany = async (
   let bankDetailsUpdate = null;
   if (updateData.bank_details || updateData.bankDetails) {
     let bankDetailsData = updateData.bank_details || updateData.bankDetails;
-    
+
     // Parse bank_details if it's a string
     if (typeof bankDetailsData === 'string') {
       try {
@@ -269,16 +273,16 @@ const updateCompany = async (
         throw new ApiError(400, 'Invalid JSON in bank_details field');
       }
     }
-    
+
     bankDetailsUpdate = {
       deleteMany: {}, // Delete all existing bank details
-      create: bankDetailsData.map(bank => ({
+      create: bankDetailsData.map((bank) => ({
         bankName: bank.bank_name,
         bankAddress: bank.bank_address,
         accountNumber: bank.account_number,
         ifscCode: bank.ifsc_code,
         swiftCode: bank.swift_code,
-      }))
+      })),
     };
   }
 
@@ -340,7 +344,7 @@ const updateCompany = async (
   // Prepare update data with bank details if provided
   const updatePayload = {
     ...transformedData,
-    ...(bankDetailsUpdate && { bankDetails: bankDetailsUpdate })
+    ...(bankDetailsUpdate && { bankDetails: bankDetailsUpdate }),
   };
 
   // Proceed with update using Prisma directly for complex nested updates
@@ -348,15 +352,18 @@ const updateCompany = async (
     where: { id: companyId },
     data: updatePayload,
     include: {
-      bankDetails: true
-    }
+      bankDetails: true,
+    },
   });
 
   // Ensure logo and signature URLs are properly formatted in response
   if (updatedCompany.logo && !updatedCompany.logo.startsWith('/uploads')) {
     updatedCompany.logo = `/uploads/logos/${updatedCompany.logo}`;
   }
-  if (updatedCompany.signature && !updatedCompany.signature.startsWith('/uploads')) {
+  if (
+    updatedCompany.signature &&
+    !updatedCompany.signature.startsWith('/uploads')
+  ) {
     updatedCompany.signature = `/uploads/signatures/${updatedCompany.signature}`;
   }
 

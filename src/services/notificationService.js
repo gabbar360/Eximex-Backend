@@ -4,8 +4,6 @@ import { createNotification } from '../socket/socket.js';
 export const notificationService = {
   // Create task assigned notification
   async createTaskAssignedNotification(task, assignerId) {
-
-    
     const notificationData = {
       companyId: task.companyId,
       senderId: assignerId,
@@ -19,10 +17,9 @@ export const notificationService = {
         taskType: task.type,
         priority: task.priority,
         dueDate: task.dueDate,
-        assignerName: task.assigner?.name
-      }
+        assignerName: task.assigner?.name,
+      },
     };
-    
 
     return await createNotification(notificationData);
   },
@@ -30,7 +27,7 @@ export const notificationService = {
   // Create task status updated notification
   async createTaskStatusUpdatedNotification(task, updatedBy) {
     const isStatusUpdate = task.status !== task.previousStatus;
-    
+
     if (!isStatusUpdate) return null;
 
     return await createNotification({
@@ -45,8 +42,8 @@ export const notificationService = {
         taskTitle: task.title,
         oldStatus: task.previousStatus,
         newStatus: task.status,
-        updatedByName: task.assignee?.name
-      }
+        updatedByName: task.assignee?.name,
+      },
     });
   },
 
@@ -63,8 +60,8 @@ export const notificationService = {
         taskId: task.id,
         taskTitle: task.title,
         completedAt: task.completedAt,
-        completedByName: task.assignee?.name
-      }
+        completedByName: task.assignee?.name,
+      },
     });
   },
 
@@ -83,8 +80,8 @@ export const notificationService = {
         taskType: task.type,
         priority: task.priority,
         status: task.status,
-        updatedByName: task.assigner?.name
-      }
+        updatedByName: task.assigner?.name,
+      },
     });
   },
 
@@ -102,19 +99,19 @@ export const notificationService = {
         taskTitle: task.title,
         taskType: task.type,
         priority: task.priority,
-        deletedByName: task.assigner?.name
-      }
+        deletedByName: task.assigner?.name,
+      },
     });
   },
 
   // Get notifications for user
   async getNotifications(userId, options = {}) {
     const { page = 1, limit = 20, isRead } = options;
-    
+
     // Convert to integers
     const pageNum = parseInt(page) || 1;
     const limitNum = parseInt(limit) || 20;
-    
+
     const where = { receiverId: userId };
     if (isRead !== undefined) where.isRead = isRead;
 
@@ -122,13 +119,13 @@ export const notificationService = {
       prisma.notification.findMany({
         where,
         include: {
-          sender: { select: { name: true, email: true } }
+          sender: { select: { name: true, email: true } },
         },
         orderBy: { createdAt: 'desc' },
         skip: (pageNum - 1) * limitNum,
-        take: limitNum
+        take: limitNum,
       }),
-      prisma.notification.count({ where })
+      prisma.notification.count({ where }),
     ]);
 
     return {
@@ -137,15 +134,15 @@ export const notificationService = {
         page: pageNum,
         limit: limitNum,
         total,
-        totalPages: Math.ceil(total / limitNum)
-      }
+        totalPages: Math.ceil(total / limitNum),
+      },
     };
   },
 
   // Get unread notifications count
   async getUnreadCount(userId) {
     return await prisma.notification.count({
-      where: { receiverId: userId, isRead: false }
+      where: { receiverId: userId, isRead: false },
     });
   },
 
@@ -153,23 +150,23 @@ export const notificationService = {
   async markAsRead(notificationId, userId) {
     return await prisma.notification.update({
       where: { id: notificationId, receiverId: userId },
-      data: { isRead: true, readAt: new Date() }
+      data: { isRead: true, readAt: new Date() },
     });
   },
 
   // Delete notification
   async deleteNotification(notificationId, userId) {
     return await prisma.notification.delete({
-      where: { id: notificationId, receiverId: userId }
+      where: { id: notificationId, receiverId: userId },
     });
   },
 
   // Mark all notifications as read
   async markAllAsRead(userId) {
     return await prisma.notification.deleteMany({
-      where: { receiverId: userId }
+      where: { receiverId: userId },
     });
-  }
+  },
 };
 
 export default notificationService;
