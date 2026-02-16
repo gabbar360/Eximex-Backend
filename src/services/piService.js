@@ -68,14 +68,19 @@ const calculatePackingBreakdown = (product, quantity, unit) => {
     case 'square meter':
     case 'sqm':
     case 'm²':
-      const sqmPerBox = dynamicFields['Square MeterPerBox'] || dynamicFields['sqmPerBox'] || 1;
+      const sqmPerBox =
+        dynamicFields['Square MeterPerBox'] || dynamicFields['sqmPerBox'] || 1;
       boxes = Math.ceil(quantity / sqmPerBox);
-      const weightPerSqm = dynamicFields['weightPerSquare Meter'] || dynamicFields['weightPerSqm'] || 0;
+      const weightPerSqm =
+        dynamicFields['weightPerSquare Meter'] ||
+        dynamicFields['weightPerSqm'] ||
+        0;
       totalWeight = quantity * weightPerSqm;
       break;
     case 'pcs':
     case 'pieces':
-      const piecesPerBox = dynamicFields['PiecesPerBox'] || dynamicFields['piecesPerBox'] || 1;
+      const piecesPerBox =
+        dynamicFields['PiecesPerBox'] || dynamicFields['piecesPerBox'] || 1;
       boxes = Math.ceil(quantity / piecesPerBox);
       const weightPerPiece = dynamicFields['weightPerPiece'] || 0;
       totalWeight = quantity * weightPerPiece;
@@ -83,32 +88,45 @@ const calculatePackingBreakdown = (product, quantity, unit) => {
     case 'box':
     case 'boxes':
       boxes = quantity;
-      const weightPerBox = dynamicFields['weightPerBox'] || dynamicFields['grossWeightPerBox'] || 0;
+      const weightPerBox =
+        dynamicFields['weightPerBox'] ||
+        dynamicFields['grossWeightPerBox'] ||
+        0;
       totalWeight = quantity * weightPerBox;
       break;
     case 'pallet':
     case 'pallets':
       pallets = quantity;
-      const boxesPerPallet = dynamicFields['BoxPerPallet'] || dynamicFields['boxesPerPallet'] || 1;
+      const boxesPerPallet =
+        dynamicFields['BoxPerPallet'] || dynamicFields['boxesPerPallet'] || 1;
       boxes = quantity * boxesPerPallet;
       const weightPerPallet = dynamicFields['weightPerPallet'] || 0;
       totalWeight = quantity * weightPerPallet;
       break;
     default:
       // Fallback calculation
-      const defaultPerBox = dynamicFields['Square MeterPerBox'] || dynamicFields['PiecesPerBox'] || 1;
+      const defaultPerBox =
+        dynamicFields['Square MeterPerBox'] ||
+        dynamicFields['PiecesPerBox'] ||
+        1;
       boxes = Math.ceil(quantity / defaultPerBox);
-      totalWeight = boxes * (dynamicFields['weightPerBox'] || dynamicFields['grossWeightPerBox'] || 0);
+      totalWeight =
+        boxes *
+        (dynamicFields['weightPerBox'] ||
+          dynamicFields['grossWeightPerBox'] ||
+          0);
   }
 
   // Calculate pallets if not already calculated
   if (pallets === 0) {
-    const boxesPerPallet = dynamicFields['BoxPerPallet'] || dynamicFields['boxesPerPallet'] || 40;
+    const boxesPerPallet =
+      dynamicFields['BoxPerPallet'] || dynamicFields['boxesPerPallet'] || 40;
     pallets = Math.ceil(boxes / boxesPerPallet);
   }
 
   // Calculate CBM
-  const cbmPerBox = dynamicFields['volumePerBox'] || dynamicFields['cbmPerBox'] || 0;
+  const cbmPerBox =
+    dynamicFields['volumePerBox'] || dynamicFields['cbmPerBox'] || 0;
   totalCBM = boxes * cbmPerBox;
 
   return {
@@ -171,7 +189,9 @@ const calculateTotals = (
       if (key === 'dutyPercent') {
         chargesTotal += (subtotal * parseFloat(value || 0)) / 100;
       } else if (key === 'otherCharges' && Array.isArray(value)) {
-        value.forEach(charge => chargesTotal += parseFloat(charge.amount || 0));
+        value.forEach(
+          (charge) => (chargesTotal += parseFloat(charge.amount || 0))
+        );
       } else if (key !== 'noOtherCharges') {
         chargesTotal += parseFloat(value || 0);
       }
@@ -237,20 +257,36 @@ const createPiInvoice = async (data, userId, req = {}) => {
 
   // Convert string numeric fields to integers/floats for Prisma
   if (piData.selectedBankId !== undefined && piData.selectedBankId !== null) {
-    piData.selectedBankId = piData.selectedBankId === '' ? null : parseInt(piData.selectedBankId);
+    piData.selectedBankId =
+      piData.selectedBankId === '' ? null : parseInt(piData.selectedBankId);
   }
   if (partyId !== undefined && partyId !== null) {
     const parsedPartyId = partyId === '' ? null : parseInt(partyId);
     piData.partyId = parsedPartyId;
   }
-  if (piData.numberOfContainers !== undefined && piData.numberOfContainers !== null) {
+  if (
+    piData.numberOfContainers !== undefined &&
+    piData.numberOfContainers !== null
+  ) {
     piData.numberOfContainers = parseInt(piData.numberOfContainers) || 1;
   }
-  if (piData.maxPermissibleWeight !== undefined && piData.maxPermissibleWeight !== null) {
-    piData.maxPermissibleWeight = piData.maxPermissibleWeight === '' ? null : parseFloat(piData.maxPermissibleWeight);
+  if (
+    piData.maxPermissibleWeight !== undefined &&
+    piData.maxPermissibleWeight !== null
+  ) {
+    piData.maxPermissibleWeight =
+      piData.maxPermissibleWeight === ''
+        ? null
+        : parseFloat(piData.maxPermissibleWeight);
   }
-  if (piData.maxShipmentWeight !== undefined && piData.maxShipmentWeight !== null) {
-    piData.maxShipmentWeight = piData.maxShipmentWeight === '' ? null : parseFloat(piData.maxShipmentWeight);
+  if (
+    piData.maxShipmentWeight !== undefined &&
+    piData.maxShipmentWeight !== null
+  ) {
+    piData.maxShipmentWeight =
+      piData.maxShipmentWeight === ''
+        ? null
+        : parseFloat(piData.maxShipmentWeight);
   }
 
   // Log the received gross weight from frontend
@@ -259,45 +295,54 @@ const createPiInvoice = async (data, userId, req = {}) => {
   const piNumber = await generatePiNumber();
 
   // Calculate product totals and enhanced packing breakdown
-  const productsWithTotals = await Promise.all(products.map(async (product) => {
-    const total = (product.quantity || 0) * (product.rate || 0);
+  const productsWithTotals = await Promise.all(
+    products.map(async (product) => {
+      const total = (product.quantity || 0) * (product.rate || 0);
 
-    // Get full product data if productId is provided
-    let fullProduct = product;
-    if (product.productId) {
-      const dbProduct = await prisma.product.findUnique({
-        where: { id: product.productId },
-        select: { packagingHierarchyData: true }
-      });
-      if (dbProduct?.packagingHierarchyData) {
-        fullProduct = { ...product, packagingHierarchyData: dbProduct.packagingHierarchyData };
+      // Get full product data if productId is provided
+      let fullProduct = product;
+      if (product.productId) {
+        const dbProduct = await prisma.product.findUnique({
+          where: { id: product.productId },
+          select: { packagingHierarchyData: true },
+        });
+        if (dbProduct?.packagingHierarchyData) {
+          fullProduct = {
+            ...product,
+            packagingHierarchyData: dbProduct.packagingHierarchyData,
+          };
+        }
       }
-    }
 
-    // Calculate enhanced packing breakdown if available
-    let packingBreakdown = null;
-    if (fullProduct.packagingHierarchyData && product.quantity && product.unit) {
-      packingBreakdown = calculatePackingBreakdown(
-        fullProduct,
-        product.quantity,
+      // Calculate enhanced packing breakdown if available
+      let packingBreakdown = null;
+      if (
+        fullProduct.packagingHierarchyData &&
+        product.quantity &&
         product.unit
-      );
-    }
+      ) {
+        packingBreakdown = calculatePackingBreakdown(
+          fullProduct,
+          product.quantity,
+          product.unit
+        );
+      }
 
-    return {
-      ...product,
-      total,
-      packingBreakdown,
-      calculatedBoxes: packingBreakdown?.calculatedBoxes || null,
-      calculatedPallets: packingBreakdown?.calculatedPallets || null,
-      totalCBM: packingBreakdown?.totalCBM || null,
-      totalWeight:
-        packingBreakdown?.totalWeight ||
-        product.totalWeight ||
-        product.quantity * 1 ||
-        0,
-    };
-  }));
+      return {
+        ...product,
+        total,
+        packingBreakdown,
+        calculatedBoxes: packingBreakdown?.calculatedBoxes || null,
+        calculatedPallets: packingBreakdown?.calculatedPallets || null,
+        totalCBM: packingBreakdown?.totalCBM || null,
+        totalWeight:
+          packingBreakdown?.totalWeight ||
+          product.totalWeight ||
+          product.quantity * 1 ||
+          0,
+      };
+    })
+  );
 
   const totals = calculateTotals(
     productsWithTotals,
@@ -472,19 +517,35 @@ const updatePiInvoice = async (id, data, userId, companyId, req = {}) => {
 
   // Convert string numeric fields to integers/floats for Prisma
   if (piData.selectedBankId !== undefined && piData.selectedBankId !== null) {
-    piData.selectedBankId = piData.selectedBankId === '' ? null : parseInt(piData.selectedBankId);
+    piData.selectedBankId =
+      piData.selectedBankId === '' ? null : parseInt(piData.selectedBankId);
   }
   if (piData.partyId !== undefined && piData.partyId !== null) {
     piData.partyId = piData.partyId === '' ? null : parseInt(piData.partyId);
   }
-  if (piData.numberOfContainers !== undefined && piData.numberOfContainers !== null) {
+  if (
+    piData.numberOfContainers !== undefined &&
+    piData.numberOfContainers !== null
+  ) {
     piData.numberOfContainers = parseInt(piData.numberOfContainers) || 1;
   }
-  if (piData.maxPermissibleWeight !== undefined && piData.maxPermissibleWeight !== null) {
-    piData.maxPermissibleWeight = piData.maxPermissibleWeight === '' ? null : parseFloat(piData.maxPermissibleWeight);
+  if (
+    piData.maxPermissibleWeight !== undefined &&
+    piData.maxPermissibleWeight !== null
+  ) {
+    piData.maxPermissibleWeight =
+      piData.maxPermissibleWeight === ''
+        ? null
+        : parseFloat(piData.maxPermissibleWeight);
   }
-  if (piData.maxShipmentWeight !== undefined && piData.maxShipmentWeight !== null) {
-    piData.maxShipmentWeight = piData.maxShipmentWeight === '' ? null : parseFloat(piData.maxShipmentWeight);
+  if (
+    piData.maxShipmentWeight !== undefined &&
+    piData.maxShipmentWeight !== null
+  ) {
+    piData.maxShipmentWeight =
+      piData.maxShipmentWeight === ''
+        ? null
+        : parseFloat(piData.maxShipmentWeight);
   }
 
   // Log the received gross weight from frontend
@@ -505,48 +566,57 @@ const updatePiInvoice = async (id, data, userId, companyId, req = {}) => {
         });
 
         // Create new products with enhanced totals and packing breakdown
-        const productsWithTotals = await Promise.all(products.map(async (product, index) => {
-          const total = (product.quantity || 0) * (product.rate || 0);
+        const productsWithTotals = await Promise.all(
+          products.map(async (product, index) => {
+            const total = (product.quantity || 0) * (product.rate || 0);
 
-          // Get full product data if productId is provided
-          let fullProduct = product;
-          if (product.productId) {
-            const dbProduct = await tx.product.findUnique({
-              where: { id: product.productId },
-              select: { packagingHierarchyData: true }
-            });
-            if (dbProduct?.packagingHierarchyData) {
-              fullProduct = { ...product, packagingHierarchyData: dbProduct.packagingHierarchyData };
+            // Get full product data if productId is provided
+            let fullProduct = product;
+            if (product.productId) {
+              const dbProduct = await tx.product.findUnique({
+                where: { id: product.productId },
+                select: { packagingHierarchyData: true },
+              });
+              if (dbProduct?.packagingHierarchyData) {
+                fullProduct = {
+                  ...product,
+                  packagingHierarchyData: dbProduct.packagingHierarchyData,
+                };
+              }
             }
-          }
 
-          // Calculate enhanced packing breakdown if available
-          let packingBreakdown = null;
-          if (fullProduct.packagingHierarchyData && product.quantity && product.unit) {
-            packingBreakdown = calculatePackingBreakdown(
-              fullProduct,
-              product.quantity,
+            // Calculate enhanced packing breakdown if available
+            let packingBreakdown = null;
+            if (
+              fullProduct.packagingHierarchyData &&
+              product.quantity &&
               product.unit
-            );
-          }
+            ) {
+              packingBreakdown = calculatePackingBreakdown(
+                fullProduct,
+                product.quantity,
+                product.unit
+              );
+            }
 
-          return {
-            ...product,
-            total,
-            packingBreakdown,
-            calculatedBoxes: packingBreakdown?.calculatedBoxes || null,
-            calculatedPallets: packingBreakdown?.calculatedPallets || null,
-            totalCBM: packingBreakdown?.totalCBM || null,
-            totalWeight:
-              packingBreakdown?.totalWeight ||
-              product.totalWeight ||
-              product.quantity * 1 ||
-              0,
-            piInvoiceId: id,
-            companyId: companyId,
-            lineNumber: index + 1,
-          };
-        }));
+            return {
+              ...product,
+              total,
+              packingBreakdown,
+              calculatedBoxes: packingBreakdown?.calculatedBoxes || null,
+              calculatedPallets: packingBreakdown?.calculatedPallets || null,
+              totalCBM: packingBreakdown?.totalCBM || null,
+              totalWeight:
+                packingBreakdown?.totalWeight ||
+                product.totalWeight ||
+                product.quantity * 1 ||
+                0,
+              piInvoiceId: id,
+              companyId: companyId,
+              lineNumber: index + 1,
+            };
+          })
+        );
 
         await tx.piProduct.createMany({
           data: productsWithTotals.map((product) => {
@@ -886,7 +956,6 @@ const updatePiStatus = async (
 
       // AUTOMATIC PAYMENT CREATION
       if (status === 'confirmed') {
-
       }
 
       // AUTOMATIC ORDER CREATION - FIXED LOGIC FOR MULTIPLE CONFIRMATIONS
@@ -953,8 +1022,6 @@ const updatePiStatus = async (
         }
       }
 
-
-
       return { updated, createdOrder };
     });
 
@@ -970,10 +1037,7 @@ const updatePiStatus = async (
       } else if (piInvoice.status === 'confirmed' && status === 'confirmed') {
         message = `PI is already confirmed with Order ${updatedPi.createdOrder.orderNumber}`;
       } else if (paymentAmount !== null) {
-
       }
-
-
     }
 
     const response = {
@@ -998,12 +1062,7 @@ const updatePiStatus = async (
   }
 };
 
-const generatePiInvoicePdf = async (
-  id,
-  companyId,
-  logoBase64 = null,
-
-) => {
+const generatePiInvoicePdf = async (id, companyId, logoBase64 = null) => {
   try {
     const piInvoice = await getPiInvoiceById(id, companyId);
 
@@ -1011,7 +1070,6 @@ const generatePiInvoicePdf = async (
     const htmlContent = await ejs.renderFile(templatePath, {
       piInvoice,
       logoBase64,
-  
     });
 
     return await generatePDF(htmlContent);

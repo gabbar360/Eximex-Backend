@@ -62,8 +62,17 @@ const getAllParties = async (companyId, options = {}, dataFilters = {}) => {
     ];
 
     // Handle Role enum search
-    const roleValues = ['Customer', 'Lead', 'Freight_Forwarder', 'Vendor', 'Agent', 'CHA', 'Transporter', 'Supplier'];
-    const matchingRoles = roleValues.filter(role => 
+    const roleValues = [
+      'Customer',
+      'Lead',
+      'Freight_Forwarder',
+      'Vendor',
+      'Agent',
+      'CHA',
+      'Transporter',
+      'Supplier',
+    ];
+    const matchingRoles = roleValues.filter((role) =>
       role.toLowerCase().includes(searchTerm.toLowerCase())
     );
     if (matchingRoles.length > 0) {
@@ -71,8 +80,14 @@ const getAllParties = async (companyId, options = {}, dataFilters = {}) => {
     }
 
     // Handle Stage enum search
-    const stageValues = ['NEW', 'QUALIFIED', 'NEGOTIATION', 'QUOTATION_SENT', 'WON'];
-    const matchingStages = stageValues.filter(stage => 
+    const stageValues = [
+      'NEW',
+      'QUALIFIED',
+      'NEGOTIATION',
+      'QUOTATION_SENT',
+      'WON',
+    ];
+    const matchingStages = stageValues.filter((stage) =>
       stage.toLowerCase().includes(searchTerm.toLowerCase())
     );
     if (matchingStages.length > 0) {
@@ -316,10 +331,16 @@ const getPartyStats = async (companyId) => {
   return stats;
 };
 
-
 const updatePartyStage = async (partyId, stage) => {
-  const validStages = ['NEW', 'QUALIFIED', 'NEGOTIATION', 'QUOTATION_SENT', 'WON', 'LOST'];
-  
+  const validStages = [
+    'NEW',
+    'QUALIFIED',
+    'NEGOTIATION',
+    'QUOTATION_SENT',
+    'WON',
+    'LOST',
+  ];
+
   if (!validStages.includes(stage)) {
     throw new ApiError(400, 'Invalid stage');
   }

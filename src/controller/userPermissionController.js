@@ -103,14 +103,6 @@ export const bulkUpdateUserPermissions = asyncHandler(async (req, res) => {
     parseInt(userId),
     Boolean(enableAll)
   );
-  
-  return res
-    .status(200)
-    .json(
-      new ApiResponse(
-        200,
-        result,
-        result.message
-      )
-    );
+
+  return res.status(200).json(new ApiResponse(200, result, result.message));
 });

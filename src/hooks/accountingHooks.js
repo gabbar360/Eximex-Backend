@@ -4,20 +4,26 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 // Auto-create accounting entries when PI Invoice status changes
-export const handlePiInvoiceStatusChange = async (piInvoiceId, oldStatus, newStatus) => {
+export const handlePiInvoiceStatusChange = async (
+  piInvoiceId,
+  oldStatus,
+  newStatus
+) => {
   try {
     console.log('📊 ACCOUNTING HOOK - Status change detected:', {
       piInvoiceId,
       oldStatus,
-      newStatus
+      newStatus,
     });
-    
+
     if (newStatus === 'confirmed' && oldStatus !== 'confirmed') {
       console.log('✅ Creating accounting entry for confirmed PI...');
       await AccountingService.createFromPiInvoice(piInvoiceId);
       console.log(`✅ Accounting entry created for PI Invoice: ${piInvoiceId}`);
     } else {
-      console.log('⚠️ No accounting entry needed - status not confirmed or already confirmed');
+      console.log(
+        '⚠️ No accounting entry needed - status not confirmed or already confirmed'
+      );
     }
   } catch (error) {
     console.error('❌ Failed to create accounting entry:', error);
@@ -39,7 +45,7 @@ export const handlePurchaseOrderCreation = async (purchaseOrderId) => {
   try {
     const purchaseOrder = await prisma.purchaseOrder.findUnique({
       where: { id: purchaseOrderId },
-      include: { vendor: true }
+      include: { vendor: true },
     });
 
     if (!purchaseOrder) return;
@@ -54,10 +60,12 @@ export const handlePurchaseOrderCreation = async (purchaseOrderId) => {
       referenceNumber: purchaseOrder.poNumber,
       partyName: purchaseOrder.vendorName,
       date: purchaseOrder.poDate,
-      createdBy: purchaseOrder.createdBy
+      createdBy: purchaseOrder.createdBy,
     });
 
-    console.log(`✅ Accounting entry created for Purchase Order: ${purchaseOrderId}`);
+    console.log(
+      `✅ Accounting entry created for Purchase Order: ${purchaseOrderId}`
+    );
   } catch (error) {
     console.error('❌ Failed to create accounting entry:', error);
   }

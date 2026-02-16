@@ -1,6 +1,12 @@
 import { Router } from 'express';
 import { verifyJWT } from '../middleware/auth.js';
-import { getNotifications, getUnreadCount, markAsRead, markAllAsRead, deleteNotification } from '../controller/notificationController.js';
+import {
+  getNotifications,
+  getUnreadCount,
+  markAsRead,
+  markAllAsRead,
+  deleteNotification,
+} from '../controller/notificationController.js';
 
 const router = Router();
 

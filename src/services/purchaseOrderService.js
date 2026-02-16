@@ -53,11 +53,7 @@ const createPurchaseOrder = async (data, userId, companyId) => {
   }
 
   // Calculate totals
-  const totals = calculateTotals(
-    items,
-    poData.cgstRate,
-    poData.sgstRate
-  );
+  const totals = calculateTotals(items, poData.cgstRate, poData.sgstRate);
 
   // Prepare items with calculated amounts
   const processedItems = items.map((item, index) => ({
@@ -273,8 +269,8 @@ const deletePurchaseOrder = async (id, companyId) => {
   await prisma.accountingEntry.deleteMany({
     where: {
       referenceType: 'PURCHASE_ORDER',
-      referenceId: parseInt(id)
-    }
+      referenceId: parseInt(id),
+    },
   });
 
   await prisma.purchaseOrder.delete({

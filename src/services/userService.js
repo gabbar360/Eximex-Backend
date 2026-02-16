@@ -19,8 +19,8 @@ const getUserById = async (userId, includePassword = false) => {
       select: {
         id: true,
         name: true,
-        displayName: true
-      }
+        displayName: true,
+      },
     },
     status: true,
     isBlocked: true,
@@ -52,8 +52,8 @@ const getUserByEmail = async (email, includePassword = false) => {
       select: {
         id: true,
         name: true,
-        displayName: true
-      }
+        displayName: true,
+      },
     },
     status: true,
     isBlocked: true,
@@ -111,8 +111,8 @@ const getAllUsers = async (options = {}, requestingUser = null) => {
       select: {
         id: true,
         name: true,
-        displayName: true
-      }
+        displayName: true,
+      },
     },
     status: true,
     isBlocked: true,
@@ -215,7 +215,7 @@ const updateUser = async (userId, updateData, updatingUser = null) => {
   if (mobileNum) updateFields.mobileNum = mobileNum.trim();
   if (roleId) updateFields.roleId = Number(roleId);
   if (status) updateFields.status = status;
-  
+
   // Only SUPER_ADMIN can update companyId
   if (companyId && updatingUser?.role?.name === 'SUPER_ADMIN') {
     updateFields.companyId = Number(companyId);
@@ -229,10 +229,10 @@ const updateUser = async (userId, updateData, updatingUser = null) => {
         select: {
           id: true,
           name: true,
-          displayName: true
-        }
-      }
-    }
+          displayName: true,
+        },
+      },
+    },
   });
 
   cacheManager.delete(`user_${userId}_false`);
@@ -286,10 +286,7 @@ const deleteUser = async (userId) => {
     // Delete all notifications sent/received by this user
     await tx.notification.deleteMany({
       where: {
-        OR: [
-          { senderId: Number(userId) },
-          { receiverId: Number(userId) },
-        ],
+        OR: [{ senderId: Number(userId) }, { receiverId: Number(userId) }],
       },
     });
 
@@ -307,40 +304,28 @@ const deleteUser = async (userId) => {
     // Delete all VGM documents created/updated by this user
     await tx.vgmDocument.deleteMany({
       where: {
-        OR: [
-          { createdBy: Number(userId) },
-          { updatedBy: Number(userId) },
-        ],
+        OR: [{ createdBy: Number(userId) }, { updatedBy: Number(userId) }],
       },
     });
 
     // Delete all packing lists created/updated by this user
     await tx.packingList.deleteMany({
       where: {
-        OR: [
-          { createdBy: Number(userId) },
-          { updatedBy: Number(userId) },
-        ],
+        OR: [{ createdBy: Number(userId) }, { updatedBy: Number(userId) }],
       },
     });
 
     // Delete all shipments created/updated by this user
     await tx.shipment.deleteMany({
       where: {
-        OR: [
-          { createdBy: Number(userId) },
-          { updatedBy: Number(userId) },
-        ],
+        OR: [{ createdBy: Number(userId) }, { updatedBy: Number(userId) }],
       },
     });
 
     // Delete all purchase orders created/updated by this user
     await tx.purchaseOrder.deleteMany({
       where: {
-        OR: [
-          { createdBy: Number(userId) },
-          { updatedBy: Number(userId) },
-        ],
+        OR: [{ createdBy: Number(userId) }, { updatedBy: Number(userId) }],
       },
     });
 
@@ -352,10 +337,7 @@ const deleteUser = async (userId) => {
     // Delete all orders created/updated by this user
     await tx.order.deleteMany({
       where: {
-        OR: [
-          { createdBy: Number(userId) },
-          { updatedBy: Number(userId) },
-        ],
+        OR: [{ createdBy: Number(userId) }, { updatedBy: Number(userId) }],
       },
     });
 
@@ -367,10 +349,7 @@ const deleteUser = async (userId) => {
     // Delete all PI invoices created/updated by this user
     await tx.piInvoice.deleteMany({
       where: {
-        OR: [
-          { createdBy: Number(userId) },
-          { updatedBy: Number(userId) },
-        ],
+        OR: [{ createdBy: Number(userId) }, { updatedBy: Number(userId) }],
       },
     });
 
@@ -499,8 +478,8 @@ const getCompanyStaff = async (companyId, options = {}) => {
         select: {
           id: true,
           name: true,
-          displayName: true
-        }
+          displayName: true,
+        },
       },
       status: true,
       lastLogin: true,
@@ -652,8 +631,8 @@ const getAllUsersForSuperAdmin = async (options = {}) => {
       select: {
         id: true,
         name: true,
-        displayName: true
-      }
+        displayName: true,
+      },
     },
     status: true,
     isBlocked: true,
@@ -723,10 +702,7 @@ const deleteSuperAdminUser = async (userId) => {
     // Delete all notifications sent/received by this user
     await tx.notification.deleteMany({
       where: {
-        OR: [
-          { senderId: Number(userId) },
-          { receiverId: Number(userId) },
-        ],
+        OR: [{ senderId: Number(userId) }, { receiverId: Number(userId) }],
       },
     });
 
@@ -744,40 +720,28 @@ const deleteSuperAdminUser = async (userId) => {
     // Delete all VGM documents created/updated by this user
     await tx.vgmDocument.deleteMany({
       where: {
-        OR: [
-          { createdBy: Number(userId) },
-          { updatedBy: Number(userId) },
-        ],
+        OR: [{ createdBy: Number(userId) }, { updatedBy: Number(userId) }],
       },
     });
 
     // Delete all packing lists created/updated by this user
     await tx.packingList.deleteMany({
       where: {
-        OR: [
-          { createdBy: Number(userId) },
-          { updatedBy: Number(userId) },
-        ],
+        OR: [{ createdBy: Number(userId) }, { updatedBy: Number(userId) }],
       },
     });
 
     // Delete all shipments created/updated by this user
     await tx.shipment.deleteMany({
       where: {
-        OR: [
-          { createdBy: Number(userId) },
-          { updatedBy: Number(userId) },
-        ],
+        OR: [{ createdBy: Number(userId) }, { updatedBy: Number(userId) }],
       },
     });
 
     // Delete all purchase orders created/updated by this user
     await tx.purchaseOrder.deleteMany({
       where: {
-        OR: [
-          { createdBy: Number(userId) },
-          { updatedBy: Number(userId) },
-        ],
+        OR: [{ createdBy: Number(userId) }, { updatedBy: Number(userId) }],
       },
     });
 
@@ -789,10 +753,7 @@ const deleteSuperAdminUser = async (userId) => {
     // Delete all orders created/updated by this user
     await tx.order.deleteMany({
       where: {
-        OR: [
-          { createdBy: Number(userId) },
-          { updatedBy: Number(userId) },
-        ],
+        OR: [{ createdBy: Number(userId) }, { updatedBy: Number(userId) }],
       },
     });
 
@@ -804,10 +765,7 @@ const deleteSuperAdminUser = async (userId) => {
     // Delete all PI invoices created/updated by this user
     await tx.piInvoice.deleteMany({
       where: {
-        OR: [
-          { createdBy: Number(userId) },
-          { updatedBy: Number(userId) },
-        ],
+        OR: [{ createdBy: Number(userId) }, { updatedBy: Number(userId) }],
       },
     });
 
@@ -909,8 +867,8 @@ const getAllDatabaseData = async (options = {}) => {
             select: {
               id: true,
               name: true,
-              displayName: true
-            }
+              displayName: true,
+            },
           },
           status: true,
           isBlocked: true,
@@ -1113,8 +1071,8 @@ const getCompanyDetails = async (companyId) => {
             select: {
               id: true,
               name: true,
-              displayName: true
-            }
+              displayName: true,
+            },
           },
           status: true,
           lastLogin: true,
@@ -1177,15 +1135,15 @@ const getTableData = async (tableName, options = {}) => {
         [data, count] = await Promise.all([
           prisma.user.findMany({
             where: userWhere,
-            include: { 
+            include: {
               company: { select: { name: true } },
               role: {
                 select: {
                   id: true,
                   name: true,
-                  displayName: true
-                }
-              }
+                  displayName: true,
+                },
+              },
             },
             take: Number(limit),
             skip: (Number(page) - 1) * Number(limit),

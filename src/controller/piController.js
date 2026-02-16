@@ -7,7 +7,6 @@ import { join } from 'path';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 
-
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
@@ -104,16 +103,19 @@ export const deletePiProduct = asyncHandler(async (req, res) => {
 });
 
 export const updatePiStatus = asyncHandler(async (req, res) => {
-  const oldPi = await PiService.getPiInvoiceById(parseInt(req.params.id), req.user.companyId);
+  const oldPi = await PiService.getPiInvoiceById(
+    parseInt(req.params.id),
+    req.user.companyId
+  );
   const oldStatus = oldPi.status;
-  
+
   console.log('🔄 PI Status Update:', {
     piId: req.params.id,
     oldStatus,
     newStatus: req.body.status,
-    companyId: req.user.companyId
+    companyId: req.user.companyId,
   });
-  
+
   const piInvoice = await PiService.updatePiStatus(
     parseInt(req.params.id),
     req.body.status,
@@ -122,12 +124,16 @@ export const updatePiStatus = asyncHandler(async (req, res) => {
     req,
     req.body.paymentAmount || null // Optional payment amount
   );
-  
+
   // Auto-create accounting entry when status changes to confirmed
   console.log('🎯 Triggering accounting hook...');
-  await handlePiInvoiceStatusChange(parseInt(req.params.id), oldStatus, req.body.status);
+  await handlePiInvoiceStatusChange(
+    parseInt(req.params.id),
+    oldStatus,
+    req.body.status
+  );
   console.log('✅ Accounting hook completed');
-  
+
   return res
     .status(200)
     .json(
@@ -240,8 +246,6 @@ export const emailInvoice = asyncHandler(async (req, res) => {
 
   const piInvoice = await PiService.getPiInvoiceById(piId, req.user.companyId);
 
-
-
   let logoBase64 = null;
   try {
     if (piInvoice.company?.logo) {
@@ -263,7 +267,6 @@ export const emailInvoice = asyncHandler(async (req, res) => {
   );
 
   try {
-
     console.log('✅ EMAIL CONTROLLER - Email sent successfully!');
   } catch (error) {
     console.error('❌ EMAIL CONTROLLER - Email send failed:', error.message);
@@ -272,11 +275,5 @@ export const emailInvoice = asyncHandler(async (req, res) => {
 
   return res
     .status(200)
-    .json(
-      new ApiResponse(
-        200,
-        {},
-        'Invoice sent successfully'
-      )
-    );
+    .json(new ApiResponse(200, {}, 'Invoice sent successfully'));
 });
