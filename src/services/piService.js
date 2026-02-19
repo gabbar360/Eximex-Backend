@@ -251,6 +251,17 @@ const calculateTotals = (
 const createPiInvoice = async (data, userId, req = {}) => {
   const { products = [], companyId, partyId, notes, ...piData } = data;
 
+  // Log the products data to debug variants
+  console.log('🔍 Creating PI with products:', JSON.stringify(products.map(p => ({
+    productId: p.productId,
+    productName: p.productName,
+    selectedVariants: p.selectedVariants,
+    quantity: p.quantity,
+    unit: p.unit
+  })), null, 2));
+
+  console.log('🔍 Raw products data:', JSON.stringify(products, null, 2));
+
   if (!companyId) {
     throw new ApiError(400, 'Company ID is required');
   }
@@ -373,17 +384,20 @@ const createPiInvoice = async (data, userId, req = {}) => {
       });
 
       if (productsWithTotals.length > 0) {
-        await tx.piProduct.createMany({
-          data: productsWithTotals.map((product, index) => {
-            const { packagingCalculation, ...productData } = product;
-            return {
+        for (let index = 0; index < productsWithTotals.length; index++) {
+          const product = productsWithTotals[index];
+          const { packagingCalculation, ...productData } = product;
+          
+          await tx.piProduct.create({
+            data: {
               ...productData,
               piInvoiceId: pi.id,
               companyId: companyId,
               lineNumber: index + 1,
-            };
-          }),
-        });
+              selectedVariants: product.selectedVariants || null,
+            },
+          });
+        }
       }
 
       // For creation, statusBefore is null but we'll set it to 'New' for clarity
@@ -618,12 +632,20 @@ const updatePiInvoice = async (id, data, userId, companyId, req = {}) => {
           })
         );
 
-        await tx.piProduct.createMany({
-          data: productsWithTotals.map((product) => {
-            const { packagingCalculation, ...productData } = product;
-            return productData;
-          }),
-        });
+        for (let index = 0; index < productsWithTotals.length; index++) {
+          const product = productsWithTotals[index];
+          const { packagingCalculation, ...productData } = product;
+          
+          await tx.piProduct.create({
+            data: {
+              ...productData,
+              piInvoiceId: id,
+              companyId: companyId,
+              lineNumber: index + 1,
+              selectedVariants: product.selectedVariants || null,
+            },
+          });
+        }
 
         // Use new products for calculation
         productsForCalculation = productsWithTotals;
