@@ -210,6 +210,9 @@ model Product {
   // Dynamic packaging hierarchy fields (JSON for flexibility)
   packagingHierarchyData Json? @map("packaging_hierarchy_data")
 
+  // Product variants
+  variants String[] @default([])
+
   isActive  Boolean   @default(true) @map("is_active")
   createdAt DateTime  @default(now()) @map("created_at")
   updatedAt DateTime  @updatedAt @map("updated_at")
@@ -542,6 +545,9 @@ model PiProduct {
 
   // Container assignment
   containerNumber Int? @default(1) @map("container_number")
+
+  // Selected variants (JSON to store multiple variant values)
+  selectedVariants Json? @map("selected_variants")
 
   // Order in PI
   lineNumber Int @default(1) @map("line_number")

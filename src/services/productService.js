@@ -352,6 +352,9 @@ const createProduct = async (productData, userId, companyId) => {
         ? packagingHierarchyData
         : null,
 
+    // Product variants
+    variants: productData.variants || [],
+
     isActive: true,
   };
 
@@ -516,6 +519,9 @@ const updateProduct = async (productId, updateData, companyId) => {
       Object.keys(packagingHierarchyData).length > 0
         ? packagingHierarchyData
         : updateData.packagingHierarchyData,
+
+    // Product variants
+    variants: updateData.variants,
 
     updatedAt: new Date(),
   };
