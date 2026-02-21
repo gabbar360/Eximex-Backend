@@ -154,35 +154,35 @@ const calculateTotals = (
     frontendGrossWeight !== null
       ? frontendGrossWeight
       : products.reduce((sum, product) => {
-          if (!product.productId) return sum;
+        if (!product.productId) return sum;
 
-          let boxes = 0;
+        let boxes = 0;
 
-          // Calculate boxes based on unit - same as frontend
-          if (product.unit === 'Box' || product.unit === 'box') {
-            boxes = product.quantity;
-          } else if (product.unit === 'pcs') {
-            boxes = product.quantity / 2000; // 50 pcs/pack × 40 pack/box
-          } else if (product.unit === 'package') {
-            boxes = product.quantity / 40; // 40 packages per box
-          } else {
-            boxes = product.quantity; // fallback assume it's boxes
-          }
+        // Calculate boxes based on unit - same as frontend
+        if (product.unit === 'Box' || product.unit === 'box') {
+          boxes = product.quantity;
+        } else if (product.unit === 'pcs') {
+          boxes = product.quantity / 2000; // 50 pcs/pack × 40 pack/box
+        } else if (product.unit === 'package') {
+          boxes = product.quantity / 40; // 40 packages per box
+        } else {
+          boxes = product.quantity; // fallback assume it's boxes
+        }
 
-          // Get gross weight per box from product data - same as frontend
-          let grossWeightPerBox =
-            product.product?.packagingHierarchyData?.dynamicFields
-              ?.grossWeightPerBox ||
-            product.product?.grossWeightPerBox ||
-            10.06;
+        // Get gross weight per box from product data - same as frontend
+        let grossWeightPerBox =
+          product.product?.packagingHierarchyData?.dynamicFields
+            ?.grossWeightPerBox ||
+          product.product?.grossWeightPerBox ||
+          10.06;
 
-          // Convert to KG if in grams - same as frontend
-          if (grossWeightPerBox > 100) {
-            grossWeightPerBox = grossWeightPerBox / 1000;
-          }
+        // Convert to KG if in grams - same as frontend
+        if (grossWeightPerBox > 100) {
+          grossWeightPerBox = grossWeightPerBox / 1000;
+        }
 
-          return sum + boxes * grossWeightPerBox;
-        }, 0);
+        return sum + boxes * grossWeightPerBox;
+      }, 0);
   let chargesTotal = 0;
   if (charges) {
     Object.entries(charges).forEach(([key, value]) => {
@@ -250,17 +250,6 @@ const calculateTotals = (
 
 const createPiInvoice = async (data, userId, req = {}) => {
   const { products = [], companyId, partyId, notes, ...piData } = data;
-
-  // Log the products data to debug variants
-  console.log('🔍 Creating PI with products:', JSON.stringify(products.map(p => ({
-    productId: p.productId,
-    productName: p.productName,
-    selectedVariants: p.selectedVariants,
-    quantity: p.quantity,
-    unit: p.unit
-  })), null, 2));
-
-  console.log('🔍 Raw products data:', JSON.stringify(products, null, 2));
 
   if (!companyId) {
     throw new ApiError(400, 'Company ID is required');
@@ -387,7 +376,7 @@ const createPiInvoice = async (data, userId, req = {}) => {
         for (let index = 0; index < productsWithTotals.length; index++) {
           const product = productsWithTotals[index];
           const { packagingCalculation, ...productData } = product;
-          
+
           await tx.piProduct.create({
             data: {
               ...productData,
@@ -635,7 +624,7 @@ const updatePiInvoice = async (id, data, userId, companyId, req = {}) => {
         for (let index = 0; index < productsWithTotals.length; index++) {
           const product = productsWithTotals[index];
           const { packagingCalculation, ...productData } = product;
-          
+
           await tx.piProduct.create({
             data: {
               ...productData,
