@@ -148,3 +148,12 @@ export const deleteCompany = asyncHandler(async (req, res) => {
     .status(200)
     .json(new ApiResponse(200, null, 'Company deleted successfully'));
 });
+
+export const getCompanyData = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const companyData = await SuperAdminService.getCompanyData(id);
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, companyData, 'Company data fetched successfully'));
+});

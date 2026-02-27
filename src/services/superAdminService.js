@@ -577,6 +577,33 @@ const deleteCompany = async (id) => {
   return true;
 };
 
+const getCompanyData = async (companyId) => {
+  const company = await prisma.companyDetails.findUnique({
+    where: { id: parseInt(companyId) },
+  });
+
+  if (!company) {
+    throw new ApiError(404, 'Company not found');
+  }
+
+  const [products, users, piInvoices, orders] = await Promise.all([
+    prisma.product.count({ where: { companyId: parseInt(companyId) } }),
+    prisma.user.count({ where: { companyId: parseInt(companyId) } }),
+    prisma.piInvoice.count({ where: { companyId: parseInt(companyId) } }),
+    prisma.order.count({ where: { companyId: parseInt(companyId) } }),
+  ]);
+
+  return {
+    company,
+    stats: {
+      products,
+      users,
+      piInvoices,
+      orders,
+    },
+  };
+};
+
 export const SuperAdminService = {
   getAllUsers,
   getUserById,
@@ -590,4 +617,5 @@ export const SuperAdminService = {
   createCompany,
   updateCompany,
   deleteCompany,
+  getCompanyData,
 };

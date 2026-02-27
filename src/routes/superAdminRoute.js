@@ -14,6 +14,7 @@ import {
   createCompany,
   updateCompany,
   deleteCompany,
+  getCompanyData,
 } from '../controller/superAdminController.js';
 
 const router = Router();
@@ -52,5 +53,6 @@ router.put(
   updateCompany
 );
 router.delete('/super-admin/companies/:id', verifyJWT, deleteCompany);
+router.get('/super-admin/companies/:id/data', verifyJWT, getCompanyData);
 
 export default router;
