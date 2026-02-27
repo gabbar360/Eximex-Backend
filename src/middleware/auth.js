@@ -566,22 +566,41 @@ export const filterByRole = asyncHandler(async (req, res, next) => {
     return next();
   }
 
-  // Get user's role permissions
-  const userRole = await prisma.role.findUnique({
-    where: { id: user.roleId },
-    select: { permissions: true, name: true },
-  });
+  // Get user's role permissions and company details
+  const [userRole, userCompany] = await Promise.all([
+    prisma.role.findUnique({
+      where: { id: user.roleId },
+      select: { permissions: true, name: true },
+    }),
+    prisma.companyDetails.findUnique({
+      where: { id: user.companyId },
+      select: { name: true },
+    })
+  ]);
 
   const permissions = userRole?.permissions || {};
   console.log('Role:', userRole?.name, 'Permissions:', permissions);
+  console.log('Company:', userCompany?.name);
 
-  // Check if user has company-wide data access permission
-  if (permissions.canViewAllCompanyData === true) {
+  // Companies that should show company-wide data to all users
+  const companyWideDataCompanies = ['Vegnar Global LLP', 'Flexa Digital'];
+  
+  // Check if current company should show company-wide data
+  const shouldShowCompanyWideData = companyWideDataCompanies.includes(userCompany?.name);
+
+  if (shouldShowCompanyWideData) {
+    // Show company-wide data for specified companies
     req.roleFilter = {}; // Can see all company data
-    console.log('✅ Admin access: Can see all company data');
+    console.log('✅ Company-wide access: All users can see company data for', userCompany?.name);
   } else {
-    req.roleFilter = { createdBy: user.id }; // Only own data
-    console.log('🔒 Staff access: Only own data (createdBy:', user.id, ')');
+    // Use role-based filtering for other companies
+    if (permissions.canViewAllCompanyData === true) {
+      req.roleFilter = {}; // Can see all company data
+      console.log('✅ Admin access: Can see all company data');
+    } else {
+      req.roleFilter = { createdBy: user.id }; // Only own data
+      console.log('🔒 Staff access: Only own data (createdBy:', user.id, ')');
+    }
   }
 
   console.log('Final roleFilter:', req.roleFilter);
