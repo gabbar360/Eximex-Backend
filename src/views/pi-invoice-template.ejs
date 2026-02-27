@@ -248,37 +248,45 @@
                 <% if (hasTilesProducts) { %>
                     <tr class="header center">
                         <th style="width: 3%;">S.No.</th>
-                        <th style="width: 28%;">Description of Goods</th>
-                        <th style="width: 6%;">No. of CNTRs</th>
-                        <th style="width: 7%;">HS Code</th>
-                        <th style="width: 8%;">Quantity</th>
-                        <th style="width: 5%;">Unit</th>
-                        <th style="width: 7%;">Total Boxes</th>
-                        <th style="width: 7%;">Total Pallets</th>
-                        <th style="width: 8%;">Rate <%= piInvoice.currency || 'USD' %></th>
-                        <th style="width: 8%;">Weight (Kgs)</th>
-                        <th style="width: 10%;">Amount <%= piInvoice.currency || 'USD' %></th>
+                        <th style="width: 25%;">Description of Goods</th>
+                        <th style="width: 5%;">No. of CNTRs</th>
+                        <th style="width: 6%;">HS Code</th>
+                        <th style="width: 7%;">Quantity</th>
+                        <th style="width: 4%;">Unit</th>
+                        <th style="width: 6%;">Total Boxes</th>
+                        <th style="width: 6%;">Total Pallets</th>
+                        <th style="width: 7%;">Rate <%= piInvoice.currency || 'USD' %></th>
+                        <th style="width: 6%;">CBM</th>
+                        <th style="width: 7%;">Weight (Kgs)</th>
+                        <th style="width: 9%;">Amount <%= piInvoice.currency || 'USD' %></th>
                     </tr>
                 <% } else { %>
                     <tr class="header center">
                         <th style="width: 4%;">S.No.</th>
-                        <th style="width: 40%;">Description of Goods</th>
-                        <th style="width: 8%;">HS Code</th>
-                        <th style="width: 10%;">Quantity</th>
-                        <th style="width: 6%;">Unit</th>
-                        <th style="width: 10%;">Rate <%= piInvoice.currency || 'USD' %></th>
-                        <th style="width: 10%;">Weight (Kgs)</th>
-                        <th style="width: 12%;">Amount <%= piInvoice.currency || 'USD' %></th>
+                        <th style="width: 35%;">Description of Goods</th>
+                        <th style="width: 7%;">HS Code</th>
+                        <th style="width: 9%;">Quantity</th>
+                        <th style="width: 5%;">Unit</th>
+                        <th style="width: 9%;">Rate <%= piInvoice.currency || 'USD' %></th>
+                        <th style="width: 7%;">CBM</th>
+                        <th style="width: 9%;">Weight (Kgs)</th>
+                        <th style="width: 11%;">Amount <%= piInvoice.currency || 'USD' %></th>
                     </tr>
                 <% } %>
             </thead>
             <tbody>
-                <% let sumAmount=0, totalNet=0, totalGross=0, totalQuantity=0, totalBoxes=0, totalPallets=0; %>
+                <% let sumAmount=0, totalNet=0, totalGross=0, totalQuantity=0, totalBoxes=0, totalPallets=0, totalCbm=0; %>
                 <% 
                     // Number formatting function for Indian format
                     function formatNumber(num) {
                         if (!num || isNaN(num)) return '0.00';
                         return parseFloat(num).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                    }
+                    
+                    // Rate formatting function for 4 decimal places
+                    function formatRate(num) {
+                        if (!num || isNaN(num)) return '0.0000';
+                        return parseFloat(num).toLocaleString('en-IN', { minimumFractionDigits: 4, maximumFractionDigits: 4 });
                     }
                     
                     // Calculate total containers from products
@@ -295,6 +303,18 @@
                     <% const gross = product.totalWeight ? parseFloat(product.totalWeight) : 0; %>
                     <% sumAmount += lineAmt; totalNet += net; totalGross += gross; %>
                     <% totalQuantity += parseFloat(product.quantity || 0); %>
+                    <% 
+                        // Calculate CBM from packaging data and quantity
+                        let productCbm = 0;
+                        if (product.product?.packagingVolume && product.quantity) {
+                            const packagingVolume = parseFloat(product.product.packagingVolume);
+                            const quantity = parseFloat(product.quantity);
+                            const piecesPerBox = product.product.totalPieces || 1;
+                            const totalBoxes = Math.ceil(quantity / piecesPerBox);
+                            productCbm = packagingVolume * totalBoxes;
+                        }
+                        totalCbm += productCbm;
+                    %>
                     <% 
                         // Based on unit type (if tiles always use sqm/sqft)
                         const tilesUnits = ['sqm', 'sqft', 'square meter'];
@@ -333,7 +353,20 @@
                                     -
                                 <% } %>
                             </td>
-                            <td class="right"><%= formatNumber(product.rate || 0) %></td>
+                            <td class="right"><%= formatRate(product.rate || 0) %></td>
+                            <td class="right"><%= 
+                                (() => {
+                                    let productCbm = 0;
+                                    if (product.product?.packagingVolume && product.quantity) {
+                                        const packagingVolume = parseFloat(product.product.packagingVolume);
+                                        const quantity = parseFloat(product.quantity);
+                                        const piecesPerBox = product.product.totalPieces || 1;
+                                        const totalBoxes = Math.ceil(quantity / piecesPerBox);
+                                        productCbm = packagingVolume * totalBoxes;
+                                    }
+                                    return productCbm.toFixed(2);
+                                })()
+                            %></td>
                             <td class="right"><%= gross ? gross.toFixed(0) + 'kg' : '0kg' %></td>
                             <td class="right"><%= piInvoice.currency === 'INR' ? '₹' : piInvoice.currency === 'EUR' ? '€' : '$' %> <%= formatNumber(product.total || 0) %></td>
                         </tr>
@@ -349,7 +382,20 @@
                             <td class="center"><%= (product.hsCode && product.hsCode !== 'N/A') ? product.hsCode : (product.hsnCode && product.hsnCode !== 'N/A') ? product.hsnCode : product.category?.hsnCode || product.product?.category?.hsnCode || product.product?.hsCode || product.product?.hsnCode || 'N/A' %></td>
                             <td class="right"><%= product.quantity || 0 %></td>
                             <td class="center"><%= product.unit || 'PCS' %></td>
-                            <td class="right"><%= formatNumber(product.rate || 0) %></td>
+                            <td class="right"><%= formatRate(product.rate || 0) %></td>
+                            <td class="right"><%= 
+                                (() => {
+                                    let productCbm = 0;
+                                    if (product.product?.packagingVolume && product.quantity) {
+                                        const packagingVolume = parseFloat(product.product.packagingVolume);
+                                        const quantity = parseFloat(product.quantity);
+                                        const piecesPerBox = product.product.totalPieces || 1;
+                                        const totalBoxes = Math.ceil(quantity / piecesPerBox);
+                                        productCbm = packagingVolume * totalBoxes;
+                                    }
+                                    return productCbm.toFixed(2);
+                                })()
+                            %></td>
                             <td class="right"><%= gross ? gross.toFixed(0) + 'kg' : '0kg' %></td>
                             <td class="right"><%= piInvoice.currency === 'INR' ? '₹' : piInvoice.currency === 'EUR' ? '€' : '$' %> <%= formatNumber(product.total || 0) %></td>
                         </tr>
@@ -366,28 +412,37 @@
                         <td class="center"><%= totalBoxes > 0 ? totalBoxes : '-' %></td>
                         <td class="center"><%= totalPallets > 0 ? totalPallets : '-' %></td>
                         <td></td>
+                        <td class="right"><%= totalCbm.toFixed(2) %></td>
                         <td class="right"><%= totalGross ? totalGross.toFixed(0) + 'kg' : '0kg' %></td>
                         <td class="right"><%= piInvoice.currency === 'INR' ? '₹' : piInvoice.currency === 'EUR' ? '€' : '$' %> <%= formatNumber(sumAmount) %></td>
                     </tr>
                 <% } else { %>
                     <tr class="bold header">
-                        <td colspan="6" class="center">SUB TOTAL</td>
+                        <td class="center">TOTAL</td>
                         <td></td>
+                        <td></td>
+                        <td class="right"><%= formatNumber(totalQuantity) %></td>
+                        <td></td>
+                        <td></td>
+                        <td class="right"><%= totalCbm.toFixed(2) %></td>
+                        <td class="right"><%= totalGross ? totalGross.toFixed(0) + 'kg' : '0kg' %></td>
                         <td class="right"><%= piInvoice.currency === 'INR' ? '₹' : piInvoice.currency === 'EUR' ? '€' : '$' %> <%= formatNumber(sumAmount) %></td>
                     </tr>
                 <% } %>
                 <% if (hasTilesProducts) { %>
                     <tr class="bold">
-                        <td colspan="11">
+                        <td colspan="12">
                             NET WEIGHT:- <%= (piInvoice.totalWeight || totalNet).toFixed(1) %> KG<br>
-                            GROSS WEIGHT:- <%= (piInvoice.totalGrossWeight || totalGross).toFixed(1) %> KG
+                            GROSS WEIGHT:- <%= (piInvoice.totalGrossWeight || totalGross).toFixed(1) %> KG<br>
+                            TOTAL CBM:- <%= totalCbm.toFixed(2) %> CBM
                         </td>
                     </tr>
                 <% } else { %>
                     <tr class="bold">
-                        <td colspan="8">
+                        <td colspan="9">
                             NET WEIGHT:- <%= (piInvoice.totalWeight || totalNet).toFixed(1) %> KG<br>
-                            GROSS WEIGHT:- <%= (piInvoice.totalGrossWeight || totalGross).toFixed(1) %> KG
+                            GROSS WEIGHT:- <%= (piInvoice.totalGrossWeight || totalGross).toFixed(1) %> KG<br>
+                            TOTAL CBM:- <%= totalCbm.toFixed(2) %> CBM
                         </td>
                     </tr>
                 <% } %>
