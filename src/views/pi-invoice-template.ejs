@@ -256,7 +256,7 @@
                         <th style="width: 6%;">Total Boxes</th>
                         <th style="width: 6%;">Total Pallets</th>
                         <th style="width: 7%;">Rate <%= piInvoice.currency || 'USD' %></th>
-                        <th style="width: 6%;">CBM</th>
+                        <th style="width: 6%;">Volume (CBM)</th>
                         <th style="width: 7%;">Weight (Kgs)</th>
                         <th style="width: 9%;">Amount <%= piInvoice.currency || 'USD' %></th>
                     </tr>
@@ -268,7 +268,7 @@
                         <th style="width: 9%;">Quantity</th>
                         <th style="width: 5%;">Unit</th>
                         <th style="width: 9%;">Rate <%= piInvoice.currency || 'USD' %></th>
-                        <th style="width: 7%;">CBM</th>
+                        <th style="width: 7%;">Volume (CBM)</th>
                         <th style="width: 9%;">Weight (Kgs)</th>
                         <th style="width: 11%;">Amount <%= piInvoice.currency || 'USD' %></th>
                     </tr>
@@ -353,7 +353,7 @@
                                     -
                                 <% } %>
                             </td>
-                            <td class="right"><%= formatRate(product.rate || 0) %></td>
+                            <td class="right"><%= piInvoice.currency === 'INR' ? '₹' : piInvoice.currency === 'EUR' ? '€' : '$' %> <%= formatRate(product.rate || 0) %></td>
                             <td class="right"><%= 
                                 (() => {
                                     let productCbm = 0;
@@ -382,7 +382,7 @@
                             <td class="center"><%= (product.hsCode && product.hsCode !== 'N/A') ? product.hsCode : (product.hsnCode && product.hsnCode !== 'N/A') ? product.hsnCode : product.category?.hsnCode || product.product?.category?.hsnCode || product.product?.hsCode || product.product?.hsnCode || 'N/A' %></td>
                             <td class="right"><%= product.quantity || 0 %></td>
                             <td class="center"><%= product.unit || 'PCS' %></td>
-                            <td class="right"><%= formatRate(product.rate || 0) %></td>
+                            <td class="right"><%= piInvoice.currency === 'INR' ? '₹' : piInvoice.currency === 'EUR' ? '€' : '$' %> <%= formatRate(product.rate || 0) %></td>
                             <td class="right"><%= 
                                 (() => {
                                     let productCbm = 0;
@@ -577,21 +577,21 @@
                     <div style="margin-bottom: 10px;">
                         <strong>For, <%= piInvoice.company?.name || 'COMPANY NAME' %></strong>
                     </div>
-                    <div style="height: 60px; display: flex; align-items: center; justify-content: center;">
+                    <div style="height: 80px; display: flex; align-items: center; justify-content: center;">
                         <% const signatureUrl = piInvoice.company?.signature; %>
                         <% const fullSignatureUrl = signatureUrl ? (signatureUrl.startsWith('http') ? signatureUrl : `http://localhost:8000${signatureUrl}`) : null; %>
                         <% if (typeof signatureBase64 !== 'undefined' && signatureBase64) { %>
-                            <img src="data:image/*;base64,<%= signatureBase64 %>" alt="Signature" style="max-height: 50px; max-width: 80px; object-fit: contain;">
+                            <img src="data:image/*;base64,<%= signatureBase64 %>" alt="Signature" style="max-height: 70px; max-width: 120px; object-fit: contain;">
                         <% } else if (fullSignatureUrl) { %>
-                            <img src="<%= fullSignatureUrl %>" alt="Signature" style="max-height: 50px; max-width: 80px; object-fit: contain;">
+                            <img src="<%= fullSignatureUrl %>" alt="Signature" style="max-height: 70px; max-width: 120px; object-fit: contain;">
                         <% } else { %>
-                            <div style="width: 80px; height: 50px; border: 1px dashed #ccc; display: flex; align-items: center; justify-content: center; font-size: 8px; color: #999;">
+                            <div style="width: 120px; height: 70px; border: 1px dashed #ccc; display: flex; align-items: center; justify-content: center; font-size: 8px; color: #999;">
                                 SIGNATURE
                             </div>
                         <% } %>
                     </div>
                     <div style="margin-top: 8px;">
-                        <div style="border-bottom: 1px solid #000; width: 80px; margin: 0 auto;"></div>
+                        <div style="border-bottom: 1px solid #000; width: 120px; margin: 0 auto;"></div>
                         <div style="font-size: 8px; margin-top: 2px;">Authorised Signatory</div>
                     </div>
                 </td>
@@ -604,7 +604,7 @@
                 <td class="header" style="background: var(--grey); font-weight: bold; padding: 6px;">NOTES:</td>
             </tr>
             <tr>
-                <td style="padding: 6px; vertical-align: top; font-size: 10px; line-height: 1.3; border: var(--inner); white-space: pre-line;">
+                <td style="padding: 6px; vertical-align: top; font-size: 10px; line-height: 1.3; border: var(--inner); white-space: pre-line; color: red;">
                     <%= piInvoice.notes %>
                 </td>
             </tr>
