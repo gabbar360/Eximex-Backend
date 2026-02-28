@@ -511,9 +511,14 @@
                                 <% if (hasTilesProducts) { %>
                                     <tr>
                                         <td class="center"><%= globalIndex + 1 %></td>
-                                        <td><strong><%= product.productName || '-' %></strong></td>
+                                        <td>
+                                            <strong><%= product.productName || '-' %></strong>
+                                            <% if (product.productDescription && product.productDescription !== product.productName) { %>
+                                                <br><%= product.productDescription %>
+                                            <% } %>
+                                        </td>
                                         <td class="center"><%= product.containerCount || 1 %></td>
-                                        <td class="center"><%= (product.hsCode && product.hsCode !== 'N/A') ? product.hsCode : 'N/A' %></td>
+                                        <td class="center"><%= (product.hsCode && product.hsCode !== 'N/A') ? product.hsCode : (product.hsnCode && product.hsnCode !== 'N/A') ? product.hsnCode : product.category?.hsnCode || product.product?.category?.hsnCode || product.product?.hsCode || product.product?.hsnCode || 'N/A' %></td>
                                         <td class="right"><%= product.quantity || 0 %></td>
                                         <td class="center"><%= product.unit || 'PCS' %></td>
                                         <td class="center"><%= isTilesProduct && product.calculatedBoxes ? product.calculatedBoxes : '-' %></td>
@@ -526,8 +531,13 @@
                                 <% } else { %>
                                     <tr>
                                         <td class="center"><%= globalIndex + 1 %></td>
-                                        <td><strong><%= product.productName || '-' %></strong></td>
-                                        <td class="center"><%= (product.hsCode && product.hsCode !== 'N/A') ? product.hsCode : 'N/A' %></td>
+                                        <td>
+                                            <strong><%= product.productName || '-' %></strong>
+                                            <% if (product.productDescription && product.productDescription !== product.productName) { %>
+                                                <br><%= product.productDescription %>
+                                            <% } %>
+                                        </td>
+                                        <td class="center"><%= (product.hsCode && product.hsCode !== 'N/A') ? product.hsCode : (product.hsnCode && product.hsnCode !== 'N/A') ? product.hsnCode : product.category?.hsnCode || product.product?.category?.hsnCode || product.product?.hsCode || product.product?.hsnCode || 'N/A' %></td>
                                         <td class="right"><%= product.quantity || 0 %></td>
                                         <td class="center"><%= product.unit || 'PCS' %></td>
                                         <td class="right"><%= piInvoice.currency === 'INR' ? '₹' : piInvoice.currency === 'EUR' ? '€' : '$' %> <%= formatRate(product.rate || 0) %></td>
@@ -542,48 +552,79 @@
                         <% // Add totals to last page %>
                         <% if (page === totalPages) { %>
                             <% console.log('Adding totals to last page:', page); %>
+                            <% 
+                                // Recalculate totals for ALL products to ensure accuracy
+                                let finalSumAmount = 0, finalTotalNet = 0, finalTotalGross = 0, finalTotalQuantity = 0, finalTotalBoxes = 0, finalTotalPallets = 0, finalTotalCbm = 0;
+                                
+                                piInvoice.products.forEach((product) => {
+                                    const lineAmt = Number(product.total || 0) || 0;
+                                    const net = product.totalWeight ? (parseFloat(product.totalWeight) * 0.9) : 0;
+                                    const gross = product.totalWeight ? parseFloat(product.totalWeight) : 0;
+                                    finalSumAmount += lineAmt; finalTotalNet += net; finalTotalGross += gross;
+                                    finalTotalQuantity += parseFloat(product.quantity || 0);
+                                    
+                                    let productCbm = 0;
+                                    if (product.product?.packagingVolume && product.quantity) {
+                                        const packagingVolume = parseFloat(product.product.packagingVolume);
+                                        const quantity = parseFloat(product.quantity);
+                                        const piecesPerBox = product.product.totalPieces || 1;
+                                        const totalBoxes = Math.ceil(quantity / piecesPerBox);
+                                        productCbm = packagingVolume * totalBoxes;
+                                    }
+                                    finalTotalCbm += productCbm;
+                                    
+                                    const tilesUnits = ['sqm', 'sqft', 'square meter'];
+                                    const isTilesProduct = tilesUnits.includes(product.unit?.toLowerCase()) && 
+                                                          ((product.calculatedBoxes && product.calculatedBoxes > 0) || 
+                                                           (product.calculatedPallets && product.calculatedPallets > 0));
+                                    if (isTilesProduct) {
+                                        finalTotalBoxes += parseFloat(product.calculatedBoxes || 0);
+                                        finalTotalPallets += parseFloat(product.calculatedPallets || 0);
+                                    }
+                                });
+                            %>
                             <% if (hasTilesProducts) { %>
                                 <tr class="bold header">
                                     <td class="center">TOTAL</td>
                                     <td></td>
                                     <td class="center"><%= totalContainers %></td>
                                     <td></td>
-                                    <td class="right"><%= formatNumber(totalQuantity) %></td>
+                                    <td class="right"><%= formatNumber(finalTotalQuantity) %></td>
                                     <td></td>
-                                    <td class="center"><%= totalBoxes > 0 ? totalBoxes : '-' %></td>
-                                    <td class="center"><%= totalPallets > 0 ? totalPallets : '-' %></td>
+                                    <td class="center"><%= finalTotalBoxes > 0 ? finalTotalBoxes : '-' %></td>
+                                    <td class="center"><%= finalTotalPallets > 0 ? finalTotalPallets : '-' %></td>
                                     <td></td>
-                                    <td class="right"><%= totalCbm.toFixed(2) %></td>
-                                    <td class="right"><%= totalGross ? totalGross.toFixed(0) + 'kg' : '0kg' %></td>
-                                    <td class="right"><%= piInvoice.currency === 'INR' ? '₹' : piInvoice.currency === 'EUR' ? '€' : '$' %> <%= formatNumber(sumAmount) %></td>
+                                    <td class="right"><%= finalTotalCbm.toFixed(2) %></td>
+                                    <td class="right"><%= finalTotalGross ? finalTotalGross.toFixed(0) + 'kg' : '0kg' %></td>
+                                    <td class="right"><%= piInvoice.currency === 'INR' ? '₹' : piInvoice.currency === 'EUR' ? '€' : '$' %> <%= formatNumber(finalSumAmount) %></td>
                                 </tr>
                             <% } else { %>
                                 <tr class="bold header">
                                     <td class="center">TOTAL</td>
                                     <td></td>
                                     <td></td>
-                                    <td class="right"><%= formatNumber(totalQuantity) %></td>
+                                    <td class="right"><%= formatNumber(finalTotalQuantity) %></td>
                                     <td></td>
                                     <td></td>
-                                    <td class="right"><%= totalCbm.toFixed(2) %></td>
-                                    <td class="right"><%= totalGross ? totalGross.toFixed(0) + 'kg' : '0kg' %></td>
-                                    <td class="right"><%= piInvoice.currency === 'INR' ? '₹' : piInvoice.currency === 'EUR' ? '€' : '$' %> <%= formatNumber(sumAmount) %></td>
+                                    <td class="right"><%= finalTotalCbm.toFixed(2) %></td>
+                                    <td class="right"><%= finalTotalGross ? finalTotalGross.toFixed(0) + 'kg' : '0kg' %></td>
+                                    <td class="right"><%= piInvoice.currency === 'INR' ? '₹' : piInvoice.currency === 'EUR' ? '€' : '$' %> <%= formatNumber(finalSumAmount) %></td>
                                 </tr>
                             <% } %>
                             <% if (hasTilesProducts) { %>
                                 <tr class="bold">
                                     <td colspan="12">
-                                        NET WEIGHT:- <%= (piInvoice.totalWeight || totalNet).toFixed(1) %> KG<br>
-                                        GROSS WEIGHT:- <%= (piInvoice.totalGrossWeight || totalGross).toFixed(1) %> KG<br>
-                                        TOTAL CBM:- <%= totalCbm.toFixed(2) %> CBM
+                                        NET WEIGHT:- <%= (piInvoice.totalWeight || finalTotalNet).toFixed(1) %> KG<br>
+                                        GROSS WEIGHT:- <%= (piInvoice.totalGrossWeight || finalTotalGross).toFixed(1) %> KG<br>
+                                        TOTAL CBM:- <%= finalTotalCbm.toFixed(2) %> CBM
                                     </td>
                                 </tr>
                             <% } else { %>
                                 <tr class="bold">
                                     <td colspan="9">
-                                        NET WEIGHT:- <%= (piInvoice.totalWeight || totalNet).toFixed(1) %> KG<br>
-                                        GROSS WEIGHT:- <%= (piInvoice.totalGrossWeight || totalGross).toFixed(1) %> KG<br>
-                                        TOTAL CBM:- <%= totalCbm.toFixed(2) %> CBM
+                                        NET WEIGHT:- <%= (piInvoice.totalWeight || finalTotalNet).toFixed(1) %> KG<br>
+                                        GROSS WEIGHT:- <%= (piInvoice.totalGrossWeight || finalTotalGross).toFixed(1) %> KG<br>
+                                        TOTAL CBM:- <%= finalTotalCbm.toFixed(2) %> CBM
                                     </td>
                                 </tr>
                             <% } %>
@@ -596,36 +637,38 @@
 
         <% let charges = 0; %>
         
-        <% // Calculate totals for all products %>
-        <% piInvoice.products.forEach((product) => { %>
-            <% if (piInvoice.products.indexOf(product) >= PRODUCTS_PER_PAGE) { %>
-                <% const lineAmt = Number(product.total || 0) || 0; %>
-                <% const net = product.totalWeight ? (parseFloat(product.totalWeight) * 0.9) : 0; %>
-                <% const gross = product.totalWeight ? parseFloat(product.totalWeight) : 0; %>
-                <% sumAmount += lineAmt; totalNet += net; totalGross += gross; %>
-                <% totalQuantity += parseFloat(product.quantity || 0); %>
-                <% 
-                    let productCbm = 0;
-                    if (product.product?.packagingVolume && product.quantity) {
-                        const packagingVolume = parseFloat(product.product.packagingVolume);
-                        const quantity = parseFloat(product.quantity);
-                        const piecesPerBox = product.product.totalPieces || 1;
-                        const totalBoxes = Math.ceil(quantity / piecesPerBox);
-                        productCbm = packagingVolume * totalBoxes;
-                    }
-                    totalCbm += productCbm;
-                    
-                    const tilesUnits = ['sqm', 'sqft', 'square meter'];
-                    const isTilesProduct = tilesUnits.includes(product.unit?.toLowerCase()) && 
-                                          ((product.calculatedBoxes && product.calculatedBoxes > 0) || 
-                                           (product.calculatedPallets && product.calculatedPallets > 0));
-                    if (isTilesProduct) {
-                        totalBoxes += parseFloat(product.calculatedBoxes || 0);
-                        totalPallets += parseFloat(product.calculatedPallets || 0);
-                    }
-                %>
-            <% } %>
-        <% }) %>
+        <% // Calculate totals for ALL products (not just remaining ones) %>
+        <% 
+            // Reset totals and recalculate for ALL products
+            sumAmount = 0; totalNet = 0; totalGross = 0; totalQuantity = 0; totalBoxes = 0; totalPallets = 0; totalCbm = 0;
+            
+            piInvoice.products.forEach((product) => {
+                const lineAmt = Number(product.total || 0) || 0;
+                const net = product.totalWeight ? (parseFloat(product.totalWeight) * 0.9) : 0;
+                const gross = product.totalWeight ? parseFloat(product.totalWeight) : 0;
+                sumAmount += lineAmt; totalNet += net; totalGross += gross;
+                totalQuantity += parseFloat(product.quantity || 0);
+                
+                let productCbm = 0;
+                if (product.product?.packagingVolume && product.quantity) {
+                    const packagingVolume = parseFloat(product.product.packagingVolume);
+                    const quantity = parseFloat(product.quantity);
+                    const piecesPerBox = product.product.totalPieces || 1;
+                    const totalBoxes = Math.ceil(quantity / piecesPerBox);
+                    productCbm = packagingVolume * totalBoxes;
+                }
+                totalCbm += productCbm;
+                
+                const tilesUnits = ['sqm', 'sqft', 'square meter'];
+                const isTilesProduct = tilesUnits.includes(product.unit?.toLowerCase()) && 
+                                      ((product.calculatedBoxes && product.calculatedBoxes > 0) || 
+                                       (product.calculatedPallets && product.calculatedPallets > 0));
+                if (isTilesProduct) {
+                    totalBoxes += parseFloat(product.calculatedBoxes || 0);
+                    totalPallets += parseFloat(product.calculatedPallets || 0);
+                }
+            });
+        %>
         
         <% // Show totals only on last page or if single page %>
         <% if (totalProducts <= PRODUCTS_PER_PAGE) { %>
