@@ -1077,6 +1077,22 @@ const generatePiInvoicePdf = async (id, companyId, logoBase64 = null) => {
   try {
     const piInvoice = await getPiInvoiceById(id, companyId);
 
+    // Update product descriptions with latest data from product table
+    if (piInvoice.products && piInvoice.products.length > 0) {
+      for (let i = 0; i < piInvoice.products.length; i++) {
+        const piProduct = piInvoice.products[i];
+        if (piProduct.productId) {
+          const latestProduct = await prisma.product.findUnique({
+            where: { id: piProduct.productId },
+            select: { description: true }
+          });
+          if (latestProduct && latestProduct.description) {
+            piInvoice.products[i].productDescription = latestProduct.description;
+          }
+        }
+      }
+    }
+
     const templatePath = join(__dirname, '../views/pi-invoice-template.ejs');
     const htmlContent = await ejs.renderFile(templatePath, {
       piInvoice,
