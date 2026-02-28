@@ -161,10 +161,9 @@ export const generatePDF = async (htmlContent, pdfOptions = {}) => {
         left: '5mm',
       },
       displayHeaderFooter: false,
-      preferCSSPageSize: false,
+      preferCSSPageSize: true,
       scale: 0.8,
       timeout: 60000,
-      pageRanges: '1',
     };
 
     const pdfBuffer = await page.pdf({ ...defaultOptions, ...pdfOptions });
