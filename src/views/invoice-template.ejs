@@ -41,6 +41,30 @@
             width: 100%;
             border-collapse: collapse;
         }
+        
+        .products-table {
+            page-break-inside: auto;
+        }
+        
+        .products-table thead {
+            display: table-header-group;
+        }
+        
+        .products-table tbody tr {
+            page-break-inside: avoid;
+            page-break-after: auto;
+        }
+        
+        .products-table tfoot {
+            display: table-footer-group;
+            page-break-inside: avoid;
+        }
+        
+        @media print {
+            .products-table tfoot {
+                display: table-row-group;
+            }
+        }
 
         th, td {
             border: var(--inner);
@@ -73,6 +97,21 @@
             background: var(--grey);
             padding: 6px 4px;
             font-weight: bold;
+        }
+        
+        .page-break {
+            page-break-before: always;
+        }
+        
+        @media print {
+            .page-break {
+                page-break-before: always;
+                break-before: page;
+            }
+        }
+        
+        @page {
+            margin: 10mm;
         }
     </style>
 </head>
@@ -275,7 +314,7 @@ const perKgCharge = totalWeight > 0
 
 
         <div class="table-title">Description of Goods</div>
-        <table>
+        <table class="products-table">
             <thead>
                 <tr class="header center">
                     <th style="width: 4%;">S.No.</th>
