@@ -349,8 +349,15 @@
                         if (product.product?.packagingVolume && product.quantity) {
                             const packagingVolume = parseFloat(product.product.packagingVolume);
                             const quantity = parseFloat(product.quantity);
-                            const piecesPerBox = product.product.totalPieces || 1;
-                            const totalBoxes = Math.ceil(quantity / piecesPerBox);
+                            let totalBoxes;
+                            // Check if unit is in pieces or boxes
+                            if (product.unit && (product.unit.toLowerCase() === 'pcs' || product.unit.toLowerCase() === 'pieces')) {
+                                // For pieces, calculate boxes using totalPieces from product data
+                                const piecesPerBox = product.product.totalPieces || 500; // use actual totalPieces from product
+                                totalBoxes = Math.ceil(quantity / piecesPerBox);
+                            } else {
+                                totalBoxes = quantity; // quantity is already in boxes
+                            }
                             productCbm = packagingVolume * totalBoxes;
                         }
                         totalCbm += productCbm;
@@ -400,8 +407,13 @@
                                     if (product.product?.packagingVolume && product.quantity) {
                                         const packagingVolume = parseFloat(product.product.packagingVolume);
                                         const quantity = parseFloat(product.quantity);
-                                        const piecesPerBox = product.product.totalPieces || 1;
-                                        const totalBoxes = Math.ceil(quantity / piecesPerBox);
+                                        const piecesPerBox = product.product.totalPieces || 500;
+                                        let totalBoxes;
+                                        if (product.unit && (product.unit.toLowerCase() === 'pcs' || product.unit.toLowerCase() === 'pieces')) {
+                                            totalBoxes = Math.ceil(quantity / piecesPerBox);
+                                        } else {
+                                            totalBoxes = quantity;
+                                        }
                                         productCbm = packagingVolume * totalBoxes;
                                     }
                                     return productCbm.toFixed(2);
@@ -429,8 +441,13 @@
                                     if (product.product?.packagingVolume && product.quantity) {
                                         const packagingVolume = parseFloat(product.product.packagingVolume);
                                         const quantity = parseFloat(product.quantity);
-                                        const piecesPerBox = product.product.totalPieces || 1;
-                                        const totalBoxes = Math.ceil(quantity / piecesPerBox);
+                                        let totalBoxes;
+                                        if (product.unit && (product.unit.toLowerCase() === 'pcs' || product.unit.toLowerCase() === 'pieces')) {
+                                            const piecesPerBox = product.product.totalPieces || 500;
+                                            totalBoxes = Math.ceil(quantity / piecesPerBox);
+                                        } else {
+                                            totalBoxes = quantity;
+                                        }
                                         productCbm = packagingVolume * totalBoxes;
                                     }
                                     return productCbm.toFixed(2);
