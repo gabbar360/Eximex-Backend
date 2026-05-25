@@ -399,7 +399,7 @@
                             <td class="center"><%= index + 1 %></td>
                             <td>
                                 <strong><%= product.productName || '-' %></strong>
-                                <% if (product.productDescription && product.productDescription !== product.productName) { %>
+                                <% if (product.productDescription) { %>
                                     <br><%= product.productDescription %>
                                 <% } %>
                             </td>
@@ -458,7 +458,7 @@
                             <td class="center"><%= index + 1 %></td>
                             <td>
                                 <strong><%= product.productName || '-' %></strong>
-                                <% if (product.productDescription && product.productDescription !== product.productName) { %>
+                                <% if (product.productDescription) { %>
                                     <br><%= product.productDescription %>
                                 <% } %>
                             </td>
