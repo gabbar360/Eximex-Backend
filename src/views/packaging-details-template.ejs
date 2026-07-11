@@ -433,12 +433,12 @@
                                             const pallets = isTilesProduct ? (p.noOfPallets || 0) : 0;
                                         %>
                                         <% const hsnCode = p.hsnCode || p.hsCode || '484047'; %>
-                                        <% const unit = isTilesProduct ? 'Box' : (p.unit || 'Box'); %>
-                                        <% const quantity = p.unit && p.unit.toLowerCase() === 'box' ? (p.packedQuantity || p.quantity || p.noOfBoxes || '-') : (p.noOfBoxes || '-'); %>
+                                        <% const unit = isTilesProduct ? 'Box' : (p.noOfBoxes ? 'Box' : (p.unit || 'Box')); %>
+                                        <% const quantity = p.noOfBoxes ? (p.noOfBoxes || '-') : (p.unit && p.unit.toLowerCase() === 'box' ? (p.packedQuantity || p.quantity || '-') : '-'); %>
                                         <% const netWeight = Number(p.netWeight || 0); %>
                                         <% const grossWeight = Number(p.grossWeight || 0); %>
                                         <% const volume = Number(p.measurement || 0); %>
-                                        <% const boxes = Number(p.noOfBoxes || (p.unit && p.unit.toLowerCase() === 'box' ? (p.packedQuantity || p.quantity) : 0)); %>
+                                        <% const boxes = Number(p.noOfBoxes || 0); %>
                                         <% const unitWeight = boxes > 0 && netWeight > 0 ? (netWeight / boxes) : 0; %>
                                         
                                         <% totalQuantity += boxes; %>
